@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="SportWearShop.Application/SportWearShop.Application.csproj" />
+  <Project Path="SportWearShop.Domain/SportWearShop.Domain.csproj" />
+  <Project Path="SportWearShop.Infrastructure/SportWearShop.Infrastructure.csproj" />
+  <Project Path="SportWearShop.Web/SportWearShop.Web.csproj" />
+</Solution>
