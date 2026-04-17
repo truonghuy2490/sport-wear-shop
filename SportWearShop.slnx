@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="SportWearShop.APIs/SportWearShop.APIs.csproj" Id="f8476c5d-7452-4298-91da-741d58006096" />
+  <Project Path="SportWearShop.BusinessLogics/SportWearShop.BusinessLogics.csproj" Id="779227b8-5b70-49d5-80e2-0c7be5b1f2ce" />
+  <Project Path="SportWearShop.Repositories/SportWearShop.Repositories.csproj" Id="50afa4ad-ad1f-4940-b782-78e37fba10b5" />
+</Solution>
