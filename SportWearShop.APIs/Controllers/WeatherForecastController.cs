@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 
-namespace SportWearShop.Web.Controllers
+namespace SportWearShop.APIs.Controllers
 {
     [ApiController]
     [Route("[controller]")]

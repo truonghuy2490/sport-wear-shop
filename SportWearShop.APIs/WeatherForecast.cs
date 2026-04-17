@@ -1,4 +1,4 @@
-namespace SportWearShop.Web
+namespace SportWearShop.APIs
 {
     public class WeatherForecast
     {
