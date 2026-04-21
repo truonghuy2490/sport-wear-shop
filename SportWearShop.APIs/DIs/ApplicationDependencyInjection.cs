@@ -12,20 +12,12 @@ namespace SportWearShop.APIs.DIs
         this IServiceCollection services,
         IConfiguration configuration)
         {
-            // Register DbContext
-            services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(
-                    configuration.GetConnectionString("DefaultConnection"),
-                    b => b.MigrationsAssembly("SportWearShop.Repositories")));
-
             services.AddBusinessLayer(configuration);
 
-            // ???? 
-            services.AddIdentity<AppUser, AppRole>()
+            // ?
+            services.AddIdentityCore<AppUser>()
                 .AddEntityFrameworkStores<AppDbContext>()
                 .AddDefaultTokenProviders();
-
-            
 
 
             return services;

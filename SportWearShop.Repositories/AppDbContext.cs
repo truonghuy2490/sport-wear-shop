@@ -511,6 +511,33 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                 .OnDelete(DeleteBehavior.Restrict);
         });
 
+        // -- Seed data for Product
+        modelBuilder.Entity<Product>().HasData(
+            new Product
+            {
+                ProductId = 1,
+                BrandId = 1,
+                CategoryId = 1,
+                ProductName = "Nike Basic T-Shirt",
+                ProductCode = "P001",
+                Slug = "nike-basic-tshirt",
+                Gender = "MEN",
+                BaseMaterial = "Cotton",
+                Status = "ACTIVE"
+            },
+            new Product
+            {
+                ProductId = 2,
+                BrandId = 1,
+                CategoryId = 1,
+                ProductName = "Nike Sport Tee",
+                ProductCode = "P002",
+                Slug = "nike-sport-tee",
+                Gender = "MEN",
+                BaseMaterial = "Polyester",
+                Status = "ACTIVE"
+            }
+        );
         OnModelCreatingPartial(modelBuilder);
     }
 
