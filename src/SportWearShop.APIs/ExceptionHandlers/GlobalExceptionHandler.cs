@@ -1,62 +1,109 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using SportWearShop.APIs.ExceptionHandlers.SportWearShop.APIs.Middlewares;
 using SportWearShop.BusinessLogics.Exceptions;
+using System.Net;
+using System.Text.Json;
 
 namespace SportWearShop.APIs.ExceptionHandlers;
 
-public sealed class GlobalExceptionHandler : IExceptionHandler
+public class GlobalExceptionMiddleware
 {
-    private readonly ILogger<GlobalExceptionHandler> _logger;
+    private readonly RequestDelegate _next;
+    private readonly ILogger<GlobalExceptionMiddleware> _logger;
 
-    public GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger)
+    public GlobalExceptionMiddleware(
+        RequestDelegate next,
+        ILogger<GlobalExceptionMiddleware> logger)
     {
+        _next = next;
         _logger = logger;
     }
 
-    public async ValueTask<bool> TryHandleAsync(
-        HttpContext httpContext,
-        Exception exception,
-        CancellationToken cancellationToken)
+    public async Task InvokeAsync(HttpContext context)
     {
-        _logger.LogError(exception,
-            "Unhandled exception occurred. TraceId: {TraceId}",
-            httpContext.TraceIdentifier);
-
-        var statusCode = exception switch
+        try
         {
-            BadRequestException => StatusCodes.Status400BadRequest,
-            UnauthorizedException => StatusCodes.Status401Unauthorized,
-            ForbiddenException => StatusCodes.Status403Forbidden,
-            NotFoundException => StatusCodes.Status404NotFound,
-            ConflictException => StatusCodes.Status409Conflict,
-            _ => StatusCodes.Status500InternalServerError
-        };
-
-        var problem = new ProblemDetails
+            await _next(context);
+        }
+        catch (Exception ex)
         {
-            Status = statusCode,
-            Title = GetTitle(statusCode),
-            Detail = exception.Message,
-            Instance = httpContext.Request.Path
-        };
-
-        problem.Extensions["traceId"] = httpContext.TraceIdentifier;
-
-        httpContext.Response.StatusCode = statusCode;
-        httpContext.Response.ContentType = "application/problem+json";
-
-        await httpContext.Response.WriteAsJsonAsync(problem, cancellationToken);
-
-        return true;
+            await HandleExceptionAsync(context, ex);
+        }
     }
 
-    private static string GetTitle(int statusCode) => statusCode switch
+    private async Task HandleExceptionAsync(HttpContext context, Exception exception)
     {
-        StatusCodes.Status400BadRequest => "Bad Request",
-        StatusCodes.Status401Unauthorized => "Unauthorized",
-        StatusCodes.Status403Forbidden => "Forbidden",
-        StatusCodes.Status404NotFound => "Not Found",
-        StatusCodes.Status409Conflict => "Conflict",
-        _ => "Internal Server Error"
-    };
+        var response = context.Response;
+        response.ContentType = "application/json";
+
+        var errorResponse = new ErrorResponse();
+        int statusCode;
+
+        switch (exception)
+        {
+            case BadRequestException:
+                statusCode = (int)HttpStatusCode.BadRequest;
+                errorResponse.Title = "Bad Request";
+                errorResponse.Message = exception.Message;
+                _logger.LogWarning(exception, "Bad request");
+                break;
+
+            case NotFoundException:
+                statusCode = (int)HttpStatusCode.NotFound;
+                errorResponse.Title = "Not Found";
+                errorResponse.Message = exception.Message;
+                _logger.LogInformation(exception, "Resource not found");
+                break;
+
+            case ConflictException:
+                statusCode = (int)HttpStatusCode.Conflict;
+                errorResponse.Title = "Conflict";
+                errorResponse.Message = exception.Message;
+                _logger.LogWarning(exception, "Conflict error");
+                break;
+
+            case ForbiddenException:
+                statusCode = (int)HttpStatusCode.Forbidden;
+                errorResponse.Title = "Forbidden";
+                errorResponse.Message = exception.Message;
+                _logger.LogWarning(exception, "Forbidden access");
+                break;
+
+            case UnauthorizedAccessException:
+                statusCode = (int)HttpStatusCode.Unauthorized;
+                errorResponse.Title = "Unauthorized";
+                errorResponse.Message = "You are not authorized";
+                _logger.LogWarning(exception, "Unauthorized access");
+                break;
+
+            default:
+                statusCode = (int)HttpStatusCode.InternalServerError;
+                errorResponse.Title = "Internal Server Error";
+                errorResponse.Message = "An unexpected error occurred. Please try again later.";
+                _logger.LogError(exception, "Unhandled exception: {Message}", exception.Message);
+                break;
+        }
+
+        response.StatusCode = statusCode;
+        errorResponse.Status = statusCode;
+        errorResponse.TraceId = context.TraceIdentifier;
+        errorResponse.Timestamp = DateTime.UtcNow;
+
+        var jsonResponse = JsonSerializer.Serialize(errorResponse, new JsonSerializerOptions
+        {
+            PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+            WriteIndented = true
+        });
+
+        await response.WriteAsync(jsonResponse);
+    }
+}
+public class ErrorResponse
+{
+    public string? Title { get; set; }
+    public int Status { get; set; }
+    public string? Message { get; set; }
+    public string? TraceId { get; set; }
+    public DateTime Timestamp { get; set; }
 }

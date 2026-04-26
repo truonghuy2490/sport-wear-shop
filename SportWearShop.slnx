@@ -3,6 +3,8 @@
     <File Path="docker-compose.yml" />
   </Folder>
   <Folder Name="/src/">
+    <Project Path="SportWearShop.Shared/SportWearShop.Shared.csproj" Id="fc2a9b36-ccf8-4a81-8e51-88e91d552e63" />
+    <Project Path="SportWearShop.Web/SportWearShop.Web.csproj" Id="d7d6ad81-2037-4fe8-bd2f-8c2447660006" />
     <Project Path="src/SportWearShop.APIs/SportWearShop.APIs.csproj" />
     <Project Path="src/SportWearShop.BusinessLogics/SportWearShop.BusinessLogics.csproj" />
     <Project Path="src/SportWearShop.Repositories/SportWearShop.Repositories.csproj" />

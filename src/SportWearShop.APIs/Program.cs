@@ -1,4 +1,5 @@
 using SportWearShop.APIs.DIs;
+using SportWearShop.APIs.ExceptionHandlers;
 using SportWearShop.Repositories;
 using SportWearShop.Repositories.SeedData;
 
@@ -35,6 +36,8 @@ if (app.Environment.IsDevelopment())
         options.RoutePrefix = "swagger";
     });
 }
+// Middleware Exception
+app.UseMiddleware<GlobalExceptionMiddleware>();
 
 app.UseHttpsRedirection();
 

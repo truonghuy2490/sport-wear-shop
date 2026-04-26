@@ -6,24 +6,28 @@ using System.Linq.Expressions;
 
 namespace SportWearShop.Repositories.Implementations;
 
-public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : class
+/// <summary>
+/// Repository base class with optimized performance, filtering, paging, and projection support
+/// </summary>
+/// <typeparam name="T">Entity type</typeparam>
+/// 
+public class BaseRepository<T> : IBaseRepository<T> where T : class
 {
     protected readonly AppDbContext _context;
-    protected readonly DbSet<TEntity> _dbSet;
-    protected readonly ILogger<BaseRepository<TEntity>> _logger;
+    protected readonly DbSet<T> _dbSet;
+    protected readonly ILogger<BaseRepository<T>> _logger;
 
     public BaseRepository(
         AppDbContext context,
-        ILogger<BaseRepository<TEntity>> logger)
+        ILogger<BaseRepository<T>> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _dbSet = _context.Set<TEntity>();
+        _dbSet = _context.Set<T>();
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
-
-    public virtual IQueryable<TEntity> Query(bool asNoTracking = true)
+    public virtual IQueryable<T> Query(bool asNoTracking = true)
     {
-        IQueryable<TEntity> query = _dbSet;
+        IQueryable<T> query = _dbSet;
 
         if (asNoTracking)
         {
@@ -32,8 +36,26 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
 
         return query;
     }
+    /*
+    /// <summary>
+    /// Get queryable with optional tracking and includes
+    /// </summary>
+    protected IQueryable<T> Query(
+        bool asNoTracking = true,
+        params Expression<Func<T, object>>[] includes)
+    {
+        IQueryable<T> query = _dbSet;
 
-    public virtual async Task<TEntity?> GetByIdAsync(
+        if (asNoTracking)
+            query = query.AsNoTracking();
+
+        foreach (var include in includes)
+            query = query.Include(include);
+
+        return query;
+    }*/
+
+    public virtual async Task<T?> GetByIdAsync(
         object id,
         CancellationToken cancellationToken = default)
     {
@@ -42,7 +64,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Getting {EntityName} by id {Id}"
             _logger.LogInformation(
                 "Getting {EntityName} by id {Id}",
-                typeof(TEntity).Name,
+                typeof(T).Name,
                 id);
 
             return await _dbSet.FindAsync(new[] { id }, cancellationToken);
@@ -53,15 +75,15 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while getting {EntityName} by id {Id}",
-                typeof(TEntity).Name,
+                typeof(T).Name,
                 id);
 
             throw;
         }
     }
 
-    public virtual async Task<TEntity?> FirstOrDefaultAsync(
-        Expression<Func<TEntity, bool>> predicate,
+    public virtual async Task<T?> FirstOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default)
     {
@@ -70,7 +92,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Getting first {EntityName} by predicate. Tracking: {Tracking}"
             _logger.LogInformation(
                 "Getting first {EntityName} by predicate. Tracking: {Tracking}",
-                typeof(TEntity).Name,
+                typeof(T).Name,
                 !asNoTracking);
 
             return await Query(asNoTracking)
@@ -82,22 +104,22 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while getting first {EntityName} by predicate",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
     public async Task<(List<TResult> Items, int TotalCount)> GetAllAsync<TResult>(
-        Expression<Func<TEntity, bool>>? filter = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Expression<Func<TEntity, TResult>>? selector = null,
+        Expression<Func<T, bool>>? filter = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        Expression<Func<T, TResult>>? selector = null,
         int pageNumber = 1,
         int pageSize = 10,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default)
     {
-        IQueryable<TEntity> query = _dbSet;
+        IQueryable<T> query = _dbSet;
 
         if (asNoTracking)
             query = query.AsNoTracking();
@@ -127,8 +149,8 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
         return (items, totalCount);
     }
 
-    public virtual async Task<IReadOnlyList<TEntity>> FindAsync(
-        Expression<Func<TEntity, bool>> predicate,
+    public virtual async Task<IReadOnlyList<T>> FindAsync(
+        Expression<Func<T, bool>> predicate,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default)
     {
@@ -137,7 +159,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log : "Finding {EntityName} by predicate. Tracking: {Tracking}"
             _logger.LogInformation(
                 "Finding {EntityName} by predicate. Tracking: {Tracking}",
-                typeof(TEntity).Name,
+                typeof(T).Name,
                 !asNoTracking);
 
             return await Query(asNoTracking)
@@ -150,14 +172,14 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while finding {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
     public virtual async Task AddAsync(
-        TEntity entity,
+        T entity,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entity);
@@ -167,7 +189,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Adding new {EntityName}"
             _logger.LogInformation(
                 "Adding new {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             await _dbSet.AddAsync(entity, cancellationToken);
         }
@@ -177,14 +199,14 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while adding {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
     public virtual async Task AddRangeAsync(
-        IEnumerable<TEntity> entities,
+        IEnumerable<T> entities,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(entities);
@@ -194,7 +216,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Adding range of {EntityName}"
             _logger.LogInformation(
                 "Adding range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             await _dbSet.AddRangeAsync(entities, cancellationToken);
         }
@@ -204,13 +226,13 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while adding range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
-    public virtual void Update(TEntity entity)
+    public virtual void Update(T entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -219,7 +241,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Updating {EntityName}"
             _logger.LogInformation(
                 "Updating {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             _dbSet.Update(entity);
         }
@@ -229,13 +251,13 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while updating {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
-    public virtual void UpdateRange(IEnumerable<TEntity> entities)
+    public virtual void UpdateRange(IEnumerable<T> entities)
     {
         ArgumentNullException.ThrowIfNull(entities);
 
@@ -244,7 +266,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Updating range of {EntityName}"
             _logger.LogInformation(
                 "Updating range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             _dbSet.UpdateRange(entities);
         }
@@ -254,13 +276,13 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while updating range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
-    public virtual void Remove(TEntity entity)
+    public virtual void Remove(T entity)
     {
         ArgumentNullException.ThrowIfNull(entity);
 
@@ -269,7 +291,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Removing {EntityName}"
             _logger.LogInformation(
                 "Removing {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             _dbSet.Remove(entity);
         }
@@ -279,13 +301,13 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while removing {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
-    public virtual void RemoveRange(IEnumerable<TEntity> entities)
+    public virtual void RemoveRange(IEnumerable<T> entities)
     {
         ArgumentNullException.ThrowIfNull(entities);
 
@@ -294,7 +316,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Removing range of {EntityName}"
             _logger.LogInformation(
                 "Removing range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             _dbSet.RemoveRange(entities);
         }
@@ -304,14 +326,14 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while removing range of {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
     public virtual async Task<bool> AnyAsync(
-        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default)
     {
         try
@@ -319,7 +341,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Checking existence for {EntityName}"
             _logger.LogInformation(
                 "Checking existence for {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             return await _dbSet.AnyAsync(predicate, cancellationToken);
         }
@@ -329,14 +351,14 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while checking existence for {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }
     }
 
     public virtual async Task<int> CountAsync(
-        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<T, bool>>? predicate = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -344,7 +366,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             // Log: "Counting {EntityName}"
             _logger.LogInformation(
                 "Counting {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             return predicate == null
                 ? await _dbSet.CountAsync(cancellationToken)
@@ -356,7 +378,7 @@ public class BaseRepository<TEntity> : IBaseRepository<TEntity> where TEntity : 
             _logger.LogError(
                 ex,
                 "Error while counting {EntityName}",
-                typeof(TEntity).Name);
+                typeof(T).Name);
 
             throw;
         }

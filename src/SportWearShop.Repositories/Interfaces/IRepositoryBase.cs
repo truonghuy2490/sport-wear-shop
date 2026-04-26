@@ -5,49 +5,49 @@ using System.Text;
 
 namespace SportWearShop.Repositories.Interfaces;
 
-public interface IBaseRepository<TEntity> where TEntity : class
+public interface IBaseRepository<T> where T : class
 {
-    Task<TEntity?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
+    Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
-    Task<TEntity?> FirstOrDefaultAsync(
-        Expression<Func<TEntity, bool>> predicate,
+    Task<T?> FirstOrDefaultAsync(
+        Expression<Func<T, bool>> predicate,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default);
 
     Task<(List<TResult> Items, int TotalCount)> GetAllAsync<TResult>(
-        Expression<Func<TEntity, bool>>? filter = null,
-        Func<IQueryable<TEntity>, IOrderedQueryable<TEntity>>? orderBy = null,
-        Expression<Func<TEntity, TResult>>? selector = null,
+        Expression<Func<T, bool>>? filter = null,
+        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
+        Expression<Func<T, TResult>>? selector = null,
         int pageNumber = 1,
         int pageSize = 10,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default);
 
-    Task<IReadOnlyList<TEntity>> FindAsync(
-        Expression<Func<TEntity, bool>> predicate,
+    Task<IReadOnlyList<T>> FindAsync(
+        Expression<Func<T, bool>> predicate,
         bool asNoTracking = true,
         CancellationToken cancellationToken = default);
 
-    IQueryable<TEntity> Query(bool asNoTracking = true);
+    IQueryable<T> Query(bool asNoTracking = true);
 
-    Task AddAsync(TEntity entity, CancellationToken cancellationToken = default);
+    Task AddAsync(T entity, CancellationToken cancellationToken = default);
 
-    Task AddRangeAsync(IEnumerable<TEntity> entities, CancellationToken cancellationToken = default);
+    Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
-    void Update(TEntity entity);
+    void Update(T entity);
 
-    void UpdateRange(IEnumerable<TEntity> entities);
+    void UpdateRange(IEnumerable<T> entities);
 
-    void Remove(TEntity entity);
+    void Remove(T entity);
 
-    void RemoveRange(IEnumerable<TEntity> entities);
+    void RemoveRange(IEnumerable<T> entities);
 
     Task<bool> AnyAsync(
-        Expression<Func<TEntity, bool>> predicate,
+        Expression<Func<T, bool>> predicate,
         CancellationToken cancellationToken = default);
 
     Task<int> CountAsync(
-        Expression<Func<TEntity, bool>>? predicate = null,
+        Expression<Func<T, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
 
 

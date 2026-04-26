@@ -1,0 +1,28 @@
+﻿/*using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace SportWearShop.Shared.ViewModels.ProductVariants;
+
+public class ProductVariantViewModel
+{
+    public long ProductVariantId { get; set; }
+
+    public string Sku { get; set; } = string.Empty;
+
+    public string ColorCode { get; set; } = string.Empty;
+
+    public string ColorName { get; set; } = string.Empty;
+
+    public string SizeCode { get; set; } = string.Empty;
+
+    public string SizeLabel { get; set; } = string.Empty;
+
+    public decimal ListPrice { get; set; }
+
+    public decimal? SalePrice { get; set; }
+
+    public string Status { get; set; } = string.Empty;
+
+    public int StockQuantity { get; set; }
+}*/
