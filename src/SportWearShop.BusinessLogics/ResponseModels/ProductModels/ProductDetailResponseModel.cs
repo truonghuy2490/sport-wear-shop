@@ -37,5 +37,8 @@ namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels
         public List<ProductImageResponseModel> Images { get; set; } = new();
 
         public List<ProductRatingResponseModel> Ratings { get; set; } = new();
+
+        public DateTime CreatedAtUtc { get; set; }
+        public DateTime UpdatedAtUtc { get; set; }
     }
 }

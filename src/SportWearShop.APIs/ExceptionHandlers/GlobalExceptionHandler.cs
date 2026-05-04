@@ -1,20 +1,19 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
-using SportWearShop.APIs.ExceptionHandlers.SportWearShop.APIs.Middlewares;
 using SportWearShop.BusinessLogics.Exceptions;
 using System.Net;
 using System.Text.Json;
 
 namespace SportWearShop.APIs.ExceptionHandlers;
 
-public class GlobalExceptionMiddleware
+public class GlobalExceptionHandler
 {
     private readonly RequestDelegate _next;
-    private readonly ILogger<GlobalExceptionMiddleware> _logger;
+    private readonly ILogger<GlobalExceptionHandler> _logger;
 
-    public GlobalExceptionMiddleware(
+    public GlobalExceptionHandler(
         RequestDelegate next,
-        ILogger<GlobalExceptionMiddleware> logger)
+        ILogger<GlobalExceptionHandler> logger)
     {
         _next = next;
         _logger = logger;

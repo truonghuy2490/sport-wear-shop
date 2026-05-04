@@ -1,4 +1,4 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -15,4 +15,4 @@ public class ProductImageViewModel
     public int SortOrder { get; set; }
 
     public bool IsPrimary { get; set; }
-}*/
+}

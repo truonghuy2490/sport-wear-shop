@@ -7,7 +7,7 @@ namespace SportWearShop.Web.Services.Interfaces;
 /// </summary>
 /// 
 public interface IProductApiService
-{
+{/*
     Task<List<ProductViewModel>> GetProductsAsync();
-    Task<ProductViewModel> GetProductByIdAsync(int id);
+    Task<ProductViewModel> GetProductByIdAsync(int id);*/
 }

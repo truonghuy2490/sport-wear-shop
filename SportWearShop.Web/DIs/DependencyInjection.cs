@@ -20,15 +20,14 @@ namespace SportWearShop.Web.DIs
             });
 
             // Optional: Keep real API service for later
-            /*services.AddHttpClient<ProductApiClient>(client =>
+            services.AddHttpClient<ProductApiClient>(client =>
             {
                 client.BaseAddress = new Uri(configuration["ApiSettings:BaseUrl"] ?? "https://localhost:5000/");
                 client.DefaultRequestHeaders.Add("Accept", "application/json");
             });
-            services.AddScoped<IProductApiService, ProductApiClient>();*/
+            services.AddScoped<IProductApiService, ProductApiClient>();
 
 
-            services.AddSingleton<IProductMockService, MockProductService>();
 
             return services;
         }

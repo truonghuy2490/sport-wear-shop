@@ -1,4 +1,4 @@
-﻿/*using SportWearShop.Shared.ViewModels.ProductImages;
+﻿using SportWearShop.Shared.ViewModels.ProductImages;
 using SportWearShop.Shared.ViewModels.ProductRatings;
 using SportWearShop.Shared.ViewModels.ProductVariants;
 using System;
@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Text;
 
 namespace SportWearShop.Shared.ViewModels.Products;
+
 public class ProductDetailViewModel
 {
     public long ProductId { get; set; }
@@ -37,4 +38,4 @@ public class ProductDetailViewModel
     public List<ProductImageViewModel> Images { get; set; } = new();
 
     public List<ProductRatingViewModel> Ratings { get; set; } = new();
-}*/
+}

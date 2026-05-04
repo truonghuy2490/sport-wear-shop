@@ -1,38 +1,33 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq.Expressions;
-using System.Text;
+﻿using System.Linq.Expressions;
 
 namespace SportWearShop.Repositories.Interfaces;
 
 public interface IBaseRepository<T> where T : class
 {
-    Task<T?> GetByIdAsync(object id, CancellationToken cancellationToken = default);
 
-    Task<T?> FirstOrDefaultAsync(
+    Task<TResult?> FirstOrDefaultAsync<TResult>(
         Expression<Func<T, bool>> predicate,
+        Expression<Func<T, TResult>> selector,
         bool asNoTracking = true,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] includes);
+
+    Task<List<TResult>> FindAsync<TResult>(
+        Expression<Func<T, bool>> filter,
+        Expression<Func<T, TResult>> selector,
+        Expression<Func<T, object>>? sortBy = null,
+        bool ascending = true,
+        bool asNoTracking = true,
+        CancellationToken cancellationToken = default,
+        params Expression<Func<T, object>>[] includes);
+
+    Task AddAsync(
+        T entity,
         CancellationToken cancellationToken = default);
 
-    Task<(List<TResult> Items, int TotalCount)> GetAllAsync<TResult>(
-        Expression<Func<T, bool>>? filter = null,
-        Func<IQueryable<T>, IOrderedQueryable<T>>? orderBy = null,
-        Expression<Func<T, TResult>>? selector = null,
-        int pageNumber = 1,
-        int pageSize = 10,
-        bool asNoTracking = true,
+    Task AddRangeAsync(
+        IEnumerable<T> entities,
         CancellationToken cancellationToken = default);
-
-    Task<IReadOnlyList<T>> FindAsync(
-        Expression<Func<T, bool>> predicate,
-        bool asNoTracking = true,
-        CancellationToken cancellationToken = default);
-
-    IQueryable<T> Query(bool asNoTracking = true);
-
-    Task AddAsync(T entity, CancellationToken cancellationToken = default);
-
-    Task AddRangeAsync(IEnumerable<T> entities, CancellationToken cancellationToken = default);
 
     void Update(T entity);
 
@@ -49,6 +44,4 @@ public interface IBaseRepository<T> where T : class
     Task<int> CountAsync(
         Expression<Func<T, bool>>? predicate = null,
         CancellationToken cancellationToken = default);
-
-
 }

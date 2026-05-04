@@ -1,261 +1,488 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SportWearShop.Repositories.Entities;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
 
-namespace SportWearShop.Repositories.SeedData;
-
-public static class SeedDataInitializer
+namespace SportWearShop.Repositories.SeedData
 {
-    public static async Task SeedAsync(AppDbContext context)
+    public static class SeedDataInitializer
     {
-        await context.Database.MigrateAsync();
-
-        await SeedBrandsAsync(context);
-        await SeedCategoriesAsync(context);
-        await SeedProductsAsync(context);
-        await SeedProductVariantsAsync(context);
-    }
-
-    private static async Task SeedBrandsAsync(AppDbContext context)
-    {
-        if (await context.Brands.AnyAsync()) return;
-
-        var now = DateTime.UtcNow;
-
-        var brands = new List<Brand>
+        public static async Task SeedAsync(AppDbContext context)
         {
-            new() { BrandCode = "NIKE",       BrandName = "Nike",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "ADIDAS",     BrandName = "Adidas",      IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "PUMA",       BrandName = "PUMA",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "UNDERARMOUR",BrandName = "Under Armour",IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "NEWBALANCE", BrandName = "New Balance", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "ASICS",      BrandName = "ASICS",       IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "REEBOK",     BrandName = "Reebok",      IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "FILA",       BrandName = "FILA",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "CONVERSE",   BrandName = "Converse",    IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { BrandCode = "VANS",       BrandName = "Vans",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now }
-        };
+            await context.Database.MigrateAsync();
 
-        await context.Brands.AddRangeAsync(brands);
-        await context.SaveChangesAsync();
-    }
+            await SeedBrandsAsync(context);
+            await SeedCategoriesWith3LevelsAsync(context);
+            await SeedProductsAsync(context);
+            await SeedProductVariantsAsync(context);
+            await SeedProductImagesAsync(context);
+            await SeedInventoryStocksAsync(context);
+            // Các table khác (Cart, Order...) để sau vì phụ thuộc User
+        }
 
-    private static async Task SeedCategoriesAsync(AppDbContext context)
-    {
-        if (await context.Categories.AnyAsync()) return;
-
-        var now = DateTime.UtcNow;
-
-        var categories = new List<Category>
+        private static async Task SeedBrandsAsync(AppDbContext context)
         {
-            new() { CategoryCode = "RUNNING",    CategoryName = "Running Shoes",   IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "SNEAKERS",   CategoryName = "Sneakers",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "TRAINING",   CategoryName = "Training Shoes",  IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "BASKETBALL", CategoryName = "Basketball Shoes",IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "FOOTBALL",   CategoryName = "Football Shoes",  IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "SANDALS",    CategoryName = "Sandals",         IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "HOODIE",     CategoryName = "Hoodies",         IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "TSHIRT",     CategoryName = "T-Shirts",        IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "SHORTS",     CategoryName = "Shorts",          IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { CategoryCode = "JACKET",     CategoryName = "Jackets",         IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now }
-        };
+            if (await context.Brands.AnyAsync()) return;
+            var now = DateTime.UtcNow;
+            var brands = new List<Brand>
+            {
+                new() { BrandCode = "NIKE", BrandName = "Nike", BrandImage = "/images/brands/nike.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "ADIDAS", BrandName = "Adidas", BrandImage = "/images/brands/adidas.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "PUMA", BrandName = "PUMA", BrandImage = "/images/brands/puma.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "UNDERARMOUR", BrandName = "Under Armour", BrandImage = "/images/brands/underarmour.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "NEWBALANCE", BrandName = "New Balance", BrandImage = "/images/brands/newbalance.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "ASICS", BrandName = "ASICS", BrandImage = "/images/brands/asics.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "REEBOK", BrandName = "Reebok", BrandImage = "/images/brands/reebok.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "FILA", BrandName = "FILA", BrandImage = "/images/brands/fila.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "CONVERSE", BrandName = "Converse", BrandImage = "/images/brands/converse.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { BrandCode = "VANS", BrandName = "Vans", BrandImage = "/images/brands/vans.jpg", IsActive = true, CreatedAtUtc = now, UpdatedAtUtc = now }
+            };
+            await context.Brands.AddRangeAsync(brands);
+            await context.SaveChangesAsync();
+        }
 
-        await context.Categories.AddRangeAsync(categories);
-        await context.SaveChangesAsync();
-    }
-
-    private static async Task SeedProductsAsync(AppDbContext context)
-    {
-        if (await context.Products.AnyAsync()) return;
-
-        var now = DateTime.UtcNow;
-
-        var brandMap = await context.Brands
-            .ToDictionaryAsync(x => x.BrandCode, x => x.BrandId);
-
-        var categoryMap = await context.Categories
-            .ToDictionaryAsync(x => x.CategoryCode, x => x.CategoryId);
-
-        var products = new List<Product>
+        // ==================== CATEGORIES 3 LEVELS ====================
+        private static async Task SeedCategoriesWith3LevelsAsync(AppDbContext context)
         {
-            new()
+            if (await context.Categories.AnyAsync()) return;
+            var now = DateTime.UtcNow;
+
+            var categories = new List<Category>
             {
-                BrandId = brandMap["NIKE"],
-                CategoryId = categoryMap["RUNNING"],
-                ProductCode = "NIKE-AIR-ZOOM-PEGASUS-40",
-                ProductName = "Nike Air Zoom Pegasus 40",
-                Slug = "nike-air-zoom-pegasus-40",
-                Description = "Daily running shoes with responsive cushioning.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
+                // Level 0 (Root) - Parent không có
+                new() { CategoryCode = "FOOTWEAR", CategoryName = "Footwear", Description = "Giày thể thao", IsActive = true, SortOrder = 1, CreatedAtUtc = now, UpdatedAtUtc = now },
+
+                // Level 1 - Children của Footwear
+                new() { CategoryCode = "RUNNING", CategoryName = "Running Shoes", Description = "Giày chạy bộ", IsActive = true, ParentCategoryId = null, SortOrder = 1, CreatedAtUtc = now, UpdatedAtUtc = now }, // sẽ set Parent sau
+                new() { CategoryCode = "SNEAKERS", CategoryName = "Sneakers", Description = "Giày sneaker casual", IsActive = true, SortOrder = 2, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "TRAINING", CategoryName = "Training Shoes", Description = "Giày tập luyện", IsActive = true, SortOrder = 3, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "BASKETBALL", CategoryName = "Basketball Shoes", IsActive = true, SortOrder = 4, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "FOOTBALL", CategoryName = "Football Shoes", IsActive = true, SortOrder = 5, CreatedAtUtc = now, UpdatedAtUtc = now },
+
+                // Level 2 - Sub categories
+                new() { CategoryCode = "LIFESTYLE", CategoryName = "Lifestyle", Description = "Giày phong cách sống", IsActive = true, SortOrder = 6, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "PERFORMANCE", CategoryName = "Performance", Description = "Giày hiệu suất cao", IsActive = true, SortOrder = 7, CreatedAtUtc = now, UpdatedAtUtc = now },
+
+                // Apparel
+                new() { CategoryCode = "APPAREL", CategoryName = "Apparel", Description = "Quần áo", IsActive = true, SortOrder = 8, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "HOODIE", CategoryName = "Hoodies", IsActive = true, SortOrder = 9, CreatedAtUtc = now, UpdatedAtUtc = now },
+                new() { CategoryCode = "TSHIRT", CategoryName = "T-Shirts", IsActive = true, SortOrder = 10, CreatedAtUtc = now, UpdatedAtUtc = now }
+            };
+
+            await context.Categories.AddRangeAsync(categories);
+            await context.SaveChangesAsync();
+
+            // Set ParentCategoryId cho 3 levels
+            var catDict = await context.Categories.ToDictionaryAsync(c => c.CategoryCode, c => c.CategoryId);
+
+            // Set Parent cho Level 1 & 2
+            var updates = new List<Category>();
+            updates.Add(await context.Categories.FindAsync(catDict["RUNNING"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["SNEAKERS"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["TRAINING"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["BASKETBALL"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["FOOTBALL"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["LIFESTYLE"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["PERFORMANCE"]));
+            updates.Last().ParentCategoryId = catDict["FOOTWEAR"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["HOODIE"]));
+            updates.Last().ParentCategoryId = catDict["APPAREL"];
+
+            updates.Add(await context.Categories.FindAsync(catDict["TSHIRT"]));
+            updates.Last().ParentCategoryId = catDict["APPAREL"];
+
+            await context.SaveChangesAsync();
+        }
+
+        // ==================== PRODUCTS, VARIANTS, IMAGES, STOCK (≥10 records mỗi table) ====================
+        private static async Task SeedProductsAsync(AppDbContext context)
+        {
+            if (await context.Products.AnyAsync()) return;
+
+            var now = DateTime.UtcNow;
+
+            var brandMap = await context.Brands
+                .ToDictionaryAsync(x => x.BrandCode, x => x.BrandId);
+
+            var catMap = await context.Categories
+                .ToDictionaryAsync(x => x.CategoryCode, x => x.CategoryId);
+
+            var products = new List<Product>
             {
-                BrandId = brandMap["ADIDAS"],
-                CategoryId = categoryMap["RUNNING"],
-                ProductCode = "ADIDAS-ULTRABOOST-LIGHT",
-                ProductName = "Adidas Ultraboost Light",
-                Slug = "adidas-ultraboost-light",
-                Description = "Premium running shoes with soft boost foam.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["RUNNING"],
+                    ProductCode = "ADIDAS-ADIZERO-EVO-SL",
+                    ProductName = "Adidas Adizero Evo SL",
+                    Slug = "adidas-adizero-evo-sl",
+                    Description = "Lightweight running shoes designed for speed training and race day.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["SNEAKERS"],
+                    ProductCode = "ADIDAS-SAMBA-OG",
+                    ProductName = "Adidas Samba OG",
+                    Slug = "adidas-samba-og",
+                    Description = "Classic lifestyle sneakers with iconic 3-Stripes design.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["LIFESTYLE"],
+                    ProductCode = "ADIDAS-GAZELLE",
+                    ProductName = "Adidas Gazelle",
+                    Slug = "adidas-gazelle",
+                    Description = "Retro-inspired lifestyle shoes with suede upper.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["TRAINING"],
+                    ProductCode = "ADIDAS-ULTRABOOST-5X",
+                    ProductName = "Adidas Ultraboost 5X",
+                    Slug = "adidas-ultraboost-5x",
+                    Description = "Responsive running and training shoes with Boost cushioning.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["RUNNING"],
+                    ProductCode = "ADIDAS-SUPERNOVA-RISE",
+                    ProductName = "Adidas Supernova Rise",
+                    Slug = "adidas-supernova-rise",
+                    Description = "Daily running shoes built for comfort and stability.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["FOOTBALL"],
+                    ProductCode = "ADIDAS-PREDATOR-CLUB",
+                    ProductName = "Adidas Predator Club",
+                    Slug = "adidas-predator-club",
+                    Description = "Football boots designed for control and precision.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["TRAINING"],
+                    ProductCode = "ADIDAS-DROPSKET-TRAINER",
+                    ProductName = "Adidas Dropset Trainer",
+                    Slug = "adidas-dropset-trainer",
+                    Description = "Training shoes suitable for gym workouts and lifting sessions.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["SNEAKERS"],
+                    ProductCode = "ADIDAS-FORUM-LOW",
+                    ProductName = "Adidas Forum Low",
+                    Slug = "adidas-forum-low",
+                    Description = "Basketball-inspired sneakers with a classic low-cut design.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["LIFESTYLE"],
+                    ProductCode = "ADIDAS-STAN-SMITH",
+                    ProductName = "Adidas Stan Smith",
+                    Slug = "adidas-stan-smith",
+                    Description = "Minimal clean sneakers with timeless court style.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    BrandId = brandMap["ADIDAS"],
+                    CategoryId = catMap["RUNNING"],
+                    ProductCode = "ADIDAS-DURAMO-SL",
+                    ProductName = "Adidas Duramo SL",
+                    Slug = "adidas-duramo-sl",
+                    Description = "Lightweight running shoes for everyday training.",
+                    Gender = "UNISEX",
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                }
+            };
+
+            await context.Products.AddRangeAsync(products);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task SeedProductVariantsAsync(AppDbContext context)
+        {
+            if (await context.ProductVariants.AnyAsync()) return;
+
+            var now = DateTime.UtcNow;
+
+            var productMap = await context.Products
+                .ToDictionaryAsync(x => x.ProductCode, x => x.ProductId);
+
+            var variants = new List<ProductVariant>
             {
-                BrandId = brandMap["PUMA"],
-                CategoryId = categoryMap["TRAINING"],
-                ProductCode = "PUMA-VELOCITY-NITRO",
-                ProductName = "PUMA Velocity Nitro",
-                Slug = "puma-velocity-nitro",
-                Description = "Lightweight and stable shoes for gym sessions.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
+                new()
+                {
+                    ProductId = productMap["ADIDAS-ADIZERO-EVO-SL"],
+                    Sku = "ADI-EVO-BLK-41",
+                    ColorCode = "BLACK",
+                    ColorName = "Core Black",
+                    SizeCode = "41",
+                    SizeLabel = "41 EU",
+                    ListPrice = 3200000,
+                    SalePrice = 2890000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-SAMBA-OG"],
+                    Sku = "ADI-SAM-WHT-40",
+                    ColorCode = "WHITE",
+                    ColorName = "Cloud White/Core Black",
+                    SizeCode = "40",
+                    SizeLabel = "40 EU",
+                    ListPrice = 2800000,
+                    SalePrice = 2490000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-GAZELLE"],
+                    Sku = "ADI-GAZ-BLU-42",
+                    ColorCode = "BLUE",
+                    ColorName = "Collegiate Blue",
+                    SizeCode = "42",
+                    SizeLabel = "42 EU",
+                    ListPrice = 2600000,
+                    SalePrice = 2290000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-ULTRABOOST-5X"],
+                    Sku = "ADI-UB5X-BLK-42",
+                    ColorCode = "BLACK",
+                    ColorName = "Core Black/Grey",
+                    SizeCode = "42",
+                    SizeLabel = "42 EU",
+                    ListPrice = 5200000,
+                    SalePrice = 4790000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-SUPERNOVA-RISE"],
+                    Sku = "ADI-SNR-WHT-41",
+                    ColorCode = "WHITE",
+                    ColorName = "Cloud White/Lucid Blue",
+                    SizeCode = "41",
+                    SizeLabel = "41 EU",
+                    ListPrice = 3600000,
+                    SalePrice = 3290000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-PREDATOR-CLUB"],
+                    Sku = "ADI-PRE-RED-42",
+                    ColorCode = "RED",
+                    ColorName = "Lucid Red/Core Black",
+                    SizeCode = "42",
+                    SizeLabel = "42 EU",
+                    ListPrice = 1800000,
+                    SalePrice = 1590000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-DROPSKET-TRAINER"],
+                    Sku = "ADI-DROP-GRY-41",
+                    ColorCode = "GREY",
+                    ColorName = "Grey Six/Core Black",
+                    SizeCode = "41",
+                    SizeLabel = "41 EU",
+                    ListPrice = 3400000,
+                    SalePrice = 2990000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-FORUM-LOW"],
+                    Sku = "ADI-FOR-WHT-40",
+                    ColorCode = "WHITE",
+                    ColorName = "Cloud White/Royal Blue",
+                    SizeCode = "40",
+                    SizeLabel = "40 EU",
+                    ListPrice = 3000000,
+                    SalePrice = 2690000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-STAN-SMITH"],
+                    Sku = "ADI-STAN-GRN-39",
+                    ColorCode = "GREEN",
+                    ColorName = "Cloud White/Green",
+                    SizeCode = "39",
+                    SizeLabel = "39 EU",
+                    ListPrice = 2700000,
+                    SalePrice = 2390000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                },
+                new()
+                {
+                    ProductId = productMap["ADIDAS-DURAMO-SL"],
+                    Sku = "ADI-DUR-BLK-41",
+                    ColorCode = "BLACK",
+                    ColorName = "Core Black/Cloud White",
+                    SizeCode = "41",
+                    SizeLabel = "41 EU",
+                    ListPrice = 1900000,
+                    SalePrice = 1690000,
+                    Status = "ACTIVE",
+                    CreatedAtUtc = now,
+                    UpdatedAtUtc = now
+                }
+            };
+
+            await context.ProductVariants.AddRangeAsync(variants);
+            await context.SaveChangesAsync();
+        }
+
+        private static async Task SeedProductImagesAsync(AppDbContext context)
+        {
+            if (await context.ProductImages.AnyAsync()) return;
+
+            var now = DateTime.UtcNow;
+
+            var products = await context.Products.ToListAsync();
+
+            var images = new List<ProductImage>();
+
+            foreach (var product in products)
             {
-                BrandId = brandMap["UNDERARMOUR"],
-                CategoryId = categoryMap["BASKETBALL"],
-                ProductCode = "UA-CURRY-SPLASH",
-                ProductName = "Under Armour Curry Splash",
-                Slug = "under-armour-curry-splash",
-                Description = "Basketball shoes inspired by quick court movement.",
-                Gender = "MEN",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["NEWBALANCE"],
-                CategoryId = categoryMap["SNEAKERS"],
-                ProductCode = "NB-574-CLASSIC",
-                ProductName = "New Balance 574 Classic",
-                Slug = "new-balance-574-classic",
-                Description = "Iconic lifestyle sneakers for daily wear.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["ASICS"],
-                CategoryId = categoryMap["RUNNING"],
-                ProductCode = "ASICS-GEL-KAYANO-30",
-                ProductName = "ASICS Gel-Kayano 30",
-                Slug = "asics-gel-kayano-30",
-                Description = "Supportive running shoes with gel cushioning.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["REEBOK"],
-                CategoryId = categoryMap["TRAINING"],
-                ProductCode = "REEBOK-NANO-X3",
-                ProductName = "Reebok Nano X3",
-                Slug = "reebok-nano-x3",
-                Description = "Versatile cross-training shoes for strength and cardio.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["FILA"],
-                CategoryId = categoryMap["SNEAKERS"],
-                ProductCode = "FILA-DISRUPTOR-II",
-                ProductName = "FILA Disruptor II",
-                Slug = "fila-disruptor-ii",
-                Description = "Chunky sneakers with bold streetwear style.",
-                Gender = "WOMEN",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["CONVERSE"],
-                CategoryId = categoryMap["SNEAKERS"],
-                ProductCode = "CONVERSE-CHUCK-70",
-                ProductName = "Converse Chuck 70",
-                Slug = "converse-chuck-70",
-                Description = "Classic canvas sneakers with timeless design.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
-            },
-            new()
-            {
-                BrandId = brandMap["VANS"],
-                CategoryId = categoryMap["SNEAKERS"],
-                ProductCode = "VANS-OLD-SKOOL",
-                ProductName = "Vans Old Skool",
-                Slug = "vans-old-skool",
-                Description = "Skate-inspired sneakers for daily casual use.",
-                Gender = "UNISEX",
-                Status = "ACTIVE",
-                CreatedAtUtc = now,
-                UpdatedAtUtc = now
+                images.AddRange(new[]
+                {
+                    new ProductImage
+                    {
+                        ProductId = product.ProductId,
+                        ImageUrl = $"/images/products/{product.Slug}-1.jpg",
+                        IsPrimary = true,
+                        SortOrder = 1,
+                        AltText = $"{product.ProductName} Front View",
+                        CreatedAtUtc = now
+                    },
+                    new ProductImage
+                    {
+                        ProductId = product.ProductId,
+                        ImageUrl = $"/images/products/{product.Slug}-2.jpg",
+                        IsPrimary = false,
+                        SortOrder = 2,
+                        AltText = $"{product.ProductName} Side View",
+                        CreatedAtUtc = now
+                    },
+                    new ProductImage
+                    {
+                        ProductId = product.ProductId,
+                        ImageUrl = $"/images/products/{product.Slug}-3.jpg",
+                        IsPrimary = false,
+                        SortOrder = 3,
+                        AltText = $"{product.ProductName} Back View",
+                        CreatedAtUtc = now
+                    }
+                });
             }
-        };
 
-        await context.Products.AddRangeAsync(products);
-        await context.SaveChangesAsync();
-    }
+            await context.ProductImages.AddRangeAsync(images);
+            await context.SaveChangesAsync();
+        }
 
-    private static async Task SeedProductVariantsAsync(AppDbContext context)
-    {
-        if (await context.ProductVariants.AnyAsync()) return;
-
-        var now = DateTime.UtcNow;
-
-        var productMap = await context.Products
-            .ToDictionaryAsync(x => x.ProductCode, x => x.ProductId);
-
-        var variants = new List<ProductVariant>
+        private static async Task SeedInventoryStocksAsync(AppDbContext context)
         {
-            new() { ProductId = productMap["NIKE-AIR-ZOOM-PEGASUS-40"], Sku = "NIKE-PEG40-BLK-41", ColorCode = "BLACK", ColorName = "Black", SizeCode = "41", SizeLabel = "41", ListPrice = 3200000, SalePrice = 2990000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["NIKE-AIR-ZOOM-PEGASUS-40"], Sku = "NIKE-PEG40-WHT-42", ColorCode = "WHITE", ColorName = "White", SizeCode = "42", SizeLabel = "42", ListPrice = 3200000, SalePrice = 3050000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
+            if (await context.InventoryStocks.AnyAsync()) return;
+            var now = DateTime.UtcNow;
+            var variants = await context.ProductVariants.ToListAsync();
 
-            new() { ProductId = productMap["ADIDAS-ULTRABOOST-LIGHT"], Sku = "ADI-UBL-BLK-41", ColorCode = "BLACK", ColorName = "Black", SizeCode = "41", SizeLabel = "41", ListPrice = 3500000, SalePrice = 3290000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["ADIDAS-ULTRABOOST-LIGHT"], Sku = "ADI-UBL-WHT-42", ColorCode = "WHITE", ColorName = "White", SizeCode = "42", SizeLabel = "42", ListPrice = 3500000, SalePrice = 3350000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
+            var stocks = variants.Select(v => new InventoryStock
+            {
+                ProductVariantId = v.ProductVariantId,
+                QuantityOnHand = 100,
+                QuantityReserved = 10,
+                UpdatedAtUtc = now
+            }).ToList();
 
-            new() { ProductId = productMap["PUMA-VELOCITY-NITRO"], Sku = "PUMA-VN-RED-40", ColorCode = "RED", ColorName = "Red", SizeCode = "40", SizeLabel = "40", ListPrice = 2800000, SalePrice = 2590000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["PUMA-VELOCITY-NITRO"], Sku = "PUMA-VN-BLK-41", ColorCode = "BLACK", ColorName = "Black", SizeCode = "41", SizeLabel = "41", ListPrice = 2800000, SalePrice = 2690000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
+            await context.InventoryStocks.AddRangeAsync(stocks);
+            await context.SaveChangesAsync();
+        }
 
-            new() { ProductId = productMap["UA-CURRY-SPLASH"], Sku = "UA-CURRY-BLU-42", ColorCode = "BLUE", ColorName = "Blue", SizeCode = "42", SizeLabel = "42", ListPrice = 3100000, SalePrice = 2890000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["UA-CURRY-SPLASH"], Sku = "UA-CURRY-BLK-43", ColorCode = "BLACK", ColorName = "Black", SizeCode = "43", SizeLabel = "43", ListPrice = 3100000, SalePrice = 2950000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["NB-574-CLASSIC"], Sku = "NB574-GRY-41", ColorCode = "GREY", ColorName = "Grey", SizeCode = "41", SizeLabel = "41", ListPrice = 2600000, SalePrice = 2450000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["NB-574-CLASSIC"], Sku = "NB574-NVY-42", ColorCode = "NAVY", ColorName = "Navy", SizeCode = "42", SizeLabel = "42", ListPrice = 2600000, SalePrice = 2490000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["ASICS-GEL-KAYANO-30"], Sku = "ASICS-K30-GRN-41", ColorCode = "GREEN", ColorName = "Green", SizeCode = "41", SizeLabel = "41", ListPrice = 3600000, SalePrice = 3390000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["ASICS-GEL-KAYANO-30"], Sku = "ASICS-K30-BLK-42", ColorCode = "BLACK", ColorName = "Black", SizeCode = "42", SizeLabel = "42", ListPrice = 3600000, SalePrice = 3450000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["REEBOK-NANO-X3"], Sku = "REEBOK-NANO-WHT-40", ColorCode = "WHITE", ColorName = "White", SizeCode = "40", SizeLabel = "40", ListPrice = 2900000, SalePrice = 2750000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["REEBOK-NANO-X3"], Sku = "REEBOK-NANO-RED-41", ColorCode = "RED", ColorName = "Red", SizeCode = "41", SizeLabel = "41", ListPrice = 2900000, SalePrice = 2790000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["FILA-DISRUPTOR-II"], Sku = "FILA-DIS-WHT-38", ColorCode = "WHITE", ColorName = "White", SizeCode = "38", SizeLabel = "38", ListPrice = 2300000, SalePrice = 2150000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["FILA-DISRUPTOR-II"], Sku = "FILA-DIS-PNK-39", ColorCode = "PINK", ColorName = "Pink", SizeCode = "39", SizeLabel = "39", ListPrice = 2300000, SalePrice = 2190000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["CONVERSE-CHUCK-70"], Sku = "CONV-C70-BLK-40", ColorCode = "BLACK", ColorName = "Black", SizeCode = "40", SizeLabel = "40", ListPrice = 2100000, SalePrice = 1990000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["CONVERSE-CHUCK-70"], Sku = "CONV-C70-CRM-41", ColorCode = "CREAM", ColorName = "Cream", SizeCode = "41", SizeLabel = "41", ListPrice = 2100000, SalePrice = 2020000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-
-            new() { ProductId = productMap["VANS-OLD-SKOOL"], Sku = "VANS-OS-BLK-40", ColorCode = "BLACK", ColorName = "Black", SizeCode = "40", SizeLabel = "40", ListPrice = 2000000, SalePrice = 1890000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now },
-            new() { ProductId = productMap["VANS-OLD-SKOOL"], Sku = "VANS-OS-BLU-41", ColorCode = "BLUE", ColorName = "Blue", SizeCode = "41", SizeLabel = "41", ListPrice = 2000000, SalePrice = 1920000, Status = "ACTIVE", CreatedAtUtc = now, UpdatedAtUtc = now }
-        };
-
-        await context.ProductVariants.AddRangeAsync(variants);
-        await context.SaveChangesAsync();
+        
     }
 }

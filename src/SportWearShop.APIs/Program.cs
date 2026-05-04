@@ -37,7 +37,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 // Middleware Exception
-app.UseMiddleware<GlobalExceptionMiddleware>();
+app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseHttpsRedirection();
 

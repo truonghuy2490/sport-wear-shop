@@ -9,7 +9,7 @@ namespace SportWearShop.Repositories.Implementations
 {
     public class OrderRepository : BaseRepository<OrderHeader>, IOrderRepository
     {
-        public OrderRepository(AppDbContext context, ILogger<BaseRepository<OrderHeader>> logger) : base(context, logger)
+        public OrderRepository(AppDbContext context) : base(context)
         {
         }
     }

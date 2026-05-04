@@ -60,7 +60,8 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.HasIndex(e => e.BrandCode, "UX_Brand_BrandCode").IsUnique();
 
             entity.HasIndex(e => e.BrandName, "UX_Brand_BrandName").IsUnique();
-
+            entity.Property(e => e.BrandImage)
+                .HasMaxLength(1000);
             entity.Property(e => e.BrandCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);

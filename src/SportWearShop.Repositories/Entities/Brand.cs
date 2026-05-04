@@ -10,6 +10,7 @@ public partial class Brand
     public string BrandName { get; set; } = null!;
 
     public string BrandCode { get; set; } = null!;
+    public string? BrandImage { get; set; }
 
     public bool IsActive { get; set; }
 

@@ -35,5 +35,7 @@ namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels
         public double AverageRating { get; set; }
 
         public int TotalStock { get; set; }
+
+        public DateTime CreatedAtUtc { get; set; }
     }
 }

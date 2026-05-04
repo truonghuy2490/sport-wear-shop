@@ -8,11 +8,8 @@ namespace SportWearShop.APIs.DIs
     {
         public static IServiceCollection AddExceptionHandling(this IServiceCollection services)
         {
-            services.AddProblemDetails();
-            services.AddExceptionHandler<GlobalExceptionHandler>();
-
             return services;
         }
     }
-    
+
 }

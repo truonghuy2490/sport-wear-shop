@@ -1,4 +1,4 @@
-﻿/*using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
 
@@ -25,4 +25,4 @@ public class ProductVariantViewModel
     public string Status { get; set; } = string.Empty;
 
     public int StockQuantity { get; set; }
-}*/
+}

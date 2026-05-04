@@ -9,7 +9,7 @@ namespace SportWearShop.Repositories.Implementations
 {
     public class UserRepository : BaseRepository<AppUser>, IUserRepository
     {
-        public UserRepository(AppDbContext context, ILogger<BaseRepository<AppUser>> logger) : base(context, logger)
+        public UserRepository(AppDbContext context) : base(context)
         {
         }
     }

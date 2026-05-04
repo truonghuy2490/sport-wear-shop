@@ -12,7 +12,6 @@ namespace SportWearShop.Repositories.UnitOfWorks;
 public class UnitOfWork : IUnitOfWork
 {
     private readonly AppDbContext _context;
-    private readonly ILoggerFactory _loggerFactory;
     private readonly ILogger<UnitOfWork> _logger;
 
     private IBaseRepository<Product>? _product;
@@ -32,82 +31,52 @@ public class UnitOfWork : IUnitOfWork
 
     public UnitOfWork(
         AppDbContext context,
-        ILoggerFactory loggerFactory,
         ILogger<UnitOfWork> logger)
     {
         _context = context ?? throw new ArgumentNullException(nameof(context));
-        _loggerFactory = loggerFactory ?? throw new ArgumentNullException(nameof(loggerFactory));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
     public IBaseRepository<Product> Products =>
-        _product ??= new BaseRepository<Product>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<Product>>());
+        _product ??= new BaseRepository<Product>(_context);
 
     public IBaseRepository<Brand> Brands =>
-        _brands ??= new BaseRepository<Brand>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<Brand>>());
+        _brands ??= new BaseRepository<Brand>(_context);
 
     public IBaseRepository<Category> Categories =>
-        _categories ??= new BaseRepository<Category>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<Category>>());
+        _categories ??= new BaseRepository<Category>(_context);
 
     public IBaseRepository<ProductVariant> ProductVariants =>
-        _productVariants ??= new BaseRepository<ProductVariant>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<ProductVariant>>());
+        _productVariants ??= new BaseRepository<ProductVariant>(_context);
 
     public IBaseRepository<ProductImage> ProductImages =>
-        _productImages ??= new BaseRepository<ProductImage>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<ProductImage>>());
+        _productImages ??= new BaseRepository<ProductImage>(_context);
 
     public IBaseRepository<Cart> Carts =>
-        _carts ??= new BaseRepository<Cart>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<Cart>>());
+        _carts ??= new BaseRepository<Cart>(_context);
 
     public IBaseRepository<CartItem> CartItems =>
-        _cartItems ??= new BaseRepository<CartItem>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<CartItem>>());
+        _cartItems ??= new BaseRepository<CartItem>(_context);
 
     public IBaseRepository<OrderHeader> OrderHeaders =>
-        _orderHeaders ??= new BaseRepository<OrderHeader>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<OrderHeader>>());
+        _orderHeaders ??= new BaseRepository<OrderHeader>(_context);
 
     public IBaseRepository<OrderItem> OrderItems =>
-        _orderItems ??= new BaseRepository<OrderItem>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<OrderItem>>());
+        _orderItems ??= new BaseRepository<OrderItem>(_context);
 
     public IBaseRepository<ProductRating> ProductRatings =>
-        _productRatings ??= new BaseRepository<ProductRating>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<ProductRating>>());
+        _productRatings ??= new BaseRepository<ProductRating>(_context);
 
     public IBaseRepository<UserAddress> UserAddresses =>
-        _userAddresses ??= new BaseRepository<UserAddress>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<UserAddress>>());
+        _userAddresses ??= new BaseRepository<UserAddress>(_context);
 
     public IBaseRepository<PaymentTransaction> PaymentTransactions =>
-        _paymentTransactions ??= new BaseRepository<PaymentTransaction>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<PaymentTransaction>>());
+        _paymentTransactions ??= new BaseRepository<PaymentTransaction>(_context);
 
     public IBaseRepository<InventoryStock> InventoryStocks =>
-        _inventoryStocks ??= new BaseRepository<InventoryStock>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<InventoryStock>>());
+        _inventoryStocks ??= new BaseRepository<InventoryStock>(_context);
 
     public IBaseRepository<InventoryMovement> InventoryMovements =>
-        _inventoryMovements ??= new BaseRepository<InventoryMovement>(
-            _context,
-            _loggerFactory.CreateLogger<BaseRepository<InventoryMovement>>());
+        _inventoryMovements ??= new BaseRepository<InventoryMovement>(_context);
 
     public async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
     {
