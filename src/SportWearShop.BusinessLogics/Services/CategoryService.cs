@@ -53,7 +53,7 @@ public class CategoryService : ICategoryService
     }
 
 
-    public async Task<CategoryDetailResponseModel> GetByIdAsync(
+    public async Task<CategoryDetailResponseModel?> GetByIdAsync(
         int categoryId,
         CancellationToken cancellationToken = default)
     {
@@ -147,7 +147,7 @@ public class CategoryService : ICategoryService
     }
 
     public async Task<CategoryResponseModel> CreateAsync(
-        CategoryCreateRequestModel request,
+        CreateCategoryRequestModel request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
@@ -177,7 +177,7 @@ public class CategoryService : ICategoryService
                 cancellationToken: cancellationToken
             );
 
-            if (isParentCategoryExist) {
+            if (!isParentCategoryExist) {
                 _logger.LogWarning(
                     "Create category failed. Parent category with ID {ParentCategoryId} not found.",
                     request.ParentCategoryId);
@@ -217,7 +217,7 @@ public class CategoryService : ICategoryService
 
     public async Task<CategoryResponseModel> UpdateAsync(
         int categoryId,
-        CategoryUpdateRequestModel request,
+        UpdateCategoryRequestModel request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);

@@ -23,7 +23,7 @@ public partial class Product
 
     public string? BaseMaterial { get; set; }
 
-    public string Status { get; set; } = null!;
+    public string Status { get; set; } = null!; // public ProductStatus Status { get; set; } // next update 
 
     public DateTime CreatedAtUtc { get; set; }
 

@@ -4,7 +4,7 @@ using System.Text;
 
 namespace SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
 
-public class CategoryCreateRequestModel
+public class CreateCategoryRequestModel
 {
     public int? ParentCategoryId { get; set; }
     public string CategoryName { get; set; } = null!;

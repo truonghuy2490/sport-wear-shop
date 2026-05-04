@@ -63,7 +63,7 @@ public class CategoryController : ControllerBase
     // AUTHORIZATION: Allow admin
     [HttpPost]
     public async Task<IActionResult> Create(
-        [FromBody] CategoryCreateRequestModel request,
+        [FromBody] CreateCategoryRequestModel request,
         CancellationToken cancellationToken)
     {
         var result = await _categoryService.CreateAsync(request, cancellationToken);
@@ -79,7 +79,7 @@ public class CategoryController : ControllerBase
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(
         int id,
-        [FromBody] CategoryUpdateRequestModel request,
+        [FromBody] UpdateCategoryRequestModel request,
         CancellationToken cancellationToken)
     {
         var result = await _categoryService.UpdateAsync(id, request, cancellationToken);
