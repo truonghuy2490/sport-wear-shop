@@ -13,5 +13,21 @@ namespace SportWearShop.BusinessLogics.Interfaces
         Task<ProductDetailResponseModel> GetDetailsAsync(
             long productId,
             CancellationToken cancellationToken = default);
+
+        Task<ProductResponseModel> CreateAsync(
+            CreateProductRequestModel request,
+            CancellationToken cancellationToken = default);
+
+        Task<ProductResponseModel> UpdateAsync(
+            long productId,
+            UpdateProductRequestModel request,
+            CancellationToken cancellationToken = default);
+
+
+        Task DeleteAsync(
+            long productId,
+            CancellationToken cancellationToken = default);
     }
+
+
 }

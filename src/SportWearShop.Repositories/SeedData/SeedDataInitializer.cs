@@ -1,5 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using SportWearShop.Repositories.Entities;
+using SportWearShop.Repositories.Enums;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -132,8 +133,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Adizero Evo SL",
                     Slug = "adidas-adizero-evo-sl",
                     Description = "Lightweight running shoes designed for speed training and race day.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -145,8 +146,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Samba OG",
                     Slug = "adidas-samba-og",
                     Description = "Classic lifestyle sneakers with iconic 3-Stripes design.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -158,8 +159,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Gazelle",
                     Slug = "adidas-gazelle",
                     Description = "Retro-inspired lifestyle shoes with suede upper.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -171,8 +172,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Ultraboost 5X",
                     Slug = "adidas-ultraboost-5x",
                     Description = "Responsive running and training shoes with Boost cushioning.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -184,8 +185,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Supernova Rise",
                     Slug = "adidas-supernova-rise",
                     Description = "Daily running shoes built for comfort and stability.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -197,8 +198,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Predator Club",
                     Slug = "adidas-predator-club",
                     Description = "Football boots designed for control and precision.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -210,8 +211,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Dropset Trainer",
                     Slug = "adidas-dropset-trainer",
                     Description = "Training shoes suitable for gym workouts and lifting sessions.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -223,8 +224,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Forum Low",
                     Slug = "adidas-forum-low",
                     Description = "Basketball-inspired sneakers with a classic low-cut design.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -236,8 +237,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Stan Smith",
                     Slug = "adidas-stan-smith",
                     Description = "Minimal clean sneakers with timeless court style.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -249,8 +250,8 @@ namespace SportWearShop.Repositories.SeedData
                     ProductName = "Adidas Duramo SL",
                     Slug = "adidas-duramo-sl",
                     Description = "Lightweight running shoes for everyday training.",
-                    Gender = "UNISEX",
-                    Status = "ACTIVE",
+                    Gender = ProductGender.Unisex,
+                    Status = ProductStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 }
@@ -281,7 +282,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "41 EU",
                     ListPrice = 3200000,
                     SalePrice = 2890000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -295,7 +296,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "40 EU",
                     ListPrice = 2800000,
                     SalePrice = 2490000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -309,7 +310,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "42 EU",
                     ListPrice = 2600000,
                     SalePrice = 2290000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -323,7 +324,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "42 EU",
                     ListPrice = 5200000,
                     SalePrice = 4790000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -337,7 +338,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "41 EU",
                     ListPrice = 3600000,
                     SalePrice = 3290000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -351,7 +352,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "42 EU",
                     ListPrice = 1800000,
                     SalePrice = 1590000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -365,7 +366,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "41 EU",
                     ListPrice = 3400000,
                     SalePrice = 2990000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -379,7 +380,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "40 EU",
                     ListPrice = 3000000,
                     SalePrice = 2690000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -393,7 +394,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "39 EU",
                     ListPrice = 2700000,
                     SalePrice = 2390000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 },
@@ -407,7 +408,7 @@ namespace SportWearShop.Repositories.SeedData
                     SizeLabel = "41 EU",
                     ListPrice = 1900000,
                     SalePrice = 1690000,
-                    Status = "ACTIVE",
+                    Status = ProductVariantStatus.Active,
                     CreatedAtUtc = now,
                     UpdatedAtUtc = now
                 }

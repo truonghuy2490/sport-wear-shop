@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SportWearShop.Repositories.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace SportWearShop.Repositories.Entities;
@@ -25,7 +26,7 @@ public partial class ProductVariant
 
     public int? WeightGrams { get; set; }
 
-    public string Status { get; set; } = null!;
+    public ProductVariantStatus Status { get; set; } = ProductVariantStatus.Draft;
 
     public DateTime CreatedAtUtc { get; set; }
 

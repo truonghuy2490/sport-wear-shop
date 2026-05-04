@@ -5,9 +5,14 @@ using System.Text;
 
 namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 
-public class ProductVariantResponseModel
+
+public class ProductVariantDetailResponseModel
 {
     public long ProductVariantId { get; set; }
+
+    public long ProductId { get; set; }
+
+    public string ProductName { get; set; } = null!;
 
     public string Sku { get; set; } = null!;
 
@@ -30,8 +35,6 @@ public class ProductVariantResponseModel
     public int QuantityOnHand { get; set; }
 
     public int QuantityReserved { get; set; }
-
-    public int AvailableStock => QuantityOnHand - QuantityReserved;
 
     public List<ProductImageResponseModel> Images { get; set; } = new();
 }

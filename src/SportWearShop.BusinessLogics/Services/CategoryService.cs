@@ -3,6 +3,7 @@ using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
 using SportWearShop.Repositories.Entities;
+using SportWearShop.Repositories.Enums;
 using SportWearShop.Repositories.UnitOfWorks;
 using System.Linq.Expressions;
 
@@ -340,7 +341,7 @@ public class CategoryService : ICategoryService
         }
 
         var hasProducts = await _unitOfWork.Products.AnyAsync(
-            predicate: product => product.CategoryId == category.CategoryId && product.Status == "ACTIVE",
+            predicate: product => product.CategoryId == category.CategoryId && product.Status == ProductStatus.Active,
             cancellationToken: cancellationToken);
 
         if (hasProducts)

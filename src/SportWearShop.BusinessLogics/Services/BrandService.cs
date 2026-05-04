@@ -3,6 +3,7 @@ using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
 using SportWearShop.Repositories.Entities;
+using SportWearShop.Repositories.Enums;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
@@ -67,7 +68,7 @@ public class BrandService : IBrandService
                 IsActive = brand.IsActive,
                 CreatedAtUtc = brand.CreatedAtUtc,
                 UpdatedAtUtc = brand.UpdatedAtUtc,
-                ProductCount = brand.Products.Count(product => product.Status == "ACTIVE")
+                ProductCount = brand.Products.Count(product => product.Status == ProductStatus.Active)
             },
             asNoTracking: true,
             cancellationToken: cancellationToken,
@@ -261,7 +262,7 @@ public class BrandService : IBrandService
 
         var hasProducts = await _unitOfWork.Products.AnyAsync(
             predicate: product => product.BrandId == brand.BrandId
-                                  && product.Status == "ACTIVE",
+                                  && product.Status == ProductStatus.Active,
             cancellationToken: cancellationToken);
 
         if (hasProducts)
