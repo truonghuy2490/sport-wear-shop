@@ -20,6 +20,8 @@ public static class DependencyInjection
          services.AddScoped<IProductService, ProductService>();
          services.AddScoped<IOrderService, OrderService>();
          services.AddScoped<ICartService, CartService>();
+         services.AddScoped<ICategoryService, CategoryService>();
+
          services.AddScoped<IAuthService, AuthService>();
 
 

@@ -2,6 +2,8 @@
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels;
+using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductRatingModels;
+using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.UnitOfWorks;
 using System.Linq.Expressions;
@@ -92,14 +94,60 @@ namespace SportWearShop.BusinessLogics.Services
                     CategoryName = product.Category.CategoryName,
                     Status = product.Status,
                     CreatedAtUtc = product.CreatedAtUtc,
-                    UpdatedAtUtc = product.UpdatedAtUtc
+                    UpdatedAtUtc = product.UpdatedAtUtc,
+                    Variants = product.ProductVariants
+                        .Where(v => v.Status == "ACTIVE")
+                        .Select(v => new ProductVariantResponseModel
+                        {
+                            ProductVariantId = v.ProductVariantId,
+                            Sku = v.Sku,
+                            ColorCode = v.ColorCode,
+                            ColorName = v.ColorName,
+                            SizeCode = v.SizeCode,
+                            SizeLabel = v.SizeLabel,
+                            ListPrice = v.ListPrice,
+                            SalePrice = v.SalePrice,
+                            Status = v.Status,
+                            //StockQuantity = v.
+                        })
+                        .ToList(),
+
+                    Images = product.ProductImages
+                        .OrderBy(i => i.SortOrder)
+                        .Select(i => new ProductImageResponseModel
+                        {
+                            ProductImageId = i.ProductImageId,
+                            ImageUrl = i.ImageUrl,
+                            AltText = i.AltText,
+                            SortOrder = i.SortOrder,
+                            IsPrimary = i.IsPrimary
+                        })
+                        .ToList(),
+
+                    Ratings = product.ProductRatings
+                        .OrderByDescending(r => r.CreatedAtUtc)
+                        .Select(r => new ProductRatingResponseModel
+                        {
+                            ProductRatingId = r.ProductRatingId,
+                            ProductId = r.ProductId,
+                            UserId = r.UserId,
+                            UserName = r.User.UserName ?? "",
+                            RatingValue = r.RatingValue,
+                            ReviewText = r.ReviewText,
+                            CreatedAtUtc = r.CreatedAtUtc
+                        })
+                        .ToList()
                 },
                 asNoTracking: true,
                 cancellationToken: cancellationToken,
                 includes: new Expression<Func<Product, object>>[]
                 {
                     product => product.Brand,
-                    product => product.Category
+                    product => product.Category,
+                    product => product.ProductRatings,
+                    product => product.ProductImages,
+                    product => product.ProductVariants
+                    
                 }
             );
 

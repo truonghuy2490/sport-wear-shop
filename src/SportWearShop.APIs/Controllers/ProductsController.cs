@@ -17,7 +17,8 @@ namespace SportWearShop.APIs.Controllers
             _productService = productService;
         }
 
-        // GET: api/productS
+        // GET: api/products
+        // AUTHORIZATION: Allow anonymous, client, admin, staff
         [HttpGet]
         public async Task<IActionResult> GetAllAsync(
             [FromQuery] int pageNumber = 1,
@@ -33,6 +34,7 @@ namespace SportWearShop.APIs.Controllers
         }
 
         // GET: api/products/1
+        // AUTHORIZATION: Allow anonymous, client, admin, staff
         [HttpGet("{productId:long}")]
         public async Task<IActionResult> GetDetailsAsync(
             [FromRoute] long productId,
