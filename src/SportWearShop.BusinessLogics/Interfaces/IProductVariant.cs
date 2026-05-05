@@ -7,7 +7,7 @@ namespace SportWearShop.BusinessLogics.Interfaces;
 
 public interface IProductVariantService
 {
-    /*Task<List<ProductVariantResponseModel>> GetByProductIdAsync(
+    Task<List<ProductVariantResponseModel>> GetByProductIdAsync(
         long productId,
         CancellationToken cancellationToken = default);
 
@@ -16,6 +16,7 @@ public interface IProductVariantService
         CancellationToken cancellationToken = default);
 
     Task<ProductVariantResponseModel> CreateAsync(
+        long productId,
         CreateProductVariantRequestModel request,
         CancellationToken cancellationToken = default);
 
@@ -24,12 +25,8 @@ public interface IProductVariantService
         UpdateProductVariantRequestModel request,
         CancellationToken cancellationToken = default);
 
-    Task ToggleStatusAsync(
-        long productVariantId,
-        CancellationToken cancellationToken = default);
-
     Task DeleteAsync(
         long productVariantId,
-        CancellationToken cancellationToken = default);*/
+        CancellationToken cancellationToken = default);
 
 }
