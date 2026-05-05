@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using SportWearShop.Repositories.Enums;
 
 namespace SportWearShop.Repositories.Entities;
 
@@ -9,11 +10,11 @@ public partial class InventoryMovement
 
     public long ProductVariantId { get; set; }
 
-    public string MovementType { get; set; } = null!;
+    public InventoryMovementType MovementType { get; set; } 
 
     public int Quantity { get; set; }
 
-    public string? ReferenceType { get; set; }
+    public InventoryReferenceType ReferenceType { get; set; }
 
     public long? ReferenceId { get; set; }
 

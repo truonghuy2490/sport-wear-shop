@@ -1,8 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SportWearShop.Repositories.Entities;
+using SportWearShop.Repositories.Enums;
+using System;
+using System.Collections.Generic;
 
 namespace SportWearShop.Repositories;
 
@@ -73,6 +74,7 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.Property(e => e.UpdatedAtUtc)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Brand_UpdatedAtUtc");
+            
         });
 
         modelBuilder.Entity<Cart>(entity =>
@@ -175,13 +177,13 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.Property(e => e.CreatedAtUtc)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_InventoryMovement_CreatedAtUtc");
-            entity.Property(e => e.MovementType)
-                .HasMaxLength(30)
-                .IsUnicode(false);
+            
             entity.Property(e => e.Note).HasMaxLength(500);
+            entity.Property(e => e.MovementType)
+                .HasConversion<int>();
+
             entity.Property(e => e.ReferenceType)
-                .HasMaxLength(30)
-                .IsUnicode(false);
+                .HasConversion<int>();
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.InventoryMovements)
                 .HasForeignKey(d => d.ProductVariantId)
@@ -348,8 +350,8 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Product_CreatedAtUtc");
             entity.Property(e => e.Gender)
-                .HasMaxLength(20)
-                .IsUnicode(false);
+                .HasConversion<int>()
+                .HasDefaultValue(ProductGender.Unisex);
             entity.Property(e => e.ProductCode)
                 .HasMaxLength(50)
                 .IsUnicode(false);
@@ -358,9 +360,8 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                 .HasMaxLength(255)
                 .IsUnicode(false);
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("ACTIVE", "DF_Product_Status");
+                .HasConversion<int>()
+                .HasDefaultValue(ProductStatus.Draft);
             entity.Property(e => e.UpdatedAtUtc)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_Product_UpdatedAtUtc");
@@ -463,9 +464,8 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
                 .HasMaxLength(80)
                 .IsUnicode(false);
             entity.Property(e => e.Status)
-                .HasMaxLength(20)
-                .IsUnicode(false)
-                .HasDefaultValue("ACTIVE", "DF_ProductVariant_Status");
+                .HasConversion<int>()
+                .HasDefaultValue(ProductVariantStatus.Draft);
             entity.Property(e => e.UpdatedAtUtc)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_ProductVariant_UpdatedAtUtc");

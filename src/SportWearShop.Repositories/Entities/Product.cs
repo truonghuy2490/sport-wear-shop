@@ -1,4 +1,5 @@
-﻿using System;
+﻿using SportWearShop.Repositories.Enums;
+using System;
 using System.Collections.Generic;
 
 namespace SportWearShop.Repositories.Entities;
@@ -19,11 +20,11 @@ public partial class Product
 
     public string? Description { get; set; }
 
-    public string? Gender { get; set; }
+    public ProductGender Gender { get; set; } = ProductGender.Unisex;
 
     public string? BaseMaterial { get; set; }
 
-    public string Status { get; set; } = null!;
+    public ProductStatus Status { get; set; } = ProductStatus.Draft;
 
     public DateTime CreatedAtUtc { get; set; }
 

@@ -451,11 +451,8 @@ namespace SportWearShop.Repositories.Migrations
                         .HasColumnType("datetime2(0)")
                         .HasDefaultValueSql("(sysutcdatetime())", "DF_InventoryMovement_CreatedAtUtc");
 
-                    b.Property<string>("MovementType")
-                        .IsRequired()
-                        .HasMaxLength(30)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(30)");
+                    b.Property<int>("MovementType")
+                        .HasColumnType("int");
 
                     b.Property<string>("Note")
                         .HasMaxLength(500)
@@ -470,10 +467,8 @@ namespace SportWearShop.Repositories.Migrations
                     b.Property<long?>("ReferenceId")
                         .HasColumnType("bigint");
 
-                    b.Property<string>("ReferenceType")
-                        .HasMaxLength(30)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(30)");
+                    b.Property<int>("ReferenceType")
+                        .HasColumnType("int");
 
                     b.HasKey("InventoryMovementId")
                         .HasName("PK__Inventor__DB9462B6B6DAD17B");
@@ -768,10 +763,10 @@ namespace SportWearShop.Repositories.Migrations
                     b.Property<string>("Description")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Gender")
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)");
+                    b.Property<int>("Gender")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<string>("ProductCode")
                         .IsRequired()
@@ -790,13 +785,10 @@ namespace SportWearShop.Repositories.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(255)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("ACTIVE", "DF_Product_Status");
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .ValueGeneratedOnAdd()
@@ -964,13 +956,10 @@ namespace SportWearShop.Repositories.Migrations
                         .IsUnicode(false)
                         .HasColumnType("varchar(80)");
 
-                    b.Property<string>("Status")
-                        .IsRequired()
+                    b.Property<int>("Status")
                         .ValueGeneratedOnAdd()
-                        .HasMaxLength(20)
-                        .IsUnicode(false)
-                        .HasColumnType("varchar(20)")
-                        .HasDefaultValue("ACTIVE", "DF_ProductVariant_Status");
+                        .HasColumnType("int")
+                        .HasDefaultValue(0);
 
                     b.Property<DateTime>("UpdatedAtUtc")
                         .ValueGeneratedOnAdd()

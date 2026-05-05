@@ -25,7 +25,7 @@ public partial class Category
 
     public virtual ICollection<Category> InverseParentCategory { get; set; } = new List<Category>();
 
-    public virtual Category? ParentCategory { get; set; }
+    public virtual Category? ParentCategory { get; set; } // 3 level category
 
     public virtual ICollection<Product> Products { get; set; } = new List<Product>();
 }
