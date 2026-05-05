@@ -1,5 +1,6 @@
 using SportWearShop.APIs.DIs;
 using SportWearShop.APIs.ExceptionHandlers;
+using SportWearShop.APIs.Middlewares;
 using SportWearShop.Repositories;
 using SportWearShop.Repositories.SeedData;
 
@@ -19,29 +20,13 @@ builder.Services.AddSwaggerDocumentation();
 
 var app = builder.Build();
 
+await app.InitializeDatabaseAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SeedDataInitializer.SeedAsync(dbContext);
-}
-
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "SportWearShop API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
-// Middleware Exception
-app.UseMiddleware<GlobalExceptionHandler>();
+app.UseSwaggerMiddlewares();
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+app.UseAuthenticationMiddlewares();
 
 app.MapControllers();
 
