@@ -16,20 +16,23 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-         services.AddRepositoryLayer(configuration);
+        services.AddRepositoryLayer(configuration);
 
         
-         services.AddScoped<ICategoryService, CategoryService>();
-         services.AddScoped<IBrandService, BrandService>();
+        services.AddScoped<ICategoryService, CategoryService>();
+        services.AddScoped<IBrandService, BrandService>();
             
-         services.AddScoped<IProductService, ProductService>();
-         services.AddScoped<IProductVariantService, ProductVariantService>();
-         services.AddScoped<IProductImageService, ProductImageService>();
+        services.AddScoped<IProductService, ProductService>();
+        services.AddScoped<IProductVariantService, ProductVariantService>();
+        services.AddScoped<IProductImageService, ProductImageService>();
 
-         services.AddScoped<IOrderService, OrderService>();
-         services.AddScoped<ICartService, CartService>();
+        services.AddScoped<IInventoryService, InventoryService>();
 
-         services.AddScoped<IAuthService, AuthService>();
+        
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<ICartService, CartService>();
+
+        services.AddScoped<IAuthService, AuthService>();
 
 
         return services;

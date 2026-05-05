@@ -177,13 +177,13 @@ public partial class AppDbContext : IdentityDbContext<AppUser, AppRole, long>
             entity.Property(e => e.CreatedAtUtc)
                 .HasPrecision(0)
                 .HasDefaultValueSql("(sysutcdatetime())", "DF_InventoryMovement_CreatedAtUtc");
-            entity.Property(e => e.MovementType)
-                .HasMaxLength(30)
-                .IsUnicode(false);
+            
             entity.Property(e => e.Note).HasMaxLength(500);
+            entity.Property(e => e.MovementType)
+                .HasConversion<int>();
+
             entity.Property(e => e.ReferenceType)
-                .HasMaxLength(30)
-                .IsUnicode(false);
+                .HasConversion<int>();
 
             entity.HasOne(d => d.ProductVariant).WithMany(p => p.InventoryMovements)
                 .HasForeignKey(d => d.ProductVariantId)
