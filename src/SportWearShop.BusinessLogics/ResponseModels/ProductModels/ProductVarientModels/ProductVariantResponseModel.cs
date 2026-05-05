@@ -1,29 +1,37 @@
-﻿using System;
+﻿using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductImageModels;
+using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels
+namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
+
+public class ProductVariantResponseModel
 {
-    public class ProductVariantResponseModel
-    {
-        public long ProductVariantId { get; set; }
+    public long ProductVariantId { get; set; }
 
-        public string Sku { get; set; } = string.Empty;
+    public string Sku { get; set; } = null!;
 
-        public string ColorCode { get; set; } = string.Empty;
+    public string ColorCode { get; set; } = null!;
 
-        public string ColorName { get; set; } = string.Empty;
+    public string ColorName { get; set; } = null!;
 
-        public string SizeCode { get; set; } = string.Empty;
+    public string SizeCode { get; set; } = null!;
 
-        public string SizeLabel { get; set; } = string.Empty;
+    public string SizeLabel { get; set; } = null!;
 
-        public decimal ListPrice { get; set; }
+    public decimal ListPrice { get; set; }
 
-        public decimal? SalePrice { get; set; }
+    public decimal? SalePrice { get; set; }
 
-        public string Status { get; set; } = string.Empty;
+    public int? WeightGrams { get; set; }
 
-        public int StockQuantity { get; set; }
-    }
+    public string Status { get; set; } = null!;
+
+    public int QuantityOnHand { get; set; }
+
+    public int QuantityReserved { get; set; }
+
+    public int AvailableStock => QuantityOnHand - QuantityReserved;
+
+    public List<ProductImageResponseModel> Images { get; set; } = new();
 }

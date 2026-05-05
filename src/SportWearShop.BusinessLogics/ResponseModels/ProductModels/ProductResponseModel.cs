@@ -1,41 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels;
 
-namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels
+public class ProductResponseModel
 {
-    public class ProductResponseModel
-    {
-        public long ProductId { get; set; }
+    public long ProductId { get; set; }
 
-        public string ProductName { get; set; } = string.Empty;
+    public string ProductName { get; set; } = null!;
 
-        public string ProductCode { get; set; } = string.Empty;
+    public string ProductCode { get; set; } = null!;
 
-        public string Slug { get; set; } = string.Empty;
+    public string Slug { get; set; } = null!;
 
-        public string? Description { get; set; }
+    public string BrandName { get; set; } = null!;
 
-        public string? Gender { get; set; }
+    public string CategoryName { get; set; } = null!;
 
-        public string? BaseMaterial { get; set; }
+    public string Gender { get; set; } = null!;
 
-        public string Status { get; set; } = string.Empty;
+    public string Status { get; set; } = null!;
 
-        public string BrandName { get; set; } = string.Empty;
+    public string? ThumbnailUrl { get; set; }
 
-        public string CategoryName { get; set; } = string.Empty;
+    public decimal MinPrice { get; set; }
 
-        public decimal? MinPrice { get; set; }
+    public decimal? MinSalePrice { get; set; }
 
-        public decimal? MaxPrice { get; set; }
-
-        public string? ThumbnailUrl { get; set; }
-
-        public double AverageRating { get; set; }
-
-        public int TotalStock { get; set; }
-
-        public DateTime CreatedAtUtc { get; set; }
-    }
+    public int TotalVariants { get; set; }
 }
