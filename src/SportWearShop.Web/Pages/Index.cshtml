@@ -1,10 +1,130 @@
-﻿@page
-@model IndexModel
-@{
-    ViewData["Title"] = "Home page";
-}
+@page
+@model SportWearShop.Web.Pages.IndexModel
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-</div>
+@{
+    ViewData["Title"] = "Home";
+}
+@if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        @Model.ErrorMessage
+    </div>
+}
+<!-- HERO -->
+<section class="py-5 mb-5 bg-light rounded-4">
+    <div class="container">
+        <div class="row align-items-center">
+            <div class="col-lg-6">
+                <p class="text-uppercase text-muted mb-2">
+                    New Collection
+                </p>
+
+                <h1 class="display-4 fw-bold mb-3">
+                    Elevate Your Everyday Style
+                </h1>
+
+                <p class="lead text-muted mb-4">
+                    Discover premium sportswear built for movement, comfort,
+                    and modern lifestyle.
+                </p>
+
+                <a asp-page="/Products/Index"
+                   class="btn btn-dark btn-lg rounded-pill px-4">
+                    Shop Now
+                </a>
+            </div>
+
+            <div class="col-lg-6 text-center">
+                <img src="https://i.pinimg.com/1200x/25/9b/d5/259bd52db8f4ac78f373b0599ab31e03.jpg"
+                    alt="Hero Banner"
+                    style="
+            width: 100%;
+            max-width: 520px;
+            height: 420px;
+            object-fit: cover;
+            border-radius: 24px;
+         " />
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- FEATURED PRODUCTS -->
+<section>
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold mb-0">
+            Featured Products
+        </h2>
+
+        <a asp-page="/Products/Index"
+           class="text-dark text-decoration-none fw-semibold">
+            View All →
+        </a>
+    </div>
+
+    @if (Model.FeaturedProducts?.Items == null || !Model.FeaturedProducts.Items.Any())
+    {
+        <div class="alert alert-info">
+            No featured products available.
+        </div>
+    }
+    else
+    {
+        <div class="row g-4">
+            @foreach (var product in Model.FeaturedProducts.Items)
+            {
+                var displayPrice = product.MinSalePrice ?? product.MinPrice;
+
+                <div class="col-6 col-md-4 col-lg-3">
+                    <div class="card border-0 shadow-sm h-100">
+
+                        <img src="@(string.IsNullOrWhiteSpace(product.ThumbnailUrl)
+                                     ? "/images/no-image.png"
+                                     : product.ThumbnailUrl)"
+                             class="card-img-top"
+                             alt="@product.ProductName" />
+
+                        <div class="card-body">
+                            <small class="text-muted">
+                                @product.BrandName
+                            </small>
+
+                            <h6 class="fw-semibold mt-1">
+                                @product.ProductName
+                            </h6>
+
+                            @if (product.MinSalePrice.HasValue)
+                            {
+                                <div>
+                                    <span class="text-muted text-decoration-line-through small">
+                                        @product.MinPrice.ToString("N0") ₫
+                                    </span>
+
+                                    <span class="fw-bold text-danger ms-2">
+                                        @product.MinSalePrice.Value.ToString("N0") ₫
+                                    </span>
+                                </div>
+                            }
+                            else
+                            {
+                                <div class="fw-bold">
+                                    @product.MinPrice.ToString("N0") ₫
+                                </div>
+                            }
+                        </div>
+
+                        <div class="card-footer bg-white border-0">
+                            <a asp-page="/Products/Details"
+                               asp-route-slug="@product.Slug"
+                               asp-route-productId="@product.ProductId"
+                               class="btn btn-outline-dark w-100">
+                                View Details
+                            </a>
+                        </div>
+
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</section>

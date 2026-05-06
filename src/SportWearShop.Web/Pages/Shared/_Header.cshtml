@@ -1,0 +1,52 @@
+<header class="border-bottom shadow-sm bg-white">
+    <nav class="navbar navbar-expand-lg navbar-light container py-3">
+
+        <a class="navbar-brand fw-bold fs-4"
+           asp-page="/Index">
+            SportWearShop
+        </a>
+
+        <button class="navbar-toggler"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainNavbar">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse"
+             id="mainNavbar">
+
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                <li class="nav-item">
+                    <a class="nav-link"
+                       asp-page="/Products/Index">
+                        Products
+                    </a>
+                </li>
+
+            </ul>
+
+            <div class="d-flex gap-2">
+
+                <a class="btn btn-outline-dark btn-sm"
+                   href="#">
+                    Search
+                </a>
+
+                <a class="btn btn-outline-dark btn-sm"
+                   href="#">
+                    Cart
+                </a>
+
+                <a class="btn btn-dark btn-sm"
+                   href="#">
+                    Login
+                </a>
+
+            </div>
+
+        </div>
+
+    </nav>
+</header>

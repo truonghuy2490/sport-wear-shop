@@ -1,4 +1,5 @@
-using SportWearShop.Shared.ViewModels.Products;
+using SportWearShop.Shared.ViewModels;
+using SportWearShop.Shared.ViewModels.ProductModels;
 
 namespace SportWearShop.Web.Services.Interfaces;
 
@@ -7,7 +8,26 @@ namespace SportWearShop.Web.Services.Interfaces;
 /// </summary>
 /// 
 public interface IProductApiService
-{/*
-    Task<List<ProductViewModel>> GetProductsAsync();
-    Task<ProductViewModel> GetProductByIdAsync(int id);*/
+{
+    Task<PagingResponseModel<ProductResponseModel>?> GetAllAsync(
+        int pageNumber = 1,
+        int pageSize = 10,
+        CancellationToken cancellationToken = default);
+
+    Task<ProductDetailResponseModel?> GetByIdAsync(
+        long productId,
+        CancellationToken cancellationToken = default);
+
+    Task<ProductResponseModel?> CreateAsync(
+        CreateProductRequestModel request,
+        CancellationToken cancellationToken = default);
+
+    Task<ProductResponseModel?> UpdateAsync(
+        long productId,
+        UpdateProductRequestModel request,
+        CancellationToken cancellationToken = default);
+
+    Task DeleteAsync(
+        long productId,
+        CancellationToken cancellationToken = default);
 }
