@@ -7,6 +7,20 @@ using SportWearShop.BusinessLogics.ResponseModels.AuthModels;
 
 namespace SportWearShop.APIs.Controllers;
 
+/*
+-- next update --
+POST /api/auth/register:        v
+POST /api/auth/login:           v
+POST /api/auth/google-login
+POST /api/auth/refresh-token:   v (basic)
+POST /api/auth/logout:          v (basic)
+GET  /api/auth/me
+-- later --
+POST /api/auth/forgot-password
+POST /api/auth/reset-password
+POST /api/auth/confirm-email
+*/
+
 [Route("api/auth")]
 [ApiController]
 public class AuthController : ControllerBase
@@ -46,11 +60,20 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/refresh-token
     [HttpPost("refresh-token")]
+    [Authorize]
     public async Task<IActionResult> RefreshTokenAsync(
         [FromBody] RefreshTokenRequestModel request,
         CancellationToken cancellationToken = default)
     {
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+        if (!long.TryParse(userIdClaim, out var userId))
+        {
+            return Unauthorized();
+        }
+
         var result = await _authService.RefreshTokenAsync(
+            userId,
             request,
             cancellationToken);
 

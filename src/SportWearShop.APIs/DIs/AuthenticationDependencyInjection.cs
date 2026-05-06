@@ -1,6 +1,7 @@
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SportWearShop.BussinessLogics.Constants;
 
 namespace SportWearShop.APIs.DIs;
 
@@ -47,7 +48,20 @@ public static class AuthenticationDependencyInjection
                 }    
             );
 
-        services.AddAuthorization();
+        services.AddAuthorization(options =>
+        {
+            options.AddPolicy("AdminOnly",
+                policy => policy.RequireRole(AppRoles.Admin));
+
+            options.AddPolicy("StaffOnly",
+                policy => policy.RequireRole(AppRoles.Staff));
+
+            options.AddPolicy("CustomerOnly",
+                policy => policy.RequireRole(AppRoles.Customer));
+
+            options.AddPolicy("AdminOrStaff",
+                policy => policy.RequireRole(AppRoles.Admin, AppRoles.Staff));
+        });
 
         return services;
     }

@@ -77,3 +77,7 @@ modelBuilder.Entity<Cart>(entity =>
           .OnDelete(DeleteBehavior.Cascade);
 });
 "
+
+sportwearshop.apis add packages
+"
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer

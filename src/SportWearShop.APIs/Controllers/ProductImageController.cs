@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -47,6 +48,7 @@ public class ProductImagesController : ControllerBase
 
     // POST: api/product-images
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPost("product-images")]
     public async Task<IActionResult> CreateAsync(
         [FromBody] CreateProductImageRequestModel request,
@@ -64,6 +66,7 @@ public class ProductImagesController : ControllerBase
 
     // PUT: api/product-images/1
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPut("product-images/{productImageId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productImageId,
@@ -80,6 +83,7 @@ public class ProductImagesController : ControllerBase
 
     // PATCH: api/product-images/1/set-primary
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPatch("product-images/{productImageId:long}/set-primary")]
     public async Task<IActionResult> SetPrimaryAsync(
         [FromRoute] long productImageId,
@@ -94,6 +98,7 @@ public class ProductImagesController : ControllerBase
 
     // DELETE: api/product-images/1
     // AUTHORIZATION: Admin
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("product-images/{productImageId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productImageId,

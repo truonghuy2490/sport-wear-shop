@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi;
 using SportWearShop.APIs.ExceptionHandlers;
 using SportWearShop.Repositories;
 using SportWearShop.Repositories.Entities;
@@ -26,6 +27,11 @@ public static class MiddlewareExtensions
     // https configuration
     public static WebApplication UseSwaggerMiddlewares(this WebApplication app)
     {
+        app.UseSwagger(options =>
+        {
+            options.OpenApiVersion = OpenApiSpecVersion.OpenApi3_1;
+        });
+        
         if (app.Environment.IsDevelopment())
         {
             app.UseSwagger();

@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -32,6 +33,7 @@ public class ProductVariantsController : ControllerBase
 
     // POST: /api/products/{productId}/product-variants
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPost("api/products/{productId:long}/product-variants")]
     public async Task<IActionResult> CreateAsync(
         [FromRoute] long productId, 
@@ -67,6 +69,7 @@ public class ProductVariantsController : ControllerBase
 
     // PUT: api/product-variants/1
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPut("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productVariantId,
@@ -85,6 +88,7 @@ public class ProductVariantsController : ControllerBase
 
     // DELETE: api/product-variants/1
     // AUTHORIZATION: Admin
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productVariantId,

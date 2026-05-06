@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
 using System;
@@ -10,9 +11,13 @@ namespace SportWearShop.Repositories.SeedData
 {
     public static class SeedDataInitializer
     {
-        public static async Task SeedAsync(AppDbContext context)
+        public static async Task SeedAsync(
+            AppDbContext context,
+            RoleManager<AppRole> roleManager)
         {
             await context.Database.MigrateAsync();
+
+            await SeedRolesAsync(roleManager);
 
             await SeedBrandsAsync(context);
             await SeedCategoriesWith3LevelsAsync(context);
@@ -21,6 +26,30 @@ namespace SportWearShop.Repositories.SeedData
             await SeedProductImagesAsync(context);
             await SeedInventoryStocksAsync(context);
             // Các table khác (Cart, Order...) để sau vì phụ thuộc User
+        }
+
+        private static async Task SeedRolesAsync(
+            RoleManager<AppRole> roleManager)
+        {
+            var roles = new[]
+            {
+                "Admin",
+                "Staff",
+                "Customer"
+            };
+
+            foreach (var roleName in roles)
+            {
+                var exists = await roleManager.RoleExistsAsync(roleName);
+
+                if (!exists)
+                {
+                    await roleManager.CreateAsync(new AppRole
+                    {
+                        Name = roleName
+                    });
+                }
+            }
         }
 
         private static async Task SeedBrandsAsync(AppDbContext context)
