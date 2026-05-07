@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 ﻿using Microsoft.AspNetCore.Authorization;
+=======
+using Microsoft.AspNetCore.Authorization;
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
