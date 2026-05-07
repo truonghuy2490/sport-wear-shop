@@ -2,16 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 
-namespace SportWearShop.BusinessLogics.ResponseModels.AuthModels
+namespace SportWearShop.BusinessLogics.ResponseModels.AuthModels;
+
+public class AuthResponseModel
 {
-    public class AuthResponseModel
-    {
-        public string AccessToken { get; set; }
-        public string RefreshToken { get; set; }
+    public string AccessToken { get; set; } = null!;
+    public DateTime AccessTokenExpiresAtUtc { get; set; }
 
-        public DateTime Expiration { get; set; }
-
-        public string Email { get; set; }
-        public string UserId { get; set; }
-    }
+    public string? RefreshToken { get; set; }
+    public DateTime? RefreshTokenExpiresAtUtc { get; set; }
 }

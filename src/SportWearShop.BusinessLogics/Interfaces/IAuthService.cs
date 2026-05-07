@@ -7,24 +7,23 @@ namespace SportWearShop.BusinessLogics.Interfaces;
 
 public interface IAuthService
 {
-    // Register
-    Task<AuthResponseModel> RegisterAsync(RegisterRequestModel request);
+    // Register Async
+    Task<AuthResponseModel> RegisterAsync(
+        RegisterRequestModel request,
+        CancellationToken cancellationToken = default);
+        
+    // Login Async
+    Task<AuthResponseModel> LoginAsync(
+        LoginRequestModel request,
+        CancellationToken cancellationToken = default);
 
-    // Login
-    Task<AuthResponseModel> LoginAsync(LoginRequestModel request);
+    // Logout Async
+    Task LogoutAsync(
+        long userId, // next update using JWT claim id
+        CancellationToken cancellationToken = default);
 
-    // Refresh Token
-    Task<AuthResponseModel> RefreshTokenAsync(string refreshToken);
-
-    // Get current user info
-    Task<UserResponseModel> GetCurrentUserAsync(string userId);
-
-    // Assign role
-    Task<bool> AssignRoleAsync(string userId, string role);
-
-    // Change password
-    Task<bool> ChangePasswordAsync(ChangePasswordRequestModel request);
-
-    // Check email exist
-    Task<bool> IsEmailExistAsync(string email);
+    // Refresh Token Async 
+    Task<AuthResponseModel> RefreshTokenAsync(
+        RefreshTokenRequestModel request,
+        CancellationToken cancellationToken = default);
 }

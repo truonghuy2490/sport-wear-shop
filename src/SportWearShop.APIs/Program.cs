@@ -1,5 +1,6 @@
 using SportWearShop.APIs.DIs;
 using SportWearShop.APIs.ExceptionHandlers;
+using SportWearShop.APIs.Middlewares;
 using SportWearShop.Repositories;
 using SportWearShop.Repositories.SeedData;
 
@@ -9,39 +10,34 @@ var builder = WebApplication.CreateBuilder(args);
 
 // OpenAPI + Controller
 builder.Services.AddApiServices();
+
 // Application Layer
 builder.Services.AddDependencyInjection(builder.Configuration);
+
 // Exception Handling
 builder.Services.AddExceptionHandling();
+
 // Swagger
 builder.Services.AddSwaggerDocumentation();
 
+// Authen + Author
+builder.Services.AddAuthenticationServices(builder.Configuration);
 
 var app = builder.Build();
 
+// seed data
+await app.InitializeDatabaseAsync();
 
-using (var scope = app.Services.CreateScope())
-{
-    var dbContext = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await SeedDataInitializer.SeedAsync(dbContext);
-}
+// Swagger Configuration
+app.UseSwaggerMiddlewares();
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "SportWearShop API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
 // Middleware Exception
 app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseHttpsRedirection();
 
-app.UseAuthorization();
+// authen + author
+app.UseAuthenticationMiddlewares();
 
 app.MapControllers();
 

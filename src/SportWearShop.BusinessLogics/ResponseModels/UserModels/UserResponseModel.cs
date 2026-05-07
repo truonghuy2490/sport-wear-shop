@@ -6,12 +6,20 @@ namespace SportWearShop.BusinessLogics.ResponseModels.UserModels
 {
     public class UserResponseModel
     {
-        public string UserId { get; set; }
-        public string Email { get; set; }
+        public long UserId { get; set; }
 
-        public string FirstName { get; set; }
-        public string LastName { get; set; }
+        public string Email { get; set; } = null!;
 
-        public List<string> Roles { get; set; }
+        public string? FirstName { get; set; }
+
+        public string? LastName { get; set; }
+
+        public string? PhoneNumber { get; set; }
+
+        public bool IsActive { get; set; }
+
+        public List<string> Roles { get; set; } = new();
+
+        public DateTime CreatedAtUtc { get; set; }
     }
 }

@@ -12,6 +12,9 @@ public class AppUser : IdentityUser<long>
 
     public bool IsActive { get; set; } = true;
 
+    // public string? RefreshToken { get; set; }
+    // public DateTime? RefreshTokenExpiresAtUtc { get; set; }
+
     public DateTime CreatedAtUtc { get; set; } = DateTime.UtcNow;
     public DateTime UpdatedAtUtc { get; set; } = DateTime.UtcNow;
 }

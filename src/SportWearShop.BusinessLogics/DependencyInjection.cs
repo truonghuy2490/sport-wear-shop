@@ -4,6 +4,7 @@ using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.Services;
 using SportWearShop.BussinessLogics.Services;
 using SportWearShop.Repositories;
+using SportWearShop.Repositories.Security;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -33,7 +34,8 @@ public static class DependencyInjection
         services.AddScoped<ICartService, CartService>();
 
         services.AddScoped<IAuthService, AuthService>();
-
+        services.AddScoped<IUserService, UserService>();
+        
 
         return services;
     }

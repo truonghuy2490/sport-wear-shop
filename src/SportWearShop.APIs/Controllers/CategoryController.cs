@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
@@ -61,6 +62,7 @@ public class CategoryController : ControllerBase
 
     // POST: api/categories
     // AUTHORIZATION: Allow admin
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     public async Task<IActionResult> Create(
         [FromBody] CreateCategoryRequestModel request,
@@ -76,6 +78,7 @@ public class CategoryController : ControllerBase
 
     // PUT: api/categories
     // AUTHORIZATION: Allow admin, staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> Update(
         int id,
@@ -88,6 +91,7 @@ public class CategoryController : ControllerBase
 
     // DELETE: api/categories
     // AUTHORIZATION: Allow admin
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> Delete(
         int id,

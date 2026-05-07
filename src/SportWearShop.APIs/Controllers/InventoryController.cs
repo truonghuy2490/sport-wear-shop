@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -32,6 +33,7 @@ public class InventoryController : ControllerBase
     }
 
     // GET: api/inventory/{productVariantId}/movements
+    [Authorize(Policy = "AdminOrStaff")]
     // AUTHORIZATION: Admin, Staff
     [HttpGet("{productVariantId:long}/movements")]
     public async Task<IActionResult> GetMovementsByVariantIdAsync(
@@ -47,6 +49,7 @@ public class InventoryController : ControllerBase
 
     // POST: api/inventory/stock-in
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPost("stock-in")]
     public async Task<IActionResult> StockInAsync(
         [FromBody] StockInRequestModel request,
@@ -61,6 +64,7 @@ public class InventoryController : ControllerBase
 
     // POST: api/inventory/stock-out
     // AUTHORIZATION: Admin, Staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPost("stock-out")]
     public async Task<IActionResult> StockOutAsync(
         [FromBody] StockOutRequestModel request,
