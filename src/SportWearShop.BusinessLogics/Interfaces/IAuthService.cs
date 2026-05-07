@@ -24,7 +24,6 @@ public interface IAuthService
 
     // Refresh Token Async 
     Task<AuthResponseModel> RefreshTokenAsync(
-        long userId,
         RefreshTokenRequestModel request,
         CancellationToken cancellationToken = default);
 }

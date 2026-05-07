@@ -1,6 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using System.Text.Json;
+using SportWearShop.Shared.ViewModels.ErrorResponseModels;
 
 namespace SportWearShop.Web.Infrastructure.Api;
 
@@ -83,9 +84,23 @@ public class ApiClient
         {
             var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
 
+            ErrorResponseModel? errorResponse = null;
+
+            try
+            {
+                errorResponse = JsonSerializer.Deserialize<ErrorResponseModel>(
+                    errorContent,
+                    _jsonOptions);
+            }
+            catch
+            {
+                // Ignore parse error, keep raw response content
+            }
+
             throw new ApiException(
                 response.StatusCode,
-                errorContent);
+                errorContent,
+                errorResponse);
         }
 
         if (response.Content.Headers.ContentLength == 0)

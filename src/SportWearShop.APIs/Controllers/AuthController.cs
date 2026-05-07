@@ -60,20 +60,11 @@ public class AuthController : ControllerBase
 
     // POST: api/auth/refresh-token
     [HttpPost("refresh-token")]
-    [Authorize]
     public async Task<IActionResult> RefreshTokenAsync(
         [FromBody] RefreshTokenRequestModel request,
         CancellationToken cancellationToken = default)
     {
-        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
-        if (!long.TryParse(userIdClaim, out var userId))
-        {
-            return Unauthorized();
-        }
-
         var result = await _authService.RefreshTokenAsync(
-            userId,
             request,
             cancellationToken);
 

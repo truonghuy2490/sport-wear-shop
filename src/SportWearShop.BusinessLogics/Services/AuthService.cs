@@ -121,12 +121,11 @@ public class AuthService : IAuthService
     }
 
     public async Task<AuthResponseModel> RefreshTokenAsync(
-        long userId,
         RefreshTokenRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var user = await _userManager.Users.FirstAsync(
-                u => u.Id == userId && u.IsActive,
+                u => u.Id == request.UserId && u.IsActive,
                 cancellationToken
         );
 
