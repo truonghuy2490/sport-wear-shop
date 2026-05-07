@@ -1,4 +1,7 @@
+<<<<<<< HEAD
 using Microsoft.AspNetCore.Authorization;
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -33,7 +36,10 @@ public class ProductVariantsController : ControllerBase
 
     // POST: /api/products/{productId}/product-variants
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPost("api/products/{productId:long}/product-variants")]
     public async Task<IActionResult> CreateAsync(
         [FromRoute] long productId, 
@@ -69,7 +75,10 @@ public class ProductVariantsController : ControllerBase
 
     // PUT: api/product-variants/1
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPut("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productVariantId,
@@ -88,7 +97,10 @@ public class ProductVariantsController : ControllerBase
 
     // DELETE: api/product-variants/1
     // AUTHORIZATION: Admin
+<<<<<<< HEAD
     [Authorize(Policy = "AdminOnly")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpDelete("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productVariantId,
