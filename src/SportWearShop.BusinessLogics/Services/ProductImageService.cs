@@ -4,17 +4,23 @@ using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductImageModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.ThirdPartyServices;
 using SportWearShop.Repositories.UnitOfWorks;
 
 namespace SportWearShop.BussinessLogics.Services;
 
 public class ProductImageService : IProductImageService {
     private readonly IUnitOfWork _unitOfWork;
-    private readonly ILogger<ProductImageService> _logger;  
+    private readonly ICloudinaryService _cloudinaryService;
+    private readonly ILogger<ProductImageService> _logger;
 
-    public ProductImageService(IUnitOfWork unitOfWork, ILogger<ProductImageService> logger)
+    public ProductImageService(
+        IUnitOfWork unitOfWork,
+        ICloudinaryService cloudinaryService,
+        ILogger<ProductImageService> logger)
     {
         _unitOfWork = unitOfWork;
+        _cloudinaryService = cloudinaryService;
         _logger = logger;
     }
 
@@ -155,13 +161,16 @@ public class ProductImageService : IProductImageService {
                     $"Product variant with ID {request.ProductVariantId} was not found in product {request.ProductId}.");
             }
         }
-        if (string.IsNullOrWhiteSpace(request.ImageUrl))
+        
+        if (request.ImageFile == null || request.ImageFile.Length == 0)
         {
-            throw new BadRequestException("Image URL is required.");
+            throw new BadRequestException("Image file is required.");
         }
 
-        var imageUrl = request.ImageUrl.Trim();
-        var altText = request.AltText?.Trim();
+        var imageUrl = await _cloudinaryService.UploadFileAsync(
+            request.ImageFile,
+            folder: "sport-wear-shop/products",
+            cancellationToken: cancellationToken);
 
         if (request.IsPrimary)
         {
@@ -171,13 +180,29 @@ public class ProductImageService : IProductImageService {
                 cancellationToken);
         }
 
+        // get next SortOrder
+        var existingImages = await _unitOfWork.ProductImages.FindAsync(
+            filter: image => image.ProductId == request.ProductId
+                            && image.ProductVariantId == request.ProductVariantId,
+            selector: image => new
+            {
+                image.SortOrder
+            },
+            asNoTracking: true,
+            cancellationToken: cancellationToken);
+
+        var nextSortOrder = existingImages.Any()
+            ? existingImages.Max(image => image.SortOrder) + 1
+            : 1;
+
+
         var image = new ProductImage
         {
             ProductId = request.ProductId,
             ProductVariantId = request.ProductVariantId,
             ImageUrl = imageUrl,
-            AltText = altText,
-            SortOrder = request.SortOrder,
+            AltText = request.AltText?.Trim(),
+            SortOrder = nextSortOrder,
             IsPrimary = request.IsPrimary,
             CreatedAtUtc = DateTime.UtcNow
         };
@@ -227,10 +252,20 @@ public class ProductImageService : IProductImageService {
             throw new NotFoundException(
                 $"Product image with ID {productImageId} was not found.");
         }
-        if (string.IsNullOrWhiteSpace(request.ImageUrl))
+
+        try
         {
-            throw new BadRequestException("Image URL is required.");
+            await _cloudinaryService.DeleteFileAsync(image.ImageUrl);
         }
+        catch(Exception ex)
+        {
+            throw new BadRequestException(ex.Message);
+        }
+
+        var imageUrl = await _cloudinaryService.UploadFileAsync(
+            request.ImageFile,
+            folder: "sport-wear-shop/products",
+            cancellationToken: cancellationToken);
 
         if (request.IsPrimary && !image.IsPrimary)
         {
@@ -239,10 +274,14 @@ public class ProductImageService : IProductImageService {
                 image.ProductVariantId,
                 cancellationToken);
         }
+        if (image.IsPrimary && request.IsPrimary)
+        {
+            throw new BadRequestException(
+                $"Product image with ID {productImageId} was primary image, please select another one before update.");
+        }
 
-        image.ImageUrl = request.ImageUrl.Trim();
+        image.ImageUrl = imageUrl;
         image.AltText = request.AltText?.Trim();
-        image.SortOrder = request.SortOrder;
         image.IsPrimary = request.IsPrimary;
 
         _unitOfWork.ProductImages.Update(image);
@@ -275,7 +314,7 @@ public class ProductImageService : IProductImageService {
             selector: image => image,
             asNoTracking: false,
             cancellationToken: cancellationToken);
-
+        
         if (image == null)
         {
             _logger.LogWarning(
@@ -285,6 +324,7 @@ public class ProductImageService : IProductImageService {
             throw new NotFoundException(
                 $"Product image with ID {productImageId} was not found.");
         }
+        
 
         await ClearPrimaryImagesAsync(
             image.ProductId,
@@ -323,6 +363,21 @@ public class ProductImageService : IProductImageService {
 
             throw new NotFoundException(
                 $"Product image with ID {productImageId} was not found.");
+        }
+
+        if (image.IsPrimary)
+        {
+            throw new BadRequestException(
+                $"Product image with ID {productImageId} was primary image, please select another one before delete.");
+        }
+
+        try
+        {
+            await _cloudinaryService.DeleteFileAsync(image.ImageUrl);
+        }
+        catch(Exception ex)
+        {
+            throw new BadRequestException(ex.Message);
         }
 
         _unitOfWork.ProductImages.Remove(image);
