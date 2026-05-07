@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 ﻿body {
     font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
@@ -13,6 +16,9 @@
 
 .form-control {
     border-radius: 999px;
+<<<<<<< HEAD
+}
+=======
 }
 =======
 ﻿/* Please see documentation at https://learn.microsoft.com/aspnet/core/client-side/bundling-and-minification
@@ -64,3 +70,4 @@ button.accept-policy {
   line-height: 60px;
 }
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227

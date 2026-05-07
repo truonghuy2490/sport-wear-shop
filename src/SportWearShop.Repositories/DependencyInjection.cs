@@ -7,6 +7,11 @@ using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.Interfaces;
 using SportWearShop.Repositories.Security;
 using SportWearShop.Repositories.Security.Interfaces;
+<<<<<<< HEAD
+using SportWearShop.Repositories.ThirdPartyServices;
+using SportWearShop.Repositories.ThirdPartyServices.Implementations;
+=======
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
@@ -56,6 +61,11 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+<<<<<<< HEAD
+        // Third party services
+        services.AddScoped<ICloudinaryService, CloudinaryService>();
+=======
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
         return services;
     }
 }

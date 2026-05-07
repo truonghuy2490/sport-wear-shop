@@ -1,4 +1,7 @@
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 ﻿using System.Net.Http.Headers;
 using SportWearShop.Web.Infrastructure.Api;
 using SportWearShop.Web.Infrastructure.HttpHandlers;
@@ -48,6 +51,9 @@ public static class DependencyInjection
         
         return services;
     }
+<<<<<<< HEAD
+}
+=======
 }
 =======
 ﻿using SportWearShop.Web.Services;
@@ -86,3 +92,4 @@ namespace SportWearShop.Web.DIs
     }
 }
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227

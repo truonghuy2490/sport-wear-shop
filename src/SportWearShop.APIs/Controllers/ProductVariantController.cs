@@ -1,7 +1,11 @@
 <<<<<<< HEAD
 using Microsoft.AspNetCore.Authorization;
 =======
+<<<<<<< HEAD
+using Microsoft.AspNetCore.Authorization;
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -39,7 +43,11 @@ public class ProductVariantsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpPost("api/products/{productId:long}/product-variants")]
     public async Task<IActionResult> CreateAsync(
         [FromRoute] long productId, 
@@ -78,7 +86,11 @@ public class ProductVariantsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpPut("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productVariantId,
@@ -100,7 +112,11 @@ public class ProductVariantsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOnly")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOnly")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpDelete("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productVariantId,
@@ -112,4 +128,22 @@ public class ProductVariantsController : ControllerBase
 
         return NoContent();
     }
+<<<<<<< HEAD
+
+    [HttpPut("{productVariantId:long}/images/sort-orders")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> UpdateImageSortOrdersAsync(
+        [FromRoute] long productVariantId,
+        [FromBody] UpdateProductImageSortOrdersRequestModel request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.UpdateSortOrdersAsync(
+            productVariantId,
+            request,
+            cancellationToken);
+
+        return Ok(result);
+    }
+=======
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 }

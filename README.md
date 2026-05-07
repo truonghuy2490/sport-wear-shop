@@ -21,27 +21,6 @@ SPORTWEARSHOP
 └── SportWearShop.sln
 ```
 
-```txt
-SPORTWEARSHOP
-│
-├── src
-│   ├── SportWearShop.APIs         # Web APIs
-│   ├── SportWearShop.BusinessLogics
-│   ├── SportWearShop.Repositories
-│   ├── SportWearShop.Shared
-│   ├── SportWearShop.Web          # Razor Pages: customer/staff
-│   └── SportWearShop.Admin        # ReactJS: admin
-│
-│
-├── .dockerignore
-├── .gitignore
-├── .gitattributes
-├── docker-compose.yml
-├── LICENSE.txt
-├── README.md
-└── SportWearShop.sln
-```
-
 Project reference
 Controller -> Service -> Repository
 
@@ -78,7 +57,6 @@ Create class AppUser + AppRole
 set up with Add migration 
 "
 dotnet ef migrations add InitIdentity --project SportWearShop.Repositories --startup-project SportWearShop.APIs --output-dir Migrations
-dotnet ef migrations add UpdateProductStatusEnums --project SportWearShop.Repositories --startup-project SportWearShop.APIs --output-dir Migrations
 dotnet ef migrations add UpdateProductStatusEnums --project SportWearShop.Repositories --startup-project SportWearShop.APIs --output-dir Migrations
 "
 "

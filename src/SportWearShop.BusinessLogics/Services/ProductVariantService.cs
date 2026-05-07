@@ -412,4 +412,117 @@ public class ProductVariantService : IProductVariantService{
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
     }
+<<<<<<< HEAD
+
+
+
+    public async Task<ProductVariantDetailResponseModel> UpdateSortOrdersAsync(
+        long productVariantId,
+        UpdateProductImageSortOrdersRequestModel request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        _logger.LogInformation(
+            "Updating product variant image sort orders. ProductVariantId={ProductVariantId}",
+            productVariantId);
+
+        var isProductVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
+            predicate: variant => variant.ProductVariantId == productVariantId
+                                && variant.Status == ProductVariantStatus.Active,
+            cancellationToken: cancellationToken);
+
+        if (!isProductVariantExist)
+        {
+            _logger.LogWarning(
+                "Update product variant image sort orders failed. Variant not found. ProductVariantId={ProductVariantId}",
+                productVariantId);
+
+            throw new NotFoundException(
+                $"Product variant with ID {productVariantId} was not found.");
+        }
+
+        if (request.Images == null || !request.Images.Any())
+        {
+            throw new BadRequestException("Image sort order request is required.");
+        }
+
+        var hasInvalidSortOrder = request.Images.Any(image => image.SortOrder <= 0);
+
+        if (hasInvalidSortOrder)
+        {
+            throw new BadRequestException("SortOrder must be greater than 0.");
+        }
+
+        var hasDuplicateImageIds = request.Images
+            .GroupBy(image => image.ProductImageId)
+            .Any(group => group.Count() > 1);
+
+        if (hasDuplicateImageIds)
+        {
+            throw new BadRequestException("Duplicate product image IDs are not allowed.");
+        }
+
+        var hasDuplicateSortOrders = request.Images
+            .GroupBy(image => image.SortOrder)
+            .Any(group => group.Count() > 1);
+
+        if (hasDuplicateSortOrders)
+        {
+            throw new BadRequestException("Duplicate sort orders are not allowed.");
+        }
+
+        var imageIds = request.Images
+            .Select(image => image.ProductImageId)
+            .ToList();
+
+        var images = await _unitOfWork.ProductImages.FindAsync(
+            filter: image => image.ProductVariantId == productVariantId
+                            && imageIds.Contains(image.ProductImageId),
+            selector: image => image,
+            asNoTracking: false,
+            cancellationToken: cancellationToken);
+
+        if (images.Count != imageIds.Count)
+        {
+            _logger.LogWarning(
+                "Update product variant image sort orders failed. One or more images not found. ProductVariantId={ProductVariantId}",
+                productVariantId);
+
+            throw new NotFoundException(
+                "One or more product images were not found in this product variant.");
+        }
+
+        foreach (var image in images)
+        {
+            var requestImage = request.Images.First(requestImage =>
+                requestImage.ProductImageId == image.ProductImageId);
+
+            image.SortOrder = requestImage.SortOrder;
+            // image.IsPrimary = false;
+        }
+
+        // var primaryImage = images
+        //     .OrderBy(image => image.SortOrder)
+        //     .ThenBy(image => image.ProductImageId)
+        //     .First();
+
+        // primaryImage.IsPrimary = true;
+
+        _unitOfWork.ProductImages.UpdateRange(images);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        _logger.LogInformation(
+            "Updated product variant image sort orders successfully. ProductVariantId={ProductVariantId}",
+            productVariantId);
+
+        var result = await GetByIdAsync(
+            productVariantId,
+            cancellationToken);
+
+        return result!;
+    }
+
+=======
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 }

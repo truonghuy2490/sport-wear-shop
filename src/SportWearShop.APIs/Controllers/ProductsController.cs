@@ -52,7 +52,11 @@ public class ProductsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpPost]
     public async Task<IActionResult> CreateAsync(
         [FromBody] CreateProductRequestModel request,
@@ -73,7 +77,11 @@ public class ProductsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpPut("{productId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productId,
@@ -94,7 +102,11 @@ public class ProductsController : ControllerBase
 <<<<<<< HEAD
     [Authorize(Policy = "AdminOnly")]
 =======
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOnly")]
+=======
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpDelete("{productId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productId,

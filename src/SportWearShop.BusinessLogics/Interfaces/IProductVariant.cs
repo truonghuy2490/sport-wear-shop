@@ -29,4 +29,12 @@ public interface IProductVariantService
         long productVariantId,
         CancellationToken cancellationToken = default);
 
+<<<<<<< HEAD
+    Task<ProductVariantDetailResponseModel> UpdateSortOrdersAsync(
+        long productVariantId,
+        UpdateProductImageSortOrdersRequestModel request,
+        CancellationToken cancellationToken = default);
+
+=======
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 }

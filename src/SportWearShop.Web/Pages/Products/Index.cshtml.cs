@@ -1,6 +1,9 @@
 ﻿// Pages/Products/Index.cshtml.cs
 using Microsoft.AspNetCore.Mvc.RazorPages;
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using SportWearShop.Shared.ViewModels;
 using SportWearShop.Shared.ViewModels.ProductModels;
 using SportWearShop.Web.Services.Interfaces;
@@ -27,6 +30,8 @@ public class IndexModel : PageModel
             pageNumber,
             pageSize,
             cancellationToken);
+<<<<<<< HEAD
+=======
 =======
 using SportWearShop.Shared.ViewModels.PageViewModel;
 using SportWearShop.Shared.ViewModels.Products;
@@ -38,5 +43,6 @@ namespace SportWearShop.Web.Pages.Products
     {
         
 >>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
+>>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     }
 }
