@@ -51,17 +51,14 @@ public class ProductImagesController : ControllerBase
     [Authorize(Policy = "AdminOrStaff")]
     [HttpPost("product-images")]
     public async Task<IActionResult> CreateAsync(
-        [FromBody] CreateProductImageRequestModel request,
+        [FromForm] CreateProductImageRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var result = await _productImageService.CreateAsync(
             request,
             cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetByProductIdAsync),
-            new { productId = request.ProductId },
-            result);
+        return Ok(result);
     }
 
     // PUT: api/product-images/1
@@ -70,7 +67,7 @@ public class ProductImagesController : ControllerBase
     [HttpPut("product-images/{productImageId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productImageId,
-        [FromBody] UpdateProductImageRequestModel request,
+        [FromForm] UpdateProductImageRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var result = await _productImageService.UpdateAsync(

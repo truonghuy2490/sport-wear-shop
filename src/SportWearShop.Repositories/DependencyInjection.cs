@@ -7,6 +7,8 @@ using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.Interfaces;
 using SportWearShop.Repositories.Security;
 using SportWearShop.Repositories.Security.Interfaces;
+using SportWearShop.Repositories.ThirdPartyServices;
+using SportWearShop.Repositories.ThirdPartyServices.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
@@ -56,6 +58,8 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenService, JwtTokenService>();
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+        // Third party services
+        services.AddScoped<ICloudinaryService, CloudinaryService>();
         return services;
     }
 }

@@ -100,4 +100,19 @@ public class ProductVariantsController : ControllerBase
 
         return NoContent();
     }
+
+    [HttpPut("{productVariantId:long}/images/sort-orders")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> UpdateImageSortOrdersAsync(
+        [FromRoute] long productVariantId,
+        [FromBody] UpdateProductImageSortOrdersRequestModel request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.UpdateSortOrdersAsync(
+            productVariantId,
+            request,
+            cancellationToken);
+
+        return Ok(result);
+    }
 }
