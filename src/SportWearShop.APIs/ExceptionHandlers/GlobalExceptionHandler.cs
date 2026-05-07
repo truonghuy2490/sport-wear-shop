@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Exceptions;
+using SportWearShop.Shared.ViewModels.ErrorResponseModels;
 using System.Net;
 using System.Text.Json;
 
@@ -36,7 +37,7 @@ public class GlobalExceptionHandler
         var response = context.Response;
         response.ContentType = "application/json";
 
-        var errorResponse = new ErrorResponse();
+        var errorResponse = new ErrorResponseModel();
         int statusCode;
 
         switch (exception)
@@ -69,11 +70,11 @@ public class GlobalExceptionHandler
                 _logger.LogWarning(exception, "Forbidden access");
                 break;
 
-            case UnauthorizedAccessException:
+            case UnauthorizedException:
                 statusCode = (int)HttpStatusCode.Unauthorized;
                 errorResponse.Title = "Unauthorized";
-                errorResponse.Message = "You are not authorized";
-                _logger.LogWarning(exception, "Unauthorized access");
+                errorResponse.Message = exception.Message;
+                _logger.LogWarning(exception, "Unauthorized");
                 break;
 
             default:
@@ -97,12 +98,4 @@ public class GlobalExceptionHandler
 
         await response.WriteAsync(jsonResponse);
     }
-}
-public class ErrorResponse
-{
-    public string? Title { get; set; }
-    public int Status { get; set; }
-    public string? Message { get; set; }
-    public string? TraceId { get; set; }
-    public DateTime Timestamp { get; set; }
 }

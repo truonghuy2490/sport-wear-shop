@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels;
 
@@ -48,6 +49,10 @@ public class ProductsController : ControllerBase
 
     // POST: api/products
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPost]
     public async Task<IActionResult> CreateAsync(
         [FromBody] CreateProductRequestModel request,
@@ -65,6 +70,10 @@ public class ProductsController : ControllerBase
 
     // PUT: api/products/1
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPut("{productId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productId,
@@ -82,6 +91,10 @@ public class ProductsController : ControllerBase
 
     // DELETE: api/products/1
     // AUTHORIZATION: Admin
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOnly")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpDelete("{productId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productId,

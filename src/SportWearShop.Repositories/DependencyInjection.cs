@@ -5,6 +5,8 @@ using Microsoft.Extensions.DependencyInjection;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.Interfaces;
+using SportWearShop.Repositories.Security;
+using SportWearShop.Repositories.Security.Interfaces;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
@@ -42,13 +44,17 @@ public static class DependencyInjection
             options => {
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = true;
+                //options.Password.RequireLowercase = true;
                 options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
+                //options.Password.RequireNonAlphanumeric = false;
                 options.Password.RequiredLength = 6;
             })
         .AddEntityFrameworkStores<AppDbContext>()
         .AddDefaultTokenProviders();
+
+        // security
+        services.AddScoped<IJwtTokenService, JwtTokenService>();
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
         return services;
     }

@@ -1,3 +1,7 @@
+<<<<<<< HEAD
+using Microsoft.AspNetCore.Authorization;
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -32,6 +36,10 @@ public class InventoryController : ControllerBase
     }
 
     // GET: api/inventory/{productVariantId}/movements
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     // AUTHORIZATION: Admin, Staff
     [HttpGet("{productVariantId:long}/movements")]
     public async Task<IActionResult> GetMovementsByVariantIdAsync(
@@ -47,6 +55,10 @@ public class InventoryController : ControllerBase
 
     // POST: api/inventory/stock-in
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPost("stock-in")]
     public async Task<IActionResult> StockInAsync(
         [FromBody] StockInRequestModel request,
@@ -61,6 +73,10 @@ public class InventoryController : ControllerBase
 
     // POST: api/inventory/stock-out
     // AUTHORIZATION: Admin, Staff
+<<<<<<< HEAD
+    [Authorize(Policy = "AdminOrStaff")]
+=======
+>>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
     [HttpPost("stock-out")]
     public async Task<IActionResult> StockOutAsync(
         [FromBody] StockOutRequestModel request,

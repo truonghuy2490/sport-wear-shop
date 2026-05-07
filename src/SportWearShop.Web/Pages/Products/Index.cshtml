@@ -1,3 +1,76 @@
+@page "/products"
+@model SportWearShop.Web.Pages.Products.IndexModel
+
+@{
+    ViewData["Title"] = "Products";
+}
+
+<h1 class="mb-4">Products</h1>
+
+@if (Model.Products?.Items == null || !Model.Products.Items.Any())
+{
+    <p>No products found.</p>
+}
+else
+{
+    <div class="row">
+        @foreach (var product in Model.Products.Items)
+        {
+            var displayPrice = product.MinSalePrice ?? product.MinPrice;
+
+            <div class="col-md-3 mb-4">
+                <div class="card h-100 shadow-sm">
+                    <img src="@(string.IsNullOrWhiteSpace(product.ThumbnailUrl) 
+                                ? "/images/no-image.png" 
+                                : product.ThumbnailUrl)"
+                         class="card-img-top"
+                         alt="@product.ProductName" />
+
+                    <div class="card-body d-flex flex-column">
+                        <small class="text-muted">
+                            @product.BrandName / @product.CategoryName
+                        </small>
+
+                        <h5 class="mt-2">@product.ProductName</h5>
+
+                        <p class="mb-1">
+                            <span class="badge bg-secondary">@product.Gender</span>
+                            <span class="badge bg-info text-dark">@product.TotalVariants variants</span>
+                        </p>
+
+                        <div class="mt-auto">
+                            @if (product.MinSalePrice.HasValue)
+                            {
+                                <p class="mb-1">
+                                    <span class="text-muted text-decoration-line-through">
+                                        @product.MinPrice.ToString("N0") ₫
+                                    </span>
+                                </p>
+
+                                <p class="fw-bold text-danger">
+                                    @product.MinSalePrice.Value.ToString("N0") ₫
+                                </p>
+                            }
+                            else
+                            {
+                                <p class="fw-bold text-danger">
+                                    @product.MinPrice.ToString("N0") ₫
+                                </p>
+                            }
+
+                            <a asp-page="/Products/Details"
+                                asp-route-slug="@product.Slug"
+                                asp-route-productId="@product.ProductId"
+                                class="btn btn-dark w-100">
+                                    View Details
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}
 @* @page
 @model SportWearShop.Web.Pages.Products.IndexModel
 @{

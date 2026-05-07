@@ -1,0 +1,194 @@
+@page "/products/{slug}/{productId:long}"
+@model SportWearShop.Web.Pages.Products.DetailsModel
+
+@{
+    var product = Model.Product;
+    ViewData["Title"] = product?.ProductName ?? "Product Details";
+}
+
+@if (product == null)
+{
+    <div class="alert alert-warning">
+        Product not found.
+    </div>
+
+    return;
+}
+
+@{
+    var productImages = product.Images
+        .OrderBy(i => i.SortOrder)
+        .ToList();
+
+    var primaryImage = productImages.FirstOrDefault(i => i.IsPrimary)
+        ?? productImages.FirstOrDefault();
+
+    var mainImageUrl = primaryImage?.ImageUrl ?? "/images/no-image.png";
+
+    var activeVariants = product.Variants
+        .Where(v => v.Status == "ACTIVE")
+        .ToList();
+
+    var minListPrice = activeVariants.Any()
+        ? activeVariants.Min(v => v.ListPrice)
+        : 0;
+
+    var minSalePrice = activeVariants
+        .Where(v => v.SalePrice.HasValue)
+        .Select(v => v.SalePrice!.Value)
+        .DefaultIfEmpty()
+        .Min();
+
+    var hasSale = minSalePrice > 0;
+
+    var colors = activeVariants
+        .GroupBy(v => new { v.ColorCode, v.ColorName })
+        .Select(g => g.Key)
+        .ToList();
+
+    var sizes = activeVariants
+        .GroupBy(v => new { v.SizeCode, v.SizeLabel })
+        .Select(g => g.Key)
+        .ToList();
+}
+
+<div class="row g-5">
+
+    <!-- LEFT: PRODUCT IMAGES -->
+    <div class="col-lg-7">
+        <div class="row g-3">
+            <div class="col-12">
+                <img src="@mainImageUrl"
+                     alt="@(primaryImage?.AltText ?? product.ProductName)"
+                     class="img-fluid rounded bg-light border w-100" />
+            </div>
+
+            @foreach (var image in productImages.Skip(1))
+            {
+                <div class="col-6">
+                    <img src="@image.ImageUrl"
+                         alt="@(image.AltText ?? product.ProductName)"
+                         class="img-fluid rounded bg-light border w-100" />
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- RIGHT: PRODUCT INFO -->
+    <div class="col-lg-5">
+        <div class="sticky-top" style="top: 90px;">
+
+            <p class="text-muted mb-1">
+                @product.BrandName
+            </p>
+
+            <h1 class="fw-bold mb-2">
+                @product.ProductName
+            </h1>
+
+            <p class="text-muted mb-3">
+                @product.CategoryName · @product.Gender
+            </p>
+
+            <!-- PRICE -->
+            <div class="mb-4">
+                @if (hasSale)
+                {
+                    <span class="fs-5 text-muted text-decoration-line-through me-2">
+                        @minListPrice.ToString("N0") ₫
+                    </span>
+
+                    <span class="fs-4 fw-bold text-danger">
+                        @minSalePrice.ToString("N0") ₫
+                    </span>
+                }
+                else
+                {
+                    <span class="fs-4 fw-bold">
+                        @minListPrice.ToString("N0") ₫
+                    </span>
+                }
+            </div>
+
+            <!-- COLOR -->
+            @if (colors.Any())
+            {
+                <div class="mb-4">
+                    <div class="fw-semibold mb-2">
+                        Color
+                    </div>
+
+                    <div class="d-flex flex-wrap gap-2">
+                        @foreach (var color in colors)
+                        {
+                            <button type="button" class="btn btn-outline-dark btn-sm">
+                                @color.ColorName
+                            </button>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- SIZE -->
+            @if (sizes.Any())
+            {
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <span class="fw-semibold">Select Size</span>
+                        <a href="#" class="small text-dark">Size guide</a>
+                    </div>
+
+                    <div class="row g-2">
+                        @foreach (var size in sizes)
+                        {
+                            var available = activeVariants.Any(v =>
+                                v.SizeCode == size.SizeCode &&
+                                v.AvailableStock > 0);
+
+                            <div class="col-4">
+                                <button type="button"
+                                        class="btn w-100 @(available ? "btn-outline-dark" : "btn-outline-secondary disabled")">
+                                    @size.SizeLabel
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            }
+
+            <!-- CTA -->
+            <div class="d-grid gap-2 mb-4">
+                <button type="button" class="btn btn-dark btn-lg rounded-pill">
+                    Add to Bag
+                </button>
+
+                <button type="button" class="btn btn-outline-dark btn-lg rounded-pill">
+                    Favorite ♡
+                </button>
+            </div>
+
+            <!-- DESCRIPTION -->
+            @if (!string.IsNullOrWhiteSpace(product.Description))
+            {
+                <div class="mb-4">
+                    <h5 class="fw-bold">Description</h5>
+                    <p class="text-muted">
+                        @product.Description
+                    </p>
+                </div>
+            }
+
+            <!-- PRODUCT DETAILS -->
+            <div class="border-top pt-3">
+                <h5 class="fw-bold">Product Details</h5>
+
+                <ul class="text-muted mb-0">
+                    <li>Product code: @product.ProductCode</li>
+                    <li>Material: @(product.BaseMaterial ?? "N/A")</li>
+                    <li>Status: @product.Status</li>
+                </ul>
+            </div>
+
+        </div>
+    </div>
+</div>

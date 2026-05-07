@@ -1,5 +1,6 @@
 ﻿using global::SportWearShop.BusinessLogics.Interfaces;
 using global::SportWearShop.BusinessLogics.ResponseModels.BrandModels;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SportWearShop.APIs.Controllers;
@@ -38,6 +39,7 @@ public class BrandController : ControllerBase
 
     // POST: api/brands
     // AUTHORIZATION: Allow admin
+    [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     public async Task<IActionResult> CreateAsync(
         [FromBody] CreateBrandRequestModel request,
@@ -53,6 +55,7 @@ public class BrandController : ControllerBase
 
     // PUT: api/brands/1
     // AUTHORIZATION: Allow admin, staff
+    [Authorize(Policy = "AdminOrStaff")]
     [HttpPut("{id:int}")]
     public async Task<IActionResult> UpdateAsync(
         int id,
@@ -65,6 +68,8 @@ public class BrandController : ControllerBase
 
     // DELETE: api/brands/1
     // AUTHORIZATION: Allow admin
+    
+    [Authorize(Policy = "AdminOnly")]
     [HttpDelete("{id:int}")]
     public async Task<IActionResult> DeleteAsync(
         int id,

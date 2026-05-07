@@ -1,0 +1,109 @@
+@inject SportWearShop.Web.Services.Interfaces.ICurrentUserService CurrentUser
+
+<header class="bg-white border-bottom sticky-top">
+
+    <nav class="navbar navbar-expand-lg container py-3">
+
+        <!-- LOGO -->
+        <a class="navbar-brand fw-bold fs-3"
+           asp-page="/Index">
+            SportWearShop
+        </a>
+
+        <!-- MOBILE TOGGLER -->
+        <button class="navbar-toggler border-0 shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainNavbar">
+
+            <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse"
+             id="mainNavbar">
+
+            <!-- CENTER MENU -->
+            <ul class="navbar-nav mx-auto gap-lg-4 mt-3 mt-lg-0">
+
+                <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       asp-page="/Products/Index">
+                        Products
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       href="#">
+                        New Arrivals
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       href="#">
+                        Sale
+                    </a>
+                </li>
+
+            </ul>
+
+            <!-- RIGHT ACTIONS -->
+            <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-4 mt-lg-0">
+
+                <!-- SEARCH -->
+                <form class="position-relative">
+
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+
+                    <input type="text"
+                           class="form-control ps-5"
+                           placeholder="Search products..." />
+
+                </form>
+
+                <!-- CART -->
+                <a href="#"
+                   class="text-dark text-decoration-none fs-5">
+                    <i class="bi bi-bag"></i>
+                </a>
+
+                @if (CurrentUser.IsAuthenticated)
+                {
+                    <div class="d-flex align-items-center gap-3">
+
+                        <a asp-page="/Profile/Index"
+                        class="text-dark text-decoration-none small fw-medium">
+
+                            Hello, @CurrentUser.DisplayName!
+
+                        </a>
+
+                        <form method="post"
+                              asp-page="/Auth/Logout">
+
+                            <button type="submit"
+                                    class="btn btn-dark btn-sm px-3">
+                                Logout
+                            </button>
+
+                        </form>
+
+                    </div>
+                }
+                else
+                {
+                    <a asp-page="/Auth/Login"
+                       class="text-dark text-decoration-none fs-5">
+                        <i class="bi bi-person"></i>
+                    </a>
+                }
+
+            </div>
+
+        </div>
+
+    </nav>
+
+</header>
