@@ -4,6 +4,10 @@ import { useNavigate } from "react-router-dom";
 import { login } from "../../api/authApi";
 import { saveTokens } from "../../utils/tokenStorage";
 
+import { useDispatch } from "react-redux";
+import { login as loginAction } from "../../redux/auth/authSlice";
+import { showToast } from "../../redux/toast/toastSlice";
+
 function LoginPage() {
 
     const [email, setEmail] = useState("");
@@ -12,14 +16,14 @@ function LoginPage() {
 
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) => {
+    const dispatch = useDispatch();
 
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         setErrorMessage("");
 
         try {
-            
             const result = await login({
                 email,
                 password
@@ -30,17 +34,31 @@ function LoginPage() {
                 result.refreshToken
             );
 
+            dispatch(
+                loginAction({
+                    email: email,
+                    displayName: email,
+                    role: "Admin"
+                })
+            );
+
+            dispatch(
+                showToast({
+                    type: "success",
+                    title: "Success",
+                    message: "Login successful."
+                })
+            );
             navigate("/");
 
         } catch (error) {
-
             setErrorMessage(
                 error.response?.data?.message ||
                 "Login failed. Please check your email and password."
             );
         }
     };
-
+    
     return (
         <div
             className="d-flex align-items-center justify-content-center py-5 bg-light"

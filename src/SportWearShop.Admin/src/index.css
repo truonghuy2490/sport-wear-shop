@@ -21,3 +21,19 @@ body {
 .form-control {
     border-radius: 12px;
 }
+
+.sport-toast {
+    min-width: 320px;
+    max-width: 420px;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.toast-indicator {
+    width: 6px;
+    align-self: stretch;
+}
+
+.toast-body {
+    padding: 0.9rem 1rem;
+}

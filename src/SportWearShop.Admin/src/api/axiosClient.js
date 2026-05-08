@@ -13,6 +13,7 @@ const axiosClient = axios.create({
     }
 });
 
+// add accesstoken to each request
 axiosClient.interceptors.request.use(
     (config) => {
         const token = getAccessToken();
@@ -26,6 +27,7 @@ axiosClient.interceptors.request.use(
     (error) => Promise.reject(error)
 );
 
+// auto refresh token when exprired or 401 return: reactive refresh 
 axiosClient.interceptors.response.use(
     (response) => response,
     async (error) => {
@@ -35,7 +37,9 @@ axiosClient.interceptors.response.use(
             error.response?.status === 401 &&
             !originalRequest._retry &&
             !originalRequest.url.includes("/auth/login") &&
-            !originalRequest.url.includes("/auth/refresh-token")
+            !originalRequest.url.includes("/auth/register") &&
+            !originalRequest.url.includes("/auth/refresh-token") &&
+            !originalRequest.url.includes("/auth/logout")
         ) {
             originalRequest._retry = true;
 

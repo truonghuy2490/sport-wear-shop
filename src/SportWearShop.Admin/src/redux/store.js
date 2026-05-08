@@ -1,21 +1,10 @@
 import { configureStore } from "@reduxjs/toolkit";
-
-const initialAuthState = {
-    currentUser: null,
-    isAuthenticated: false,
-    isLoading: false,
-    errorMessage: null
-};
-
-function authReducer(state = initialAuthState, action) {
-    switch (action.type) {
-        default:
-            return state;
-    }
-}
+import authReducer from "./auth/authSlice";
+import toastReducer from "./toast/toastSlice";
 
 export const store = configureStore({
     reducer: {
-        auth: authReducer
+        auth: authReducer,
+        toast: toastReducer
     }
 });

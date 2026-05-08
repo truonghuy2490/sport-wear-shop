@@ -6,7 +6,7 @@ export const emptyLoginRequest = {
 export const emptyRegisterRequest = {
     email: "",
     password: "",
-    firstName:
+    firstName: "",
     lastName: "",
     phoneNumber: ""
 };
