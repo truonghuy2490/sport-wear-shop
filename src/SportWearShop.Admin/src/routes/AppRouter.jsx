@@ -7,6 +7,8 @@ import ProductListPage from "../pages/products/ProductListPage";
 import LoginPage from "../pages/auth/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
 import BrandPage from "../pages/brands/BrandPage";
+import BrandDetailPage from "../pages/brands/BrandDetailPage";
+import BrandEditPage from "../pages/brands/BrandEditPage";
 import CategoryPage from "../pages/categories/CategoryPage";
 import OrderPage from "../pages/orders/OrderPage";
 import InventoryPage from "../pages/inventory/InventoryPage";
@@ -65,7 +67,7 @@ function AppRouter() {
                     </ProtectedRoute>
                 }
             />
-
+            {/* BRAND */}
             <Route
                 path="/brands"
                 element={
@@ -76,7 +78,30 @@ function AppRouter() {
                     </ProtectedRoute>
                 }
             />
+
+            <Route
+                path="/brands/:brandId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <BrandDetailPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/brands/:brandId/edit"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <BrandEditPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
             
+            {/* Inventory */}
             <Route
                 path="/inventory"
                 element={
