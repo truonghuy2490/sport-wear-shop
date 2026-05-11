@@ -1,4 +1,5 @@
-﻿using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
+﻿using SportWearShop.BusinessLogics.ResponseModels;
+using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,8 +8,10 @@ namespace SportWearShop.BusinessLogics.Interfaces;
 
 public interface IProductVariantService
 {
-    Task<List<ProductVariantResponseModel>> GetByProductIdAsync(
+    Task<PagingResponseModel<ProductVariantResponseModel>> GetByProductIdAsync(
         long productId,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<ProductVariantDetailResponseModel?> GetByIdAsync(

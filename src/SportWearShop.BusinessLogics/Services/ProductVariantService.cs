@@ -3,10 +3,12 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductImageModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 
 namespace SportWearShop.BussinessLogics.Services;
@@ -23,17 +25,21 @@ public class ProductVariantService : IProductVariantService{
         _logger = logger;
     }
 
-    public async Task<List<ProductVariantResponseModel>> GetByProductIdAsync(
+    public async Task<PagingResponseModel<ProductVariantResponseModel>> GetByProductIdAsync(
         long productId,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(
-            "Retrieving product variants. ProductId={ProductId}",
-            productId);
+            "Retrieving product variants. ProductId={ProductId}, PageNumber={PageNumber}, PageSize={PageSize}",
+            productId,
+            pageNumber,
+            pageSize);
 
         var productExists = await _unitOfWork.Products.AnyAsync(
             product => product.ProductId == productId
-                       && product.Status == ProductStatus.Active,
+                    && product.Status == ProductStatus.Active,
             cancellationToken);
 
         if (!productExists)
@@ -45,9 +51,24 @@ public class ProductVariantService : IProductVariantService{
             throw new NotFoundException($"Product with ID {productId} was not found.");
         }
 
-        var variants = await _unitOfWork.ProductVariants.FindAsync(
-            filter: variant => variant.ProductId == productId
-                               && variant.Status == ProductVariantStatus.Active,
+        var options = new QueryOptions<ProductVariant>
+        {
+            Filter = variant => variant.ProductId == productId
+                                && variant.Status == ProductVariantStatus.Active,
+            SortBy = variant => variant.CreatedAtUtc,
+            Ascending = false,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true,
+            Includes = new List<Expression<Func<ProductVariant, object>>>
+            {
+                variant => variant.InventoryStock!,
+                variant => variant.ProductImages
+            }
+        };
+
+        var result = await _unitOfWork.ProductVariants.FindWithPagingAsync(
+            options,
             selector: variant => new ProductVariantResponseModel
             {
                 ProductVariantId = variant.ProductVariantId,
@@ -78,22 +99,19 @@ public class ProductVariantService : IProductVariantService{
                     })
                     .ToList()
             },
-            sortBy: variant => variant.CreatedAtUtc,
-            ascending: false,
-            asNoTracking: true,
-            cancellationToken: cancellationToken,
-            includes: new Expression<Func<ProductVariant, object>>[]
-            {
-                variant => variant.InventoryStock!,
-                variant => variant.ProductImages
-            });
+            cancellationToken);
 
         _logger.LogInformation(
-            "Retrieved product variants successfully. ProductId={ProductId}, Count={Count}",
+            "Retrieved product variants successfully. ProductId={ProductId}, ReturnedItems={ReturnedItems}, TotalCount={TotalCount}",
             productId,
-            variants.Count);
+            result.Items.Count,
+            result.TotalCount);
 
-        return variants;
+        return new PagingResponseModel<ProductVariantResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
 
     public async Task<ProductVariantDetailResponseModel?> GetByIdAsync(

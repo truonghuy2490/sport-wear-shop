@@ -19,7 +19,7 @@ public class UnitOfWork : IUnitOfWork
     private IBaseRepository<Category>? _categories;
     private IBaseRepository<ProductVariant>? _productVariants;
     private IBaseRepository<ProductImage>? _productImages;
-    private IBaseRepository<Cart>? _carts;
+    private ICartRepository? _carts;
     private IBaseRepository<CartItem>? _cartItems;
     private IBaseRepository<OrderHeader>? _orderHeaders;
     private IBaseRepository<OrderItem>? _orderItems;
@@ -28,6 +28,10 @@ public class UnitOfWork : IUnitOfWork
     private IBaseRepository<PaymentTransaction>? _paymentTransactions;
     private IBaseRepository<InventoryStock>? _inventoryStocks;
     private IBaseRepository<InventoryMovement>? _inventoryMovements;
+   
+    
+
+    private ICartRepository _cartRepository;
 
     public UnitOfWork(
         AppDbContext context,
@@ -51,8 +55,8 @@ public class UnitOfWork : IUnitOfWork
     public IBaseRepository<ProductImage> ProductImages =>
         _productImages ??= new BaseRepository<ProductImage>(_context);
 
-    public IBaseRepository<Cart> Carts =>
-        _carts ??= new BaseRepository<Cart>(_context);
+    public ICartRepository Carts => 
+        _carts ??= new CartRepository(_context);
 
     public IBaseRepository<CartItem> CartItems =>
         _cartItems ??= new BaseRepository<CartItem>(_context);

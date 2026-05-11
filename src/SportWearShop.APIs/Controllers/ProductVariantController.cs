@@ -19,13 +19,17 @@ public class ProductVariantsController : ControllerBase
 
     // GET /api/products/{productId}/variants
     // AUTHORIZATION: Allow anonymous, client, admin, staff
-    [HttpGet("api/products/{productId:long}/product-variants")]
+    [HttpGet("products/{productId:long}/variants")]
     public async Task<IActionResult> GetByProductIdAsync(
-        [FromRoute] long productId,
+        long productId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
         var result = await _productVariantService.GetByProductIdAsync(
             productId,
+            pageNumber,
+            pageSize,
             cancellationToken);
 
         return Ok(result);

@@ -5,6 +5,3 @@ using System.Text;
 
 namespace SportWearShop.BusinessLogics.Services;
 
-public class OrderService : IOrderService
-{
-}

@@ -20,9 +20,15 @@ public class BrandController : ControllerBase
     // AUTHORIZATION: Allow anonymous, client, admin, staff
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        CancellationToken cancellationToken)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _brandService.GetAllAsync(cancellationToken);
+        var result = await _brandService.GetAllAsync(
+            pageNumber,
+            pageSize,
+            cancellationToken);
+
         return Ok(result);
     }
 
@@ -42,27 +48,31 @@ public class BrandController : ControllerBase
     [Authorize(Policy = "AdminOnly")]
     [HttpPost]
     public async Task<IActionResult> CreateAsync(
-        [FromBody] CreateBrandRequestModel request,
-        CancellationToken cancellationToken)
+        [FromForm] CreateBrandRequestModel request,
+        CancellationToken cancellationToken = default)
     {
         var result = await _brandService.CreateAsync(request, cancellationToken);
 
         return CreatedAtAction(
             nameof(GetByIdAsync),
-            new { id = result.BrandId },
+            new { brandId = result.BrandId },
             result);
     }
 
     // PUT: api/brands/1
     // AUTHORIZATION: Allow admin, staff
     [Authorize(Policy = "AdminOrStaff")]
-    [HttpPut("{id:int}")]
+    [HttpPut("{brandId:int}")]
     public async Task<IActionResult> UpdateAsync(
-        int id,
-        [FromBody] UpdateBrandRequestModel request,
-        CancellationToken cancellationToken)
+        int brandId,
+        [FromForm] UpdateBrandRequestModel request,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _brandService.UpdateAsync(id, request, cancellationToken);
+        var result = await _brandService.UpdateAsync(
+            brandId,
+            request,
+            cancellationToken);
+
         return Ok(result);
     }
 

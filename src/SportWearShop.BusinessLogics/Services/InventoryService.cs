@@ -1,14 +1,17 @@
 ﻿using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.InventoryModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using LinqKit;
 
 namespace SportWearShop.BusinessLogics.Services;
 
@@ -68,19 +71,23 @@ public class InventoryService : IInventoryService
         return stock;
     }
 
-    public async Task<List<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
+    public async Task<PagingResponseModel<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
         long productVariantId,
-        CancellationToken cancellationToken = default
-    )
+        InventoryMovementQueryRequestModel request,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         _logger.LogInformation(
-            "Retrieving inventory movements. ProductVariantId={ProductVariantId}",
-            productVariantId);
+            "Retrieving inventory movements. ProductVariantId={ProductVariantId}, PageNumber={PageNumber}, PageSize={PageSize}",
+            productVariantId,
+            request.PageNumber,
+            request.PageSize);
+
         var isVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
-            predicate: pv => pv.ProductVariantId == productVariantId
-                                && pv.Status == ProductVariantStatus.Active,
-            cancellationToken: cancellationToken
-        );
+            pv => pv.ProductVariantId == productVariantId
+                && pv.Status == ProductVariantStatus.Active,
+            cancellationToken);
 
         if (!isVariantExist)
         {
@@ -91,31 +98,87 @@ public class InventoryService : IInventoryService
             throw new NotFoundException(
                 $"Product variant with ID {productVariantId} was not found.");
         }
+        
+        var filter = PredicateBuilder.New<InventoryMovement>(true);
+        filter = filter.And(movement => movement.ProductVariantId == productVariantId);
 
-        var movements = await _unitOfWork.InventoryMovements.FindAsync(
-            filter: m => m.ProductVariantId == productVariantId,
-            selector: m => new InventoryMovementResponseModel
+        if (request.MovementType.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.MovementType == request.MovementType.Value);
+        }
+
+        if (request.ReferenceType.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.ReferenceType == request.ReferenceType.Value);
+        }
+
+        if (request.ReferenceId.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.ReferenceId == request.ReferenceId.Value);
+        }
+
+        if (request.MinQuantity.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.Quantity >= request.MinQuantity.Value);
+        }
+
+        if (request.MaxQuantity.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.Quantity <= request.MaxQuantity.Value);
+        }
+
+        if (request.CreatedFromUtc.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.CreatedAtUtc >= request.CreatedFromUtc.Value);
+        }
+
+        if (request.CreatedToUtc.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.CreatedAtUtc <= request.CreatedToUtc.Value);
+        }
+
+        var options = new QueryOptions<InventoryMovement>
+        {
+            Filter = filter,
+            SortBy = GetInventoryMovementSortExpression(request.SortBy),
+            Ascending = request.IsAscending,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            AsNoTracking = true,
+            Includes = new List<Expression<Func<InventoryMovement, object>>>
             {
-                InventoryMovementId = m.InventoryMovementId,
-                ProductVariantId = m.ProductVariantId,
-                Sku = m.ProductVariant.Sku,
-                MovementType = m.MovementType.ToString(),
-                Quantity = m.Quantity,
-                ReferenceType = m.ReferenceType.ToString(),
-                ReferenceId = m.ReferenceId,
-                Note = m.Note,
-                CreatedAtUtc = m.CreatedAtUtc
-            },
-            asNoTracking: true,
-            sortBy: m => m.CreatedAtUtc,
-            ascending: true,
-            includes: new Expression<Func<InventoryMovement, object>>[]
-            {
-                m => m.ProductVariant
+                movement => movement.ProductVariant
             }
-        );
+        };
 
-        return movements;
+        var result = await _unitOfWork.InventoryMovements.FindWithPagingAsync(
+            options,
+            selector: movement => new InventoryMovementResponseModel
+            {
+                InventoryMovementId = movement.InventoryMovementId,
+                ProductVariantId = movement.ProductVariantId,
+                Sku = movement.ProductVariant.Sku,
+                MovementType = movement.MovementType.ToString(),
+                Quantity = movement.Quantity,
+                ReferenceType = movement.ReferenceType.ToString(),
+                ReferenceId = movement.ReferenceId,
+                Note = movement.Note,
+                CreatedAtUtc = movement.CreatedAtUtc
+            },
+            cancellationToken);
+
+        return new PagingResponseModel<InventoryMovementResponseModel>(
+            result.Items,
+            result.TotalCount,
+            request.PageNumber,
+            request.PageSize);
     }
 
     // Stock Movement by Staff: Stock In, Stock Out
@@ -381,6 +444,18 @@ public class InventoryService : IInventoryService
         }
 
         return stock;
+    }
+
+    private static Expression<Func<InventoryMovement, object>> GetInventoryMovementSortExpression(
+        InventoryMovementSortBy sortBy)
+    {
+        return sortBy switch
+        {
+            InventoryMovementSortBy.Quantity => movement => movement.Quantity,
+            InventoryMovementSortBy.MovementType => movement => movement.MovementType,
+            InventoryMovementSortBy.ReferenceType => movement => movement.ReferenceType,
+            _ => movement => movement.CreatedAtUtc
+        };
     }
 
 }

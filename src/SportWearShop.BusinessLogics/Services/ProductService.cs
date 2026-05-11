@@ -12,6 +12,7 @@ using SportWearShop.Repositories.Enums;
 using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System.Linq.Expressions;
+using LinqKit;
 
 namespace SportWearShop.BusinessLogics.Services
 {
@@ -38,9 +39,10 @@ namespace SportWearShop.BusinessLogics.Services
                 request.PageNumber,
                 request.PageSize,
                 request.SearchTerm);
-
-            Expression<Func<Product, bool>> filter = product =>
-                product.Status == (request.Status ?? ProductStatus.Active);
+            var filter = PredicateBuilder.New<Product>(true);
+            filter = filter.And(
+                product => product.Status == (request.Status ?? ProductStatus.Active)
+            );
 
             if (!string.IsNullOrWhiteSpace(request.SearchTerm))
             {
