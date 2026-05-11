@@ -39,6 +39,12 @@ dotnet add SportWearShop.Repositories package Microsoft.EntityFrameworkCore.Tool
 - APIs
 "
 dotnet add SportWearShop.APIs package Microsoft.EntityFrameworkCore.Design
+dotnet add SportWearShop.APIs package FluentValidation.AspNetCore
+dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer
+"
+- Services
+"
+dotnet add SportWearShop.BusinessLogics package FluentValidation
 "
 
 Scafford DB: 
@@ -78,6 +84,3 @@ modelBuilder.Entity<Cart>(entity =>
 });
 "
 
-sportwearshop.apis add packages
-"
-dotnet add package Microsoft.AspNetCore.Authentication.JwtBearer

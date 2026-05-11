@@ -495,7 +495,7 @@ public class ProductVariantService : IProductVariantService{
         foreach (var image in images)
         {
             var requestImage = request.Images.First(requestImage =>
-                requestImage.ProductImageId == image.ProductImageId);
+                    requestImage.ProductImageId == image.ProductImageId);
 
             image.SortOrder = requestImage.SortOrder;
             // image.IsPrimary = false;

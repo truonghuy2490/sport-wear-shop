@@ -4,15 +4,25 @@ import Layout from "../layouts/Layout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import ProductListPage from "../pages/products/ProductListPage";
+import ProductDetailPage from "../pages/products/ProductDetailPage";
+import ProductCreatePage from "../pages/products/ProductCreatePage";
+
 import LoginPage from "../pages/auth/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
+
 import BrandPage from "../pages/brands/BrandPage";
 import BrandDetailPage from "../pages/brands/BrandDetailPage";
 import BrandEditPage from "../pages/brands/BrandEditPage";
+
 import CategoryPage from "../pages/categories/CategoryPage";
+import CategoryDetailPage from "../pages/categories/CategoryDetailPage";
+import CategoryCreatePage from "../pages/categories/CategoryCreatePage";
+import CategoryEditPage from "../pages/categories/CategoryEditPage";
+
 import OrderPage from "../pages/orders/OrderPage";
 import InventoryPage from "../pages/inventory/InventoryPage";
 import AccountPage from "../pages/accounts/AccountPage";
+import AccountDetailPage from "../pages/accounts/AccountDetailPage";
 
 
 
@@ -35,6 +45,7 @@ function AppRouter() {
                 }
             />
 
+            {/* PRODUCT */}
             <Route
                 path="/products"
                 element={
@@ -45,7 +56,28 @@ function AppRouter() {
                     </ProtectedRoute>
                 }
             />
+            <Route
+                path="/products/:productId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProductDetailPage/>
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/products/create"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProductCreatePage/>
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
 
+            {/* CATEGORY */}
             <Route
                 path="/categories"
                 element={
@@ -57,6 +89,40 @@ function AppRouter() {
                 }
             />
 
+            <Route
+                path="/categories/create"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <CategoryCreatePage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/categories/:categoryId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <CategoryDetailPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="/categories/:categoryId/edit"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <CategoryEditPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            {/* ORDER */}
             <Route
                 path="/orders"
                 element={
@@ -100,7 +166,7 @@ function AppRouter() {
                     </ProtectedRoute>
                 }
             />
-            
+
             {/* Inventory */}
             <Route
                 path="/inventory"
@@ -112,13 +178,23 @@ function AppRouter() {
                     </ProtectedRoute>
                 }
             />
-
+            {/* ACCOUNT */}
             <Route
                 path="/accounts"
                 element={
                     <ProtectedRoute>
                         <Layout>
                             <AccountPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/accounts/:userId"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <AccountDetailPage />
                         </Layout>
                     </ProtectedRoute>
                 }

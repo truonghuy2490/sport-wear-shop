@@ -21,13 +21,11 @@ public class ProductsController : ControllerBase
     // AUTHORIZATION: Allow anonymous, client, admin, staff
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
+        [FromQuery] ProductQueryRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var result = await _productService.GetAllAsync(
-            pageNumber,
-            pageSize,
+            request,
             cancellationToken);
 
         return Ok(result);
@@ -81,7 +79,7 @@ public class ProductsController : ControllerBase
 
         return Ok(result);
     }
-
+    
 
     // DELETE: api/products/1
     // AUTHORIZATION: Admin

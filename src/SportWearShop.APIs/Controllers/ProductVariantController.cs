@@ -101,7 +101,7 @@ public class ProductVariantsController : ControllerBase
         return NoContent();
     }
 
-    [HttpPut("{productVariantId:long}/images/sort-orders")]
+    [HttpPut("api/product-variants/{productVariantId:long}/images/sort-orders")]
     [Authorize(Policy = "AdminOrStaff")]
     public async Task<IActionResult> UpdateImageSortOrdersAsync(
         [FromRoute] long productVariantId,

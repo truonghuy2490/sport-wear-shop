@@ -2,9 +2,8 @@ import { useSelector } from "react-redux";
 import useLogout from "../hooks/useLogout";
 function Header() {
 
-    const currentUser = useSelector(
-        (state) => state.auth.currentUser
-    );
+    const currentUser = useSelector((state) => state.auth.currentUser);
+
     const handleLogout = useLogout();
     return (
         <header className="bg-white border-bottom sticky-top">
@@ -44,7 +43,7 @@ function Header() {
                             className="btn btn-light dropdown-toggle fw-medium"
                             data-bs-toggle="dropdown"
                         >
-                            Hello, {currentUser?.displayName || currentUser?.email || "Admin"}
+                            Hello, {currentUser?.displayName || "Admin"}
                         </button>
 
                         <ul className="dropdown-menu dropdown-menu-end">

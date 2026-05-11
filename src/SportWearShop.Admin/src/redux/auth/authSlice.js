@@ -1,7 +1,7 @@
 import { createSlice } from "@reduxjs/toolkit";
-
+import {createUserProfileResponseModel} from "../../models/userModel";
 const initialState = {
-    currentUser: null,
+    currentUser: createUserProfileResponseModel(),
     isAuthenticated: false
 };
 

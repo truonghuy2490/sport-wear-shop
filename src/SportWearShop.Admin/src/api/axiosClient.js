@@ -2,6 +2,7 @@ import axios from "axios";
 import {
     getAccessToken,
     getRefreshToken,
+    getUserId,
     saveTokens,
     clearTokens
 } from "../utils/tokenStorage";
@@ -33,20 +34,28 @@ axiosClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
+        if (!originalRequest) {
+            return Promise.reject(error);
+        }
+
+        const isAuthRequest =
+            originalRequest.url?.includes("/auth/login") ||
+            originalRequest.url?.includes("/auth/register") ||
+            originalRequest.url?.includes("/auth/refresh-token") ||
+            originalRequest.url?.includes("/auth/logout");
+
         if (
             error.response?.status === 401 &&
             !originalRequest._retry &&
-            !originalRequest.url.includes("/auth/login") &&
-            !originalRequest.url.includes("/auth/register") &&
-            !originalRequest.url.includes("/auth/refresh-token") &&
-            !originalRequest.url.includes("/auth/logout")
+            !isAuthRequest
         ) {
             originalRequest._retry = true;
 
             try {
+                const userId = getUserId();
                 const refreshToken = getRefreshToken();
 
-                if (!refreshToken) {
+                if (!userId || !refreshToken) {
                     clearTokens();
                     window.location.href = "/login";
                     return Promise.reject(error);
@@ -55,14 +64,20 @@ axiosClient.interceptors.response.use(
                 const response = await axios.post(
                     `${import.meta.env.VITE_API_BASE_URL}/auth/refresh-token`,
                     {
+                        userId: Number(userId),
                         refreshToken: refreshToken
                     }
                 );
 
                 const { accessToken, refreshToken: newRefreshToken } = response.data;
 
-                saveTokens(accessToken, newRefreshToken);
+                saveTokens(
+                    accessToken,
+                    newRefreshToken,
+                    userId
+                );
 
+                originalRequest.headers = originalRequest.headers ?? {};
                 originalRequest.headers.Authorization = `Bearer ${accessToken}`;
 
                 return axiosClient(originalRequest);

@@ -6,8 +6,7 @@ namespace SportWearShop.BusinessLogics.Interfaces
     public interface IProductService
     {
         Task<PagingResponseModel<ProductResponseModel>> GetAllAsync(
-            int pageNumber,
-            int pageSize,
+            ProductQueryRequestModel request,
             CancellationToken cancellationToken = default);
 
         Task<ProductDetailResponseModel> GetDetailsAsync(

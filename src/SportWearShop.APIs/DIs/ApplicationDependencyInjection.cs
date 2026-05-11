@@ -1,4 +1,8 @@
-﻿using SportWearShop.BusinessLogics;
+﻿using FluentValidation;
+using FluentValidation.AspNetCore;
+using SportWearShop.BusinessLogics;
+using SportWearShop.BusinessLogics.Validators;
+using SportWearShop.BusinessLogics.Validators.Products;
 
 namespace SportWearShop.APIs.DIs
 {
@@ -10,6 +14,12 @@ namespace SportWearShop.APIs.DIs
         {
             services.AddBusinessLayer(configuration);
 
+            // validators
+            services.AddFluentValidationAutoValidation();
+            // products
+            services.AddValidatorsFromAssemblyContaining<ProductQueryRequestModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<CreateProductRequestModelValidator>();
+            services.AddValidatorsFromAssemblyContaining<UpdateProductRequestModelValidator>();
 
             return services;
         }

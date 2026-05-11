@@ -1,48 +1,108 @@
+import { useEffect, useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+
+import { getProducts, deleteProduct } from "../../api/productApi";
+
+import PageHeader from "../../components/common/PageHeader";
+import SearchBox from "../../components/common/SearchBox";
+import { showToast } from "../../redux/toast/toastSlice";
+
 function ProductListPage() {
-    const products = [
-        {
-            id: 1,
-            name: "Nike Running T-Shirt",
-            brand: "Nike",
-            category: "T-Shirt",
-            price: 29.99,
-            status: "Active",
-            stock: 120
-        },
-        {
-            id: 2,
-            name: "Adidas Training Shorts",
-            brand: "Adidas",
-            category: "Shorts",
-            price: 35.5,
-            status: "Active",
-            stock: 80
-        },
-        {
-            id: 3,
-            name: "Puma Sport Jacket",
-            brand: "Puma",
-            category: "Jacket",
-            price: 79.99,
-            status: "Inactive",
-            stock: 0
+    const dispatch = useDispatch();
+
+    const [products, setProducts] = useState([]);
+    const [searchKeyword, setSearchKeyword] = useState("");
+    const [isLoading, setIsLoading] = useState(true);
+
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
+
+    const navigate = useNavigate();
+
+    useEffect(() => {
+        loadProducts();
+    }, [pageNumber]);
+
+    async function loadProducts() {
+        try {
+            setIsLoading(true);
+
+            const data = await getProducts(pageNumber, pageSize);
+
+            setProducts(data.items || data.data || []);
+            setTotalPages(data.totalPages || 1);
+        } catch (error) {
+            dispatch(
+                showToast({
+                    type: "error",
+                    title: "Error",
+                    message:
+                        error.response?.data?.message ||
+                        "Failed to load products."
+                })
+            );
+        } finally {
+            setIsLoading(false);
         }
-    ];
+    }
+
+    async function handleDeleteProduct(productId) {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this product?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteProduct(productId);
+
+            setProducts((prevProducts) =>
+                prevProducts.filter(
+                    (product) => product.productId !== productId
+                )
+            );
+
+            dispatch(
+                showToast({
+                    type: "success",
+                    title: "Success",
+                    message: "Product deleted successfully."
+                })
+            );
+        } catch (error) {
+            dispatch(
+                showToast({
+                    type: "error",
+                    title: "Error",
+                    message:
+                        error.response?.data?.message ||
+                        "Failed to delete product."
+                })
+            );
+        }
+    }
+
+    const filteredProducts = products.filter((product) => {
+        const keyword = searchKeyword.toLowerCase();
+
+        return (
+            product.productName?.toLowerCase().includes(keyword) ||
+            product.productCode?.toLowerCase().includes(keyword) ||
+            product.brandName?.toLowerCase().includes(keyword) ||
+            product.categoryName?.toLowerCase().includes(keyword)
+        );
+    });
 
     return (
         <div>
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <div>
-                    <h3 className="fw-bold mb-1">Products</h3>
-                    <p className="text-muted mb-0">
-                        Manage product information, stock and status.
-                    </p>
-                </div>
-
-                <button className="btn btn-dark">
-                    + Add Product
-                </button>
-            </div>
+            <PageHeader
+                title="Products"
+                description="Manage product information, variants, images and status."
+                actionText="+ Add Product"
+                onActionClick={() => navigate("/products/create")}
+            />
 
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
@@ -52,77 +112,192 @@ function ProductListPage() {
                             Product List
                         </h5>
 
-                        <input
-                            type="text"
-                            className="form-control w-auto"
+                        <SearchBox
+                            value={searchKeyword}
+                            onChange={setSearchKeyword}
                             placeholder="Search product..."
                         />
                     </div>
 
-                    <div className="table-responsive">
-                        <table className="table table-hover align-middle">
-                            <thead className="table-light">
-                                <tr>
-                                    <th>#</th>
-                                    <th>Product</th>
-                                    <th>Brand</th>
-                                    <th>Category</th>
-                                    <th>Price</th>
-                                    <th>Stock</th>
-                                    <th>Status</th>
-                                    <th className="text-end">Actions</th>
-                                </tr>
-                            </thead>
+                    {isLoading ? (
+                        <div className="text-center py-5 text-muted">
+                            Loading products...
+                        </div>
+                    ) : (
+                        <>
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle">
+                                    <thead className="table-light">
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Image</th>
+                                            <th>Product</th>
+                                            <th>Brand</th>
+                                            <th>Category</th>
+                                            <th>Gender</th>
+                                            <th>Price</th>
+                                            <th>Variants</th>
+                                            <th>Status</th>
+                                            <th className="text-end">
+                                                Actions
+                                            </th>
+                                        </tr>
+                                    </thead>
 
-                            <tbody>
-                                {products.map((product, index) => (
-                                    <tr key={product.id}>
-                                        <td>{index + 1}</td>
+                                    <tbody>
+                                        {filteredProducts.length === 0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="10"
+                                                    className="text-center text-muted py-4"
+                                                >
+                                                    No products found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredProducts.map((product, index) => (
+                                                <tr key={product.productId}>
+                                                    <td>
+                                                        {(pageNumber - 1) * pageSize + index + 1}
+                                                    </td>
 
-                                        <td className="fw-medium">
-                                            {product.name}
-                                        </td>
+                                                    <td>
+                                                        {product.thumbnailUrl ? (
+                                                            <img
+                                                                src={product.thumbnailUrl}
+                                                                alt={product.productName}
+                                                                width="56"
+                                                                height="56"
+                                                                className="rounded object-fit-cover"
+                                                            />
+                                                        ) : (
+                                                            <div
+                                                                className="bg-light rounded d-flex align-items-center justify-content-center"
+                                                                style={{
+                                                                    width: "56px",
+                                                                    height: "56px"
+                                                                }}
+                                                            >
+                                                                <i className="bi bi-image text-muted"></i>
+                                                            </div>
+                                                        )}
+                                                    </td>
 
-                                        <td>{product.brand}</td>
+                                                    <td>
+                                                        <div className="fw-medium">
+                                                            {product.productName}
+                                                        </div>
 
-                                        <td>{product.category}</td>
+                                                        <div className="text-muted small">
+                                                            {product.productCode}
+                                                        </div>
+                                                    </td>
 
-                                        <td>
-                                            ${product.price.toFixed(2)}
-                                        </td>
+                                                    <td>
+                                                        {product.brandName}
+                                                    </td>
 
-                                        <td>{product.stock}</td>
+                                                    <td>
+                                                        {product.categoryName}
+                                                    </td>
 
-                                        <td>
-                                            <span
-                                                className={
-                                                    product.status === "Active"
-                                                        ? "badge bg-success"
-                                                        : "badge bg-secondary"
-                                                }
-                                            >
-                                                {product.status}
-                                            </span>
-                                        </td>
+                                                    <td>
+                                                        {product.gender}
+                                                    </td>
 
-                                        <td className="text-end">
-                                            <button className="btn btn-sm btn-outline-primary me-2">
-                                                View
-                                            </button>
+                                                    <td>
+                                                        {product.minSalePrice ? (
+                                                            <>
+                                                                <div className="fw-medium">
+                                                                    ${product.minSalePrice.toFixed(2)}
+                                                                </div>
 
-                                            <button className="btn btn-sm btn-outline-dark me-2">
-                                                Edit
-                                            </button>
+                                                                <div className="text-muted small text-decoration-line-through">
+                                                                    ${product.minPrice.toFixed(2)}
+                                                                </div>
+                                                            </>
+                                                        ) : (
+                                                            <span className="fw-medium">
+                                                                ${product.minPrice.toFixed(2)}
+                                                            </span>
+                                                        )}
+                                                    </td>
 
-                                            <button className="btn btn-sm btn-outline-danger">
-                                                Delete
-                                            </button>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                                    <td>
+                                                        {product.totalVariants}
+                                                    </td>
+
+                                                    <td>
+                                                        <span
+                                                            className={
+                                                                product.status === "Active"
+                                                                    ? "badge bg-success"
+                                                                    : "badge bg-secondary"
+                                                            }
+                                                        >
+                                                            {product.status}
+                                                        </span>
+                                                    </td>
+
+                                                    <td className="text-end">
+                                                        <Link
+                                                            to={`/products/${product.productId}`}
+                                                            className="btn btn-sm btn-outline-primary me-2"
+                                                        >
+                                                            View
+                                                        </Link>
+
+                                                        <Link
+                                                            to={`/products/${product.productId}/edit`}
+                                                            className="btn btn-sm btn-outline-dark me-2"
+                                                        >
+                                                            Edit
+                                                        </Link>
+
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-outline-danger"
+                                                            onClick={() =>
+                                                                handleDeleteProduct(product.productId)
+                                                            }
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div className="d-flex justify-content-between align-items-center mt-3">
+                                <div className="text-muted small">
+                                    Page {pageNumber} of {totalPages}
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary me-2"
+                                        disabled={pageNumber <= 1}
+                                        onClick={() => setPageNumber((prev) => prev - 1)}
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary"
+                                        disabled={pageNumber >= totalPages}
+                                        onClick={() => setPageNumber((prev) => prev + 1)}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
 
                 </div>
             </div>

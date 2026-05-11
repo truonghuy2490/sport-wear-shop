@@ -8,6 +8,8 @@ import { useDispatch } from "react-redux";
 import { login as loginAction } from "../../redux/auth/authSlice";
 import { showToast } from "../../redux/toast/toastSlice";
 
+import { getCurrentUser } from "../../api/userApi";
+
 function LoginPage() {
 
     const [email, setEmail] = useState("");
@@ -34,12 +36,16 @@ function LoginPage() {
                 result.refreshToken
             );
 
+            const currentUser = await getCurrentUser();
+            
+            saveTokens(
+                result.accessToken,
+                result.refreshToken,
+                currentUser.userId
+            );
+
             dispatch(
-                loginAction({
-                    email: email,
-                    displayName: email,
-                    role: "Admin"
-                })
+                loginAction(currentUser)
             );
 
             dispatch(
