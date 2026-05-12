@@ -1,18 +1,30 @@
 import axiosClient from "./axiosClient";
 
-export async function getProducts(pageNumber = 1, pageSize = 10) {
+export async function getProducts(query) {
+    const params = {
+        pageNumber: query.pageNumber,
+        pageSize: query.pageSize,
+        sortBy: query.sortBy,
+        isAscending: query.isAscending
+    };
+
+    if (query.searchTerm?.trim()) {
+        params.searchTerm = query.searchTerm.trim();
+    }
+
+    if (query.status !== "") {
+        params.status = Number(query.status);
+    }
+
     const response = await axiosClient.get("/products", {
-        params: {
-            pageNumber,
-            pageSize
-        }
+        params
     });
 
     return response.data;
 }
 
 export async function getProductDetail(productId) {
-    const response = await axiosClient.get(`/products/${productId}`);
+    const response = await axiosClient.get(`/admin/products/${productId}`);
     return response.data;
 }
 

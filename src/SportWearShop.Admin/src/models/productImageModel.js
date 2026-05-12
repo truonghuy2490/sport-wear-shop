@@ -11,9 +11,8 @@ export const productImageResponseModel = {
 export const createProductImageRequestModel = {
     productId: 0,
     productVariantId: null,
-    imageUrl: "",
+    imageFile: null,
     altText: "",
-    sortOrder: 0,
     isPrimary: false
 };
 

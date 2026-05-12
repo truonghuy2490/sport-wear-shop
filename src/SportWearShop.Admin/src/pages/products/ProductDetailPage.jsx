@@ -3,14 +3,14 @@ import { Link, useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 import { getProductDetail } from "../../api/productApi";
+import { productDetailResponseModel } from "../../models/productModel";
 import { showToast } from "../../redux/toast/toastSlice";
 
 function ProductDetailPage() {
     const { productId } = useParams();
-
     const dispatch = useDispatch();
 
-    const [product, setProduct] = useState(null);
+    const [product, setProduct] = useState(productDetailResponseModel);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -23,7 +23,12 @@ function ProductDetailPage() {
 
             const data = await getProductDetail(productId);
 
-            setProduct(data);
+            setProduct({
+                ...productDetailResponseModel,
+                ...data,
+                images: data.images || [],
+                variants: data.variants || []
+            });
         } catch (error) {
             dispatch(
                 showToast({
@@ -39,6 +44,39 @@ function ProductDetailPage() {
         }
     }
 
+    function formatPrice(value) {
+        return new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND"
+        }).format(value || 0);
+    }
+
+    function formatDate(value) {
+        if (!value) return "-";
+        return new Date(value).toLocaleString("vi-VN");
+    }
+
+    function getStatusBadgeClass(status) {
+        switch (status) {
+            case "Active":
+                return "badge bg-success";
+            case "Draft":
+                return "badge bg-warning text-dark";
+            case "Deleted":
+                return "badge bg-danger";
+            case "Inactive":
+                return "badge bg-secondary";
+            default:
+                return "badge bg-secondary";
+        }
+    }
+
+    function getStockBadgeClass(availableQuantity) {
+        if (availableQuantity <= 0) return "badge bg-danger";
+        if (availableQuantity <= 5) return "badge bg-warning text-dark";
+        return "badge bg-success";
+    }
+
     if (isLoading) {
         return (
             <div className="text-center py-5 text-muted">
@@ -47,7 +85,7 @@ function ProductDetailPage() {
         );
     }
 
-    if (!product) {
+    if (!product.productId) {
         return (
             <div className="text-center py-5 text-muted">
                 Product not found.
@@ -59,12 +97,10 @@ function ProductDetailPage() {
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 className="fw-bold mb-1">
-                        Product Detail
-                    </h3>
+                    <h3 className="fw-bold mb-1">Admin Product Detail</h3>
 
                     <p className="text-muted mb-0">
-                        View product information, images and variants.
+                        View full admin product information, images, variants and inventory.
                     </p>
                 </div>
 
@@ -98,13 +134,7 @@ function ProductDetailPage() {
                             </div>
                         </div>
 
-                        <span
-                            className={
-                                product.status === "Active"
-                                    ? "badge bg-success"
-                                    : "badge bg-secondary"
-                            }
-                        >
+                        <span className={getStatusBadgeClass(product.status)}>
                             {product.status}
                         </span>
                     </div>
@@ -112,51 +142,45 @@ function ProductDetailPage() {
                     <hr />
 
                     <div className="row g-4">
-                        <div className="col-md-6">
-                            <div className="text-muted small">Product ID</div>
-                            <div className="fw-medium">{product.productId}</div>
-                        </div>
+                        <ProductInfoItem
+                            label="Product ID"
+                            value={product.productId}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Slug</div>
-                            <div className="fw-medium">{product.slug}</div>
-                        </div>
+                        <ProductInfoItem
+                            label="Slug"
+                            value={product.slug}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Brand</div>
-                            <div className="fw-medium">{product.brandName}</div>
-                        </div>
+                        <ProductInfoItem
+                            label="Brand"
+                            value={`${product.brandName} (#${product.brandId})`}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Category</div>
-                            <div className="fw-medium">{product.categoryName}</div>
-                        </div>
+                        <ProductInfoItem
+                            label="Category"
+                            value={`${product.categoryName} (#${product.categoryId})`}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Gender</div>
-                            <div className="fw-medium">{product.gender}</div>
-                        </div>
+                        <ProductInfoItem
+                            label="Gender"
+                            value={product.gender}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Base Material</div>
-                            <div className="fw-medium">
-                                {product.baseMaterial || "-"}
-                            </div>
-                        </div>
+                        <ProductInfoItem
+                            label="Base Material"
+                            value={product.baseMaterial || "-"}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Created At</div>
-                            <div className="fw-medium">
-                                {new Date(product.createdAtUtc).toLocaleString()}
-                            </div>
-                        </div>
+                        <ProductInfoItem
+                            label="Created At"
+                            value={formatDate(product.createdAtUtc)}
+                        />
 
-                        <div className="col-md-6">
-                            <div className="text-muted small">Updated At</div>
-                            <div className="fw-medium">
-                                {new Date(product.updatedAtUtc).toLocaleString()}
-                            </div>
-                        </div>
+                        <ProductInfoItem
+                            label="Updated At"
+                            value={formatDate(product.updatedAtUtc)}
+                        />
 
                         <div className="col-md-12">
                             <div className="text-muted small">Description</div>
@@ -170,41 +194,62 @@ function ProductDetailPage() {
 
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-body">
-                    <h5 className="fw-semibold mb-3">
-                        Product Images
-                    </h5>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="fw-semibold mb-0">
+                            Product Images
+                        </h5>
 
-                    {product.images?.length === 0 ? (
+                        <span className="text-muted small">
+                            {product.images.length} images
+                        </span>
+                    </div>
+
+                    {product.images.length === 0 ? (
                         <div className="text-muted">
                             No images found.
                         </div>
                     ) : (
                         <div className="row g-3">
-                            {product.images.map((image) => (
-                                <div
-                                    className="col-6 col-md-3 col-lg-2"
-                                    key={image.productImageId}
-                                >
-                                    <div className="border rounded-3 p-2 h-100">
-                                        <img
-                                            src={image.imageUrl}
-                                            alt={image.altText || product.productName}
-                                            className="img-fluid rounded mb-2"
-                                            style={{
-                                                height: "120px",
-                                                width: "100%",
-                                                objectFit: "cover"
-                                            }}
-                                        />
+                            {product.images
+                                .slice()
+                                .sort((a, b) => a.sortOrder - b.sortOrder)
+                                .map((image) => (
+                                    <div
+                                        className="col-6 col-md-3 col-lg-2"
+                                        key={image.productImageId}
+                                    >
+                                        <div className="border rounded-3 p-2 h-100 position-relative">
+                                            <img
+                                                src={image.imageUrl}
+                                                alt={image.altText || product.productName}
+                                                className="img-fluid rounded mb-2"
+                                                style={{
+                                                    height: "120px",
+                                                    width: "100%",
+                                                    objectFit: "cover"
+                                                }}
+                                            />
 
-                                        {image.isMain && (
-                                            <span className="badge bg-dark">
-                                                Main
-                                            </span>
-                                        )}
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="text-muted small">
+                                                    #{image.sortOrder}
+                                                </span>
+
+                                                {image.isPrimary && (
+                                                    <span className="badge bg-dark">
+                                                        Primary
+                                                    </span>
+                                                )}
+                                            </div>
+
+                                            <div className="text-muted small mt-1">
+                                                {image.productVariantId
+                                                    ? `Variant ID: ${image.productVariantId}`
+                                                    : "Product image"}
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     )}
                 </div>
@@ -212,9 +257,15 @@ function ProductDetailPage() {
 
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
-                    <h5 className="fw-semibold mb-3">
-                        Product Variants
-                    </h5>
+                    <div className="d-flex justify-content-between align-items-center mb-3">
+                        <h5 className="fw-semibold mb-0">
+                            Product Variants
+                        </h5>
+
+                        <span className="text-muted small">
+                            {product.variants.length} variants
+                        </span>
+                    </div>
 
                     <div className="table-responsive">
                         <table className="table table-hover align-middle">
@@ -224,18 +275,21 @@ function ProductDetailPage() {
                                     <th>SKU</th>
                                     <th>Color</th>
                                     <th>Size</th>
-                                    <th>List Price</th>
-                                    <th>Sale Price</th>
+                                    <th>Price</th>
                                     <th>Weight</th>
+                                    <th>On Hand</th>
+                                    <th>Reserved</th>
+                                    <th>Available</th>
                                     <th>Status</th>
+                                    <th>Images</th>
                                 </tr>
                             </thead>
 
                             <tbody>
-                                {product.variants?.length === 0 ? (
+                                {product.variants.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan="8"
+                                            colSpan="11"
                                             className="text-center text-muted py-4"
                                         >
                                             No variants found.
@@ -246,26 +300,66 @@ function ProductDetailPage() {
                                         <tr key={variant.productVariantId}>
                                             <td>{index + 1}</td>
 
-                                            <td className="fw-medium">
-                                                {variant.sku}
+                                            <td>
+                                                <div className="fw-medium">
+                                                    {variant.sku}
+                                                </div>
+
+                                                <div className="text-muted small">
+                                                    ID: {variant.productVariantId}
+                                                </div>
                                             </td>
 
                                             <td>
-                                                {variant.colorName || "-"}
+                                                <div className="d-flex align-items-center gap-2">
+                                                    <span
+                                                        className="border rounded-circle"
+                                                        style={{
+                                                            width: "18px",
+                                                            height: "18px",
+                                                            backgroundColor:
+                                                                variant.colorCode || "#ffffff"
+                                                        }}
+                                                    />
+
+                                                    <div>
+                                                        <div className="fw-medium">
+                                                            {variant.colorName || "-"}
+                                                        </div>
+
+                                                        <div className="text-muted small">
+                                                            {variant.colorCode || "-"}
+                                                        </div>
+                                                    </div>
+                                                </div>
                                             </td>
 
                                             <td>
-                                                {variant.sizeLabel || "-"}
+                                                <div className="fw-medium">
+                                                    {variant.sizeLabel || "-"}
+                                                </div>
+
+                                                <div className="text-muted small">
+                                                    {variant.sizeCode || "-"}
+                                                </div>
                                             </td>
 
                                             <td>
-                                                ${Number(variant.listPrice).toFixed(2)}
-                                            </td>
+                                                {variant.salePrice ? (
+                                                    <>
+                                                        <div className="fw-medium text-danger">
+                                                            {formatPrice(variant.salePrice)}
+                                                        </div>
 
-                                            <td>
-                                                {variant.salePrice
-                                                    ? `$${Number(variant.salePrice).toFixed(2)}`
-                                                    : "-"}
+                                                        <div className="text-muted small text-decoration-line-through">
+                                                            {formatPrice(variant.listPrice)}
+                                                        </div>
+                                                    </>
+                                                ) : (
+                                                    <span className="fw-medium">
+                                                        {formatPrice(variant.listPrice)}
+                                                    </span>
+                                                )}
                                             </td>
 
                                             <td>
@@ -274,16 +368,59 @@ function ProductDetailPage() {
                                                     : "-"}
                                             </td>
 
+                                            <td>{variant.quantityOnHand}</td>
+
+                                            <td>{variant.quantityReserved}</td>
+
                                             <td>
                                                 <span
-                                                    className={
-                                                        variant.status === "Active"
-                                                            ? "badge bg-success"
-                                                            : "badge bg-secondary"
-                                                    }
+                                                    className={getStockBadgeClass(
+                                                        variant.availableQuantity
+                                                    )}
                                                 >
+                                                    {variant.availableQuantity}
+                                                </span>
+                                            </td>
+
+                                            <td>
+                                                <span className={getStatusBadgeClass(variant.status)}>
                                                     {variant.status}
                                                 </span>
+                                            </td>
+
+                                            <td>
+                                                {variant.images?.length > 0 ? (
+                                                    <div className="d-flex">
+                                                        {variant.images
+                                                            .slice(0, 3)
+                                                            .map((image) => (
+                                                                <img
+                                                                    key={image.productImageId}
+                                                                    src={image.imageUrl}
+                                                                    alt={
+                                                                        image.altText ||
+                                                                        variant.sku
+                                                                    }
+                                                                    className="rounded border me-1"
+                                                                    style={{
+                                                                        width: "36px",
+                                                                        height: "36px",
+                                                                        objectFit: "cover"
+                                                                    }}
+                                                                />
+                                                            ))}
+
+                                                        {variant.images.length > 3 && (
+                                                            <span className="badge bg-light text-dark align-self-center">
+                                                                +{variant.images.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-muted small">
+                                                        No images
+                                                    </span>
+                                                )}
                                             </td>
                                         </tr>
                                     ))
@@ -293,6 +430,15 @@ function ProductDetailPage() {
                     </div>
                 </div>
             </div>
+        </div>
+    );
+}
+
+function ProductInfoItem({ label, value }) {
+    return (
+        <div className="col-md-6">
+            <div className="text-muted small">{label}</div>
+            <div className="fw-medium">{value || "-"}</div>
         </div>
     );
 }

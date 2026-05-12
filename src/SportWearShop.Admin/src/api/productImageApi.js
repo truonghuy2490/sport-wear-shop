@@ -1,8 +1,7 @@
 // src/api/productImageApi.js
-
 import axiosClient from "./axiosClient";
 
-function buildProductImageFormData(request) {
+export function buildProductImageFormData(request) {
     const formData = new FormData();
 
     formData.append("productId", request.productId);
@@ -11,9 +10,12 @@ function buildProductImageFormData(request) {
         formData.append("productVariantId", request.productVariantId);
     }
 
-    formData.append("imageUrl", request.imageUrl);
-    formData.append("altText", request.altText || "");
-    formData.append("sortOrder", request.sortOrder);
+    formData.append("imageFile", request.imageFile);
+
+    if (request.altText) {
+        formData.append("altText", request.altText);
+    }
+
     formData.append("isPrimary", request.isPrimary);
 
     return formData;
@@ -39,7 +41,7 @@ export async function createProductImage(request) {
     const formData = buildProductImageFormData(request);
 
     const response = await axiosClient.post(
-        "/api/product-images",
+        "/product-images",
         formData,
         {
             headers: {

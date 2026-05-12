@@ -3,36 +3,59 @@ import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 import { getProducts, deleteProduct } from "../../api/productApi";
-
 import PageHeader from "../../components/common/PageHeader";
 import SearchBox from "../../components/common/SearchBox";
 import { showToast } from "../../redux/toast/toastSlice";
 
+import {
+    productQueryRequestModel,
+    productStatusOptions,
+    productSortByOptions
+} from "../../models/productModel";
+
 function ProductListPage() {
     const dispatch = useDispatch();
-
-    const [products, setProducts] = useState([]);
-    const [searchKeyword, setSearchKeyword] = useState("");
-    const [isLoading, setIsLoading] = useState(true);
-
-    const [pageNumber, setPageNumber] = useState(1);
-    const [pageSize] = useState(10);
-    const [totalPages, setTotalPages] = useState(1);
-
     const navigate = useNavigate();
 
-    useEffect(() => {
-        loadProducts();
-    }, [pageNumber]);
+    const [products, setProducts] = useState([]);
+    const [query, setQuery] = useState(productQueryRequestModel);
+    const [isLoading, setIsLoading] = useState(false);
 
-    async function loadProducts() {
+    const [paging, setPaging] = useState({
+        totalCount: 0,
+        pageNumber: 1,
+        pageSize: 10,
+        totalPages: 1,
+        hasPreviousPage: false,
+        hasNextPage: false
+    });
+
+    useEffect(() => {
+        loadProducts(query);
+    }, [
+        query.pageNumber,
+        query.pageSize,
+        query.status,
+        query.sortBy,
+        query.isAscending
+    ]);
+
+    async function loadProducts(currentQuery = query) {
         try {
             setIsLoading(true);
 
-            const data = await getProducts(pageNumber, pageSize);
+            const data = await getProducts(currentQuery);
 
-            setProducts(data.items || data.data || []);
-            setTotalPages(data.totalPages || 1);
+            setProducts(data.items || []);
+
+            setPaging({
+                totalCount: data.totalCount || 0,
+                pageNumber: data.pageNumber || 1,
+                pageSize: data.pageSize || currentQuery.pageSize,
+                totalPages: data.totalPages || 1,
+                hasPreviousPage: data.hasPreviousPage || false,
+                hasNextPage: data.hasNextPage || false
+            });
         } catch (error) {
             dispatch(
                 showToast({
@@ -48,6 +71,35 @@ function ProductListPage() {
         }
     }
 
+    function updateQuery(name, value) {
+        setQuery((prev) => ({
+            ...prev,
+            [name]: value,
+            pageNumber: 1
+        }));
+    }
+
+    function handleSearchSubmit(e) {
+        e.preventDefault();
+
+        const newQuery = {
+            ...query,
+            pageNumber: 1
+        };
+
+        setQuery(newQuery);
+        loadProducts(newQuery);
+    }
+
+    function handleResetFilters() {
+        const defaultQuery = {
+            ...productQueryRequestModel
+        };
+
+        setQuery(defaultQuery);
+        loadProducts(defaultQuery);
+    }
+
     async function handleDeleteProduct(productId) {
         const confirmed = window.confirm(
             "Are you sure you want to delete this product?"
@@ -58,12 +110,6 @@ function ProductListPage() {
         try {
             await deleteProduct(productId);
 
-            setProducts((prevProducts) =>
-                prevProducts.filter(
-                    (product) => product.productId !== productId
-                )
-            );
-
             dispatch(
                 showToast({
                     type: "success",
@@ -71,6 +117,8 @@ function ProductListPage() {
                     message: "Product deleted successfully."
                 })
             );
+
+            loadProducts(query);
         } catch (error) {
             dispatch(
                 showToast({
@@ -84,16 +132,28 @@ function ProductListPage() {
         }
     }
 
-    const filteredProducts = products.filter((product) => {
-        const keyword = searchKeyword.toLowerCase();
+    function formatPrice(value) {
+        return new Intl.NumberFormat("vi-VN", {
+            style: "currency",
+            currency: "VND"
+        }).format(value || 0);
+    }
 
-        return (
-            product.productName?.toLowerCase().includes(keyword) ||
-            product.productCode?.toLowerCase().includes(keyword) ||
-            product.brandName?.toLowerCase().includes(keyword) ||
-            product.categoryName?.toLowerCase().includes(keyword)
-        );
-    });
+    function getStatusBadgeClass(status) {
+        switch (status) {
+            case "Active":
+                return "badge bg-success";
+
+            case "Draft":
+                return "badge bg-warning text-dark";
+
+            case "Deleted":
+                return "badge bg-danger";
+
+            default:
+                return "badge bg-secondary";
+        }
+    }
 
     return (
         <div>
@@ -104,19 +164,119 @@ function ProductListPage() {
                 onActionClick={() => navigate("/products/create")}
             />
 
+            <div className="card border-0 shadow-sm mb-3">
+                <div className="card-body">
+                    <form onSubmit={handleSearchSubmit}>
+                        <div className="row g-3 align-items-end">
+                            <div className="col-md-4">
+                                <label className="form-label small text-muted">
+                                    Search
+                                </label>
+
+                                <SearchBox
+                                    value={query.searchTerm}
+                                    onChange={(value) =>
+                                        setQuery((prev) => ({
+                                            ...prev,
+                                            searchTerm: value
+                                        }))
+                                    }
+                                    placeholder="Search name, code, brand..."
+                                />
+                            </div>
+
+                            <div className="col-md-2">
+                                <label className="form-label small text-muted">
+                                    Status
+                                </label>
+
+                                <select
+                                    className="form-select"
+                                    value={query.status}
+                                    onChange={(e) =>
+                                        updateQuery("status", e.target.value)
+                                    }
+                                >
+                                    {productStatusOptions.map((option) => (
+                                        <option
+                                            key={option.label}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="col-md-2">
+                                <label className="form-label small text-muted">
+                                    Sort by
+                                </label>
+
+                                <select
+                                    className="form-select"
+                                    value={query.sortBy}
+                                    onChange={(e) =>
+                                        updateQuery("sortBy", Number(e.target.value))
+                                    }
+                                >
+                                    {productSortByOptions.map((option) => (
+                                        <option
+                                            key={option.value}
+                                            value={option.value}
+                                        >
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="col-md-2">
+                                <label className="form-label small text-muted">
+                                    Direction
+                                </label>
+
+                                <select
+                                    className="form-select"
+                                    value={query.isAscending ? "true" : "false"}
+                                    onChange={(e) =>
+                                        updateQuery(
+                                            "isAscending",
+                                            e.target.value === "true"
+                                        )
+                                    }
+                                >
+                                    <option value="false">Descending</option>
+                                    <option value="true">Ascending</option>
+                                </select>
+                            </div>
+
+                            <div className="col-md-2 d-flex gap-2">
+                                <button type="submit" className="btn btn-dark">
+                                    Search
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn btn-outline-secondary"
+                                    onClick={handleResetFilters}
+                                >
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
-
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="mb-0 fw-semibold">
-                            Product List
-                        </h5>
+                        <h5 className="mb-0 fw-semibold">Product List</h5>
 
-                        <SearchBox
-                            value={searchKeyword}
-                            onChange={setSearchKeyword}
-                            placeholder="Search product..."
-                        />
+                        <div className="text-muted small">
+                            Total: {paging.totalCount} products
+                        </div>
                     </div>
 
                     {isLoading ? (
@@ -145,7 +305,7 @@ function ProductListPage() {
                                     </thead>
 
                                     <tbody>
-                                        {filteredProducts.length === 0 ? (
+                                        {products.length === 0 ? (
                                             <tr>
                                                 <td
                                                     colSpan="10"
@@ -155,10 +315,13 @@ function ProductListPage() {
                                                 </td>
                                             </tr>
                                         ) : (
-                                            filteredProducts.map((product, index) => (
+                                            products.map((product, index) => (
                                                 <tr key={product.productId}>
                                                     <td>
-                                                        {(pageNumber - 1) * pageSize + index + 1}
+                                                        {(paging.pageNumber - 1) *
+                                                            paging.pageSize +
+                                                            index +
+                                                            1}
                                                     </td>
 
                                                     <td>
@@ -193,48 +356,38 @@ function ProductListPage() {
                                                         </div>
                                                     </td>
 
-                                                    <td>
-                                                        {product.brandName}
-                                                    </td>
+                                                    <td>{product.brandName}</td>
 
-                                                    <td>
-                                                        {product.categoryName}
-                                                    </td>
+                                                    <td>{product.categoryName}</td>
 
-                                                    <td>
-                                                        {product.gender}
-                                                    </td>
+                                                    <td>{product.gender}</td>
 
                                                     <td>
                                                         {product.minSalePrice ? (
                                                             <>
-                                                                <div className="fw-medium">
-                                                                    ${product.minSalePrice.toFixed(2)}
+                                                                <div className="fw-medium text-danger">
+                                                                    {formatPrice(product.minSalePrice)}
                                                                 </div>
 
                                                                 <div className="text-muted small text-decoration-line-through">
-                                                                    ${product.minPrice.toFixed(2)}
+                                                                    {formatPrice(product.minPrice)}
                                                                 </div>
                                                             </>
                                                         ) : (
                                                             <span className="fw-medium">
-                                                                ${product.minPrice.toFixed(2)}
+                                                                {formatPrice(product.minPrice)}
                                                             </span>
                                                         )}
                                                     </td>
 
                                                     <td>
-                                                        {product.totalVariants}
+                                                        <span className="badge bg-light text-dark">
+                                                            {product.totalVariants}
+                                                        </span>
                                                     </td>
 
                                                     <td>
-                                                        <span
-                                                            className={
-                                                                product.status === "Active"
-                                                                    ? "badge bg-success"
-                                                                    : "badge bg-secondary"
-                                                            }
-                                                        >
+                                                        <span className={getStatusBadgeClass(product.status)}>
                                                             {product.status}
                                                         </span>
                                                     </td>
@@ -273,15 +426,20 @@ function ProductListPage() {
 
                             <div className="d-flex justify-content-between align-items-center mt-3">
                                 <div className="text-muted small">
-                                    Page {pageNumber} of {totalPages}
+                                    Page {paging.pageNumber} of {paging.totalPages}
                                 </div>
 
                                 <div>
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-outline-secondary me-2"
-                                        disabled={pageNumber <= 1}
-                                        onClick={() => setPageNumber((prev) => prev - 1)}
+                                        disabled={!paging.hasPreviousPage}
+                                        onClick={() =>
+                                            setQuery((prev) => ({
+                                                ...prev,
+                                                pageNumber: prev.pageNumber - 1
+                                            }))
+                                        }
                                     >
                                         Previous
                                     </button>
@@ -289,8 +447,13 @@ function ProductListPage() {
                                     <button
                                         type="button"
                                         className="btn btn-sm btn-outline-secondary"
-                                        disabled={pageNumber >= totalPages}
-                                        onClick={() => setPageNumber((prev) => prev + 1)}
+                                        disabled={!paging.hasNextPage}
+                                        onClick={() =>
+                                            setQuery((prev) => ({
+                                                ...prev,
+                                                pageNumber: prev.pageNumber + 1
+                                            }))
+                                        }
                                     >
                                         Next
                                     </button>
@@ -298,7 +461,6 @@ function ProductListPage() {
                             </div>
                         </>
                     )}
-
                 </div>
             </div>
         </div>

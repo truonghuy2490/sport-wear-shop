@@ -18,9 +18,9 @@ export async function getProductVariantById(productVariantId) {
     return response.data;
 }
 
-export async function createProductVariant(productId, request) {
+export async function createProductVariants(productId, request) {
     const response = await axiosClient.post(
-        `/products/${productId}/product-variants`,
+        `/products/${productId}/product-variants/batch`,
         request
     );
 
