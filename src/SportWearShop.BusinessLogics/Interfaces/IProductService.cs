@@ -26,6 +26,10 @@ namespace SportWearShop.BusinessLogics.Interfaces
         Task DeleteAsync(
             long productId,
             CancellationToken cancellationToken = default);
+
+        Task<AdminProductDetailResponseModel> GetAdminDetailsAsync(
+            long productId,
+            CancellationToken cancellationToken = default);     
     }
 
 

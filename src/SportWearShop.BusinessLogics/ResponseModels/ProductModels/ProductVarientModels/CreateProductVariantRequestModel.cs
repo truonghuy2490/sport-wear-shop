@@ -6,7 +6,6 @@ namespace SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarie
 {
     public class CreateProductVariantRequestModel
     {
-        public string Sku { get; set; } = string.Empty;
 
         public string ColorCode { get; set; } = string.Empty;
 

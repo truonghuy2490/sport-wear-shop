@@ -292,6 +292,122 @@ namespace SportWearShop.BusinessLogics.Services
             return product;
         }
 
+        public async Task<AdminProductDetailResponseModel> GetAdminDetailsAsync(
+            long productId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Retrieving admin product details. ProductId={ProductId}",
+                productId);
+
+            var product = await _unitOfWork.Products.FirstOrDefaultAsync(
+                predicate: product => product.ProductId == productId,
+                selector: product => new AdminProductDetailResponseModel
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductCode = product.ProductCode,
+                    Slug = product.Slug,
+                    Description = product.Description,
+                    Gender = product.Gender.ToString(),
+                    BaseMaterial = product.BaseMaterial,
+
+                    BrandId = product.BrandId,
+                    BrandName = product.Brand.BrandName,
+
+                    CategoryId = product.CategoryId,
+                    CategoryName = product.Category.CategoryName,
+
+                    Status = product.Status.ToString(),
+                    CreatedAtUtc = product.CreatedAtUtc,
+                    UpdatedAtUtc = product.UpdatedAtUtc,
+
+                    Images = product.ProductImages
+                        .OrderBy(image => image.SortOrder)
+                        .Select(image => new AdminProductImageResponseModel
+                        {
+                            ProductImageId = image.ProductImageId,
+                            ProductVariantId = image.ProductVariantId,
+                            ImageUrl = image.ImageUrl,
+                            AltText = image.AltText,
+                            SortOrder = image.SortOrder,
+                            IsPrimary = image.IsPrimary
+                        })
+                        .ToList(),
+
+                    Variants = product.ProductVariants
+                        .OrderBy(variant => variant.ColorName)
+                        .ThenBy(variant => variant.SizeCode)
+                        .Select(variant => new AdminProductVariantResponseModel
+                        {
+                            ProductVariantId = variant.ProductVariantId,
+                            ProductId = variant.ProductId,
+                            Sku = variant.Sku,
+                            ColorCode = variant.ColorCode,
+                            ColorName = variant.ColorName,
+                            SizeCode = variant.SizeCode,
+                            SizeLabel = variant.SizeLabel,
+                            ListPrice = variant.ListPrice,
+                            SalePrice = variant.SalePrice,
+                            WeightGrams = variant.WeightGrams,
+                            Status = variant.Status.ToString(),
+
+                            QuantityOnHand = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityOnHand,
+
+                            QuantityReserved = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityReserved,
+
+                            AvailableQuantity = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityOnHand - variant.InventoryStock.QuantityReserved,
+
+                            Images = variant.ProductImages
+                                .OrderBy(image => image.SortOrder)
+                                .Select(image => new AdminProductImageResponseModel
+                                {
+                                    ProductImageId = image.ProductImageId,
+                                    ProductVariantId = image.ProductVariantId,
+                                    ImageUrl = image.ImageUrl,
+                                    AltText = image.AltText,
+                                    SortOrder = image.SortOrder,
+                                    IsPrimary = image.IsPrimary
+                                })
+                                .ToList()
+                        })
+                        .ToList()
+                },
+                asNoTracking: true,
+                cancellationToken: cancellationToken,
+                includes:
+                [
+                    product => product.Brand,
+                    product => product.Category,
+                    product => product.ProductImages,
+                    product => product.ProductVariants
+                ]);
+
+            if (product == null)
+            {
+                _logger.LogWarning(
+                    "Admin product details retrieval failed. Product not found. ProductId={ProductId}",
+                    productId);
+
+                throw new NotFoundException(
+                    $"Product with ID {productId} was not found.");
+            }
+
+            _logger.LogInformation(
+                "Retrieved admin product details successfully. ProductId={ProductId}, VariantCount={VariantCount}, ImageCount={ImageCount}",
+                product.ProductId,
+                product.Variants.Count,
+                product.Images.Count);
+
+            return product;
+        }
+
         public async Task<ProductResponseModel> CreateAsync(
             CreateProductRequestModel request,
             CancellationToken cancellationToken = default)

@@ -18,9 +18,9 @@ public interface IProductVariantService
         long productVariantId,
         CancellationToken cancellationToken = default);
 
-    Task<ProductVariantResponseModel> CreateAsync(
+    Task<List<ProductVariantResponseModel>> CreateManyAsync(
         long productId,
-        CreateProductVariantRequestModel request,
+        CreateProductVariantsRequestModel request,
         CancellationToken cancellationToken = default);
 
     Task<ProductVariantResponseModel> UpdateAsync(
@@ -37,4 +37,7 @@ public interface IProductVariantService
         UpdateProductImageSortOrdersRequestModel request,
         CancellationToken cancellationToken = default);
 
+    Task<AdminProductVariantDetailResponseModel> GetAdminByIdAsync(
+        long productVariantId,
+        CancellationToken cancellationToken = default);
 }

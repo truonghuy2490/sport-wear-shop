@@ -76,10 +76,7 @@ public class CategoryController : ControllerBase
     {
         var result = await _categoryService.CreateAsync(request, cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.CategoryId },
-            result);
+        return Ok(result);
     }
 
     // PUT: api/categories

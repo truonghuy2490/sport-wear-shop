@@ -38,21 +38,18 @@ public class ProductVariantsController : ControllerBase
     // POST: /api/products/{productId}/product-variants
     // AUTHORIZATION: Admin, Staff
     [Authorize(Policy = "AdminOrStaff")]
-    [HttpPost("api/products/{productId:long}/product-variants")]
-    public async Task<IActionResult> CreateAsync(
-        [FromRoute] long productId, 
-        [FromBody] CreateProductVariantRequestModel request,
+    [HttpPost("api/products/{productId:long}/product-variants/batch")]
+    public async Task<IActionResult> CreateManyAsync(
+        [FromRoute] long productId,
+        [FromBody] CreateProductVariantsRequestModel request,
         CancellationToken cancellationToken = default)
     {
-        var result = await _productVariantService.CreateAsync(
+        var result = await _productVariantService.CreateManyAsync(
             productId,
             request,
             cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetByIdAsync),
-            new { productVariantId = result.ProductVariantId },
-            result);
+        return Ok(result);
     }
 
     // GET /api/product-variants/{productVariantId}
@@ -115,6 +112,19 @@ public class ProductVariantsController : ControllerBase
         var result = await _productVariantService.UpdateSortOrdersAsync(
             productVariantId,
             request,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpGet("api/admin/product-variants/{productVariantId:long}")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> GetAdminByIdAsync(
+        long productVariantId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.GetAdminByIdAsync(
+            productVariantId,
             cancellationToken);
 
         return Ok(result);
