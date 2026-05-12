@@ -124,7 +124,7 @@ public class ProductVariantService : IProductVariantService{
 
         var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
             predicate: v => v.ProductVariantId == productVariantId
-                         && v.Status == ProductVariantStatus.Active,
+                         && v.Status != ProductVariantStatus.Deleted,
             selector: v => new ProductVariantDetailResponseModel
             {
                 ProductVariantId = v.ProductVariantId,
@@ -477,7 +477,7 @@ public class ProductVariantService : IProductVariantService{
 
         var isProductVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
             predicate: variant => variant.ProductVariantId == productVariantId
-                                && variant.Status == ProductVariantStatus.Active,
+                                && variant.Status != ProductVariantStatus.Deleted,
             cancellationToken: cancellationToken);
 
         if (!isProductVariantExist)

@@ -34,7 +34,7 @@ public class ProductImageService : IProductImageService {
 
         var isProductExist = await _unitOfWork.Products.AnyAsync(
             product => product.ProductId == productId
-                       && product.Status == ProductStatus.Active,
+                       && product.Status != ProductStatus.Deleted,
             cancellationToken);
 
         if(!isProductExist)
@@ -80,7 +80,7 @@ public class ProductImageService : IProductImageService {
 
         var isVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
             variant => variant.ProductVariantId == productVariantId
-                       && variant.Status == ProductVariantStatus.Active,
+                       && variant.Status != ProductVariantStatus.Deleted,
             cancellationToken);
 
         if(!isVariantExist)
