@@ -16,5 +16,9 @@ public interface ICheckoutService
         long orderId,
         bool isSuccess,
         CancellationToken cancellationToken = default);
+
+    Task<PaymentResultResponseModel> ConfirmCodOrderAsync(
+        long orderId,
+        CancellationToken cancellationToken = default);
 }
 

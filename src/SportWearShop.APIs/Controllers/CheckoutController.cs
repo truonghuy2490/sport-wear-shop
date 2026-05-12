@@ -71,6 +71,20 @@ public class CheckoutController : ControllerBase
         return Ok(result);
     }
 
+    // POST: api/checkout/orders/{orderId}/confirm-cod
+    [HttpPost("orders/{orderId:long}/confirm-cod")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> ConfirmCodOrderAsync(
+        long orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _checkoutService.ConfirmCodOrderAsync(
+            orderId,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
     private bool TryGetUserId(out long userId)
     {
         var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);

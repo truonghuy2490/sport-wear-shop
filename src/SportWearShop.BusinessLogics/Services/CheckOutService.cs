@@ -3,6 +3,7 @@ using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.ResponseModels.CheckOutModels;
 using SportWearShop.Repositories.Entities;
+using SportWearShop.Repositories.Enums;
 using SportWearShop.Repositories.UnitOfWorks;
 
 namespace SportWearShop.BusinessLogics.Services;
@@ -166,7 +167,15 @@ public class CheckoutService : ICheckoutService
 
             subtotal += lineTotalAmount;
 
-            variant.InventoryStock.QuantityOnHand -= cartItem.Quantity;
+            var availableStock = variant.InventoryStock.QuantityOnHand - variant.InventoryStock.QuantityReserved;
+
+            if (availableStock < cartItem.Quantity)
+            {
+                throw new BadRequestException(
+                    $"Product {variant.Sku} does not have enough available stock.");
+            }
+
+            variant.InventoryStock.QuantityReserved += cartItem.Quantity;
             variant.InventoryStock.UpdatedAtUtc = now;
 
             orderItems.Add(new OrderItem
@@ -190,7 +199,8 @@ public class CheckoutService : ICheckoutService
             _unitOfWork.InventoryStocks.Update(variant.InventoryStock);
         }
 
-        var shippingFee = DefaultShippingFee;
+        // this should be a distance cacultor for shipping fee in next update XD, discount also :D
+        var shippingFee = DefaultShippingFee; 
         var discountAmount = 0;
         var totalAmount = subtotal + shippingFee - discountAmount;
 
@@ -238,6 +248,23 @@ public class CheckoutService : ICheckoutService
             _unitOfWork.CartItems.Remove(cartItem);
         }
 
+        // make a reverse stock 
+        foreach (var orderItem in orderItems)
+        {
+            await _unitOfWork.InventoryMovements.AddAsync(
+                new InventoryMovement
+                {
+                    ProductVariantId = orderItem.ProductVariantId!.Value,
+                    MovementType = InventoryMovementType.Reserve,
+                    Quantity = orderItem.Quantity,
+                    ReferenceType = InventoryReferenceType.Order,
+                    ReferenceId = null,
+                    Note = $"Reserved stock for order {order.OrderNumber}",
+                    CreatedAtUtc = now
+                },
+                cancellationToken);
+        }
+
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         // Online Payment in next update
@@ -274,6 +301,7 @@ public class CheckoutService : ICheckoutService
             cancellationToken: cancellationToken,
             includes:
             [
+                order => order.OrderItems,
                 order => order.PaymentTransactions
             ]);
 
@@ -296,6 +324,72 @@ public class CheckoutService : ICheckoutService
             throw new BadRequestException("Payment already confirmed.");
         }
 
+        foreach (var item in order.OrderItems)
+        {
+            if (item.ProductVariantId == null)
+            {
+                continue;
+            }
+
+            var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
+                predicate: stock => stock.ProductVariantId == item.ProductVariantId.Value,
+                selector: stock => stock,
+                asNoTracking: false,
+                cancellationToken: cancellationToken);
+
+            if (stock == null)
+            {
+                throw new NotFoundException("Inventory stock not found.");
+            }
+
+            if (stock.QuantityReserved < item.Quantity)
+            {
+                throw new BadRequestException("Reserved stock is not enough.");
+            }
+
+            if (isSuccess)
+            {
+                stock.QuantityReserved -= item.Quantity;
+                stock.QuantityOnHand -= item.Quantity;
+                stock.UpdatedAtUtc = now;
+                
+                // Sold   
+                await _unitOfWork.InventoryMovements.AddAsync(
+                    new InventoryMovement
+                    {
+                        ProductVariantId = item.ProductVariantId.Value,
+                        MovementType = InventoryMovementType.Sold,
+                        Quantity = item.Quantity,
+                        ReferenceType = InventoryReferenceType.Order,
+                        ReferenceId = order.OrderId,
+                        Note = $"Sold stock for order {order.OrderNumber}",
+                        CreatedAtUtc = now
+                    },
+                    cancellationToken);
+            }
+            else
+            {
+                stock.QuantityReserved -= item.Quantity;
+                stock.UpdatedAtUtc = now;
+
+                // Release 
+                await _unitOfWork.InventoryMovements.AddAsync(
+                    new InventoryMovement
+                    {
+                        ProductVariantId = item.ProductVariantId.Value,
+                        MovementType = InventoryMovementType.Release,
+                        Quantity = item.Quantity,
+                        ReferenceType = InventoryReferenceType.Order,
+                        ReferenceId = order.OrderId,
+                        Note = $"Released stock for failed payment order {order.OrderNumber}",
+                        CreatedAtUtc = now
+                    },
+                    cancellationToken);
+            }
+
+            _unitOfWork.InventoryStocks.Update(stock);
+        }
+
         if (isSuccess)
         {
             paymentTransaction.TransactionStatus = "Paid";
@@ -314,6 +408,8 @@ public class CheckoutService : ICheckoutService
             paymentTransaction.UpdatedAtUtc = now;
 
             order.PaymentStatus = "Failed";
+            order.OrderStatus = "Cancelled";
+            order.CancelledAtUtc = now;
             order.UpdatedAtUtc = now;
         }
 
@@ -330,10 +426,117 @@ public class CheckoutService : ICheckoutService
             OrderStatus = order.OrderStatus
         };
     }
-        private static string GenerateOrderNumber()
+
+    public async Task<PaymentResultResponseModel> ConfirmCodOrderAsync(
+        long orderId,
+        CancellationToken cancellationToken = default)
+    {
+        var now = DateTime.UtcNow;
+
+        var order = await _unitOfWork.OrderHeaders.FirstOrDefaultAsync(
+            predicate: order => order.OrderId == orderId,
+            selector: order => order,
+            asNoTracking: false,
+            cancellationToken: cancellationToken,
+            includes:
+            [
+                order => order.OrderItems,
+                order => order.PaymentTransactions
+            ]);
+
+        if (order == null)
+        {
+            throw new NotFoundException("Order not found.");
+        }
+
+        if (order.OrderStatus != "Pending")
+        {
+            throw new BadRequestException("Only pending order can be confirmed.");
+        }
+
+        var paymentTransaction = order.PaymentTransactions
+            .OrderByDescending(transaction => transaction.CreatedAtUtc)
+            .FirstOrDefault();
+
+        if (paymentTransaction == null)
+        {
+            throw new NotFoundException("Payment transaction not found.");
+        }
+
+        if (paymentTransaction.PaymentMethod != "COD")
+        {
+            throw new BadRequestException("This order is not COD order.");
+        }
+
+        foreach (var item in order.OrderItems)
+        {
+            if (item.ProductVariantId == null)
+            {
+                continue;
+            }
+
+            var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
+                predicate: stock => stock.ProductVariantId == item.ProductVariantId.Value,
+                selector: stock => stock,
+                asNoTracking: false,
+                cancellationToken: cancellationToken);
+
+            if (stock == null)
+            {
+                throw new NotFoundException("Inventory stock not found.");
+            }
+
+            if (stock.QuantityReserved < item.Quantity)
+            {
+                throw new BadRequestException("Reserved stock is not enough.");
+            }
+
+            stock.QuantityReserved -= item.Quantity;
+            stock.QuantityOnHand -= item.Quantity;
+            stock.UpdatedAtUtc = now;
+
+            await _unitOfWork.InventoryMovements.AddAsync(
+                new InventoryMovement
+                {
+                    ProductVariantId = item.ProductVariantId.Value,
+                    MovementType = InventoryMovementType.Sold,
+                    Quantity = item.Quantity,
+                    ReferenceType = InventoryReferenceType.Order,
+                    ReferenceId = order.OrderId,
+                    Note = $"Sold stock for COD order {order.OrderNumber}",
+                    CreatedAtUtc = now
+                },
+                cancellationToken);
+
+            _unitOfWork.InventoryStocks.Update(stock);
+        }
+
+        paymentTransaction.TransactionStatus = "Confirmed";
+        paymentTransaction.UpdatedAtUtc = now;
+
+        order.OrderStatus = "Confirmed";
+        order.PaymentStatus = "Unpaid";
+        order.UpdatedAtUtc = now;
+
+        _unitOfWork.PaymentTransactions.Update(paymentTransaction);
+        _unitOfWork.OrderHeaders.Update(order);
+
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new PaymentResultResponseModel
+        {
+            OrderId = order.OrderId,
+            IsSuccess = true,
+            PaymentStatus = order.PaymentStatus,
+            OrderStatus = order.OrderStatus
+        };
+    }
+
+    private static string GenerateOrderNumber()
     {
         return $"ORD-{DateTime.UtcNow:yyyyMMddHHmmssfff}";
     }
+    
     private static string BuildAddressSnapshot(UserAddress address)
     {
         return $"{address.RecipientName} | {address.PhoneNumber} | {address.AddressLine1}, {address.Ward}, {address.District}, {address.City}";
