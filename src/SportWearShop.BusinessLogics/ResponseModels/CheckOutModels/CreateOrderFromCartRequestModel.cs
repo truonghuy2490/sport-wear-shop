@@ -3,5 +3,5 @@ public class CreateOrderFromCartRequestModel
 {
     public long ShippingAddressId { get; set; }
 
-    public string PaymentMethod { get; set; } = "PayOS";
+    public string PaymentMethod { get; set; } = "COD"; // COD or Online(payos,vnpay,...)
 }

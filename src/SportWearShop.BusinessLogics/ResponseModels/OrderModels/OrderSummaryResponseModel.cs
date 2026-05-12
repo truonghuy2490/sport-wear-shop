@@ -12,4 +12,6 @@ public class OrderSummaryResponseModel
     public string PaymentStatus { get; set; } = null!;
 
     public DateTime OrderedAtUtc { get; set; }
+
+    public int TotalItems { get; set; }
 }

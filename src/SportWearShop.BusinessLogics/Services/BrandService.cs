@@ -211,37 +211,49 @@ public class BrandService : IBrandService
             throw new NotFoundException($"Brand with ID {brandId} not found.");
         }
 
-        var normalizedBrandCode = request.BrandCode.Trim().ToUpper();
-        var normalizedBrandName = request.BrandName.Trim();
 
-        var isBrandCodeExist = await _unitOfWork.Brands.AnyAsync(
-            predicate: brand => brand.BrandCode == normalizedBrandCode
-                                && brand.BrandId != brandId
-                                && brand.IsActive,
-            cancellationToken: cancellationToken);
-
-        if (isBrandCodeExist)
+        if (!string.IsNullOrWhiteSpace(request.BrandCode))
         {
-            _logger.LogWarning(
-                "Update brand failed. Duplicate BrandCode={BrandCode}",
-                normalizedBrandCode);
+            
+            var normalizedBrandCode = request.BrandCode.Trim();
+            var isBrandCodeExist = await _unitOfWork.Brands.AnyAsync(
+                predicate: otherBrand =>
+                    otherBrand.BrandCode == normalizedBrandCode &&
+                    otherBrand.BrandId != brandId,
+                cancellationToken: cancellationToken);
 
-            throw new ConflictException("Brand code already exists.");
+            if (isBrandCodeExist)
+            {
+                _logger.LogWarning(
+                    "Update brand failed. Duplicate BrandCode={BrandCode}",
+                    normalizedBrandCode);
+
+                throw new ConflictException("Brand code already exists.");
+            }
+
+            brand.BrandCode = normalizedBrandCode;
         }
 
-        var isBrandNameExist = await _unitOfWork.Brands.AnyAsync(
-            predicate: brand => brand.BrandName == normalizedBrandName
-                                && brand.BrandId != brandId
-                                && brand.IsActive,
-            cancellationToken: cancellationToken);
-
-        if (isBrandNameExist)
+        if (!string.IsNullOrWhiteSpace(request.BrandName))
         {
-            _logger.LogWarning(
-                "Update brand failed. Duplicate BrandName={BrandName}",
-                normalizedBrandName);
+            
+            var normalizedBrandName = request.BrandName.Trim();
+            var isBrandNameExist = await _unitOfWork.Brands.AnyAsync(
+                predicate: otherBrand =>
+                    otherBrand.BrandName == normalizedBrandName &&
+                    otherBrand.BrandId != brandId,
+                cancellationToken: cancellationToken);
 
-            throw new ConflictException("Brand name already exists.");
+            if (isBrandNameExist)
+            {
+                _logger.LogWarning(
+                    "Update brand failed. Duplicate BrandName={BrandName}",
+                    normalizedBrandName);
+
+                throw new ConflictException("Brand name already exists.");
+            }
+
+            brand.BrandName = normalizedBrandName;
         }
 
         if (request.BrandImageFile is { Length: > 0 })
@@ -259,8 +271,6 @@ public class BrandService : IBrandService
             brand.IsActive = request.IsActive.Value;
         }
 
-        brand.BrandName = normalizedBrandName;
-        brand.BrandCode = normalizedBrandCode;
         brand.UpdatedAtUtc = DateTime.UtcNow;
 
         _unitOfWork.Brands.Update(brand);
@@ -289,7 +299,7 @@ public class BrandService : IBrandService
             brandId);
 
         var brand = await _unitOfWork.Brands.FirstOrDefaultAsync(
-            predicate: brand => brand.BrandId == brandId && brand.IsActive,
+            predicate: brand => brand.BrandId == brandId,
             selector: brand => brand,
             asNoTracking: false,
             cancellationToken: cancellationToken);
@@ -302,6 +312,14 @@ public class BrandService : IBrandService
 
             throw new NotFoundException($"Brand with ID {brandId} not found.");
         }
+        if (!brand.IsActive)
+        {
+            _logger.LogWarning(
+                "Delete brand failed. Brand has been deactive. BrandId={BrandId}",
+                brandId);
+            throw new ConflictException("Cannot delete brand while being deactive.");
+        }
+
 
         var hasProducts = await _unitOfWork.Products.AnyAsync(
             predicate: product => product.BrandId == brand.BrandId
@@ -313,7 +331,6 @@ public class BrandService : IBrandService
             _logger.LogWarning(
                 "Delete brand failed. Brand has active products. BrandId={BrandId}",
                 brandId);
-
             throw new ConflictException("Cannot delete brand with active products.");
         }
 

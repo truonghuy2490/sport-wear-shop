@@ -52,11 +52,8 @@ public class BrandController : ControllerBase
         CancellationToken cancellationToken = default)
     {
         var result = await _brandService.CreateAsync(request, cancellationToken);
-
-        return CreatedAtAction(
-            nameof(GetByIdAsync),
-            new { brandId = result.BrandId },
-            result);
+        // return ok 
+        return Ok(result);
     }
 
     // PUT: api/brands/1
