@@ -6,6 +6,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import ProductListPage from "../pages/products/ProductListPage";
 import ProductDetailPage from "../pages/products/ProductDetailPage";
 import ProductCreatePage from "../pages/products/ProductCreatePage";
+import ProductUpdatePage from "../pages/products/ProductUpdatePage";
 
 import LoginPage from "../pages/auth/LoginPage";
 import DashboardPage from "../pages/dashboard/DashboardPage";
@@ -72,6 +73,16 @@ function AppRouter() {
                     <ProtectedRoute>
                         <Layout>
                             <ProductCreatePage/>
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/products/:productId/update"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <ProductUpdatePage/>
                         </Layout>
                     </ProtectedRoute>
                 }
@@ -169,7 +180,7 @@ function AppRouter() {
 
             {/* Inventory */}
             <Route
-                path="/inventory"
+                path="/inventory/:productVariantId"
                 element={
                     <ProtectedRoute>
                         <Layout>

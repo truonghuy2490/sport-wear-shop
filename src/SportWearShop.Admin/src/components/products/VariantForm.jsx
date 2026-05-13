@@ -5,7 +5,8 @@ function VariantForm({
     onAdd,
     onRemove,
     onSubmit,
-    isSubmitting
+    isSubmitting,
+    submitText = "Create Variants"
 }) {
     return (
         <form onSubmit={onSubmit}>
@@ -196,9 +197,7 @@ function VariantForm({
                             className="btn btn-dark"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting
-                                ? "Creating..."
-                                : "Create Variants"}
+                            {isSubmitting ? "Saving..." : submitText}
                         </button>
                     </div>
                 </div>

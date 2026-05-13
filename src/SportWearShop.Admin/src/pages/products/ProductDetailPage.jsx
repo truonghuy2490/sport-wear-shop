@@ -7,6 +7,7 @@ import { productDetailResponseModel } from "../../models/productModel";
 import { showToast } from "../../redux/toast/toastSlice";
 
 function ProductDetailPage() {
+    
     const { productId } = useParams();
     const dispatch = useDispatch();
 
@@ -113,10 +114,10 @@ function ProductDetailPage() {
                     </Link>
 
                     <Link
-                        to={`/products/${product.productId}/edit`}
+                        to={`/products/${product.productId}/update`}
                         className="btn btn-dark"
                     >
-                        Edit Product
+                        Update Product
                     </Link>
                 </div>
             </div>
@@ -282,6 +283,7 @@ function ProductDetailPage() {
                                     <th>Available</th>
                                     <th>Status</th>
                                     <th>Images</th>
+                                    <th>Actions</th>
                                 </tr>
                             </thead>
 
@@ -289,7 +291,7 @@ function ProductDetailPage() {
                                 {product.variants.length === 0 ? (
                                     <tr>
                                         <td
-                                            colSpan="11"
+                                            colSpan="12"
                                             className="text-center text-muted py-4"
                                         >
                                             No variants found.
@@ -421,6 +423,14 @@ function ProductDetailPage() {
                                                         No images
                                                     </span>
                                                 )}
+                                            </td>
+                                            <td>
+                                                <Link
+                                                    to={`/inventory/${variant.productVariantId}`}
+                                                    className="btn btn-sm btn-outline-dark"
+                                                >
+                                                    Inventory
+                                                </Link>
                                             </td>
                                         </tr>
                                     ))

@@ -401,10 +401,10 @@ function ProductListPage() {
                                                         </Link>
 
                                                         <Link
-                                                            to={`/products/${product.productId}/edit`}
+                                                            to={`/products/${product.productId}/update`}
                                                             className="btn btn-sm btn-outline-dark me-2"
                                                         >
-                                                            Edit
+                                                            Update
                                                         </Link>
 
                                                         <button

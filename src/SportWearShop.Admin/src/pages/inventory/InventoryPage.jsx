@@ -1,4 +1,5 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 import {
@@ -14,7 +15,11 @@ import { showToast } from "../../redux/toast/toastSlice";
 function InventoryPage() {
     const dispatch = useDispatch();
 
-    const [productVariantId, setProductVariantId] = useState("");
+    const { productVariantId: routeVariantId } = useParams();
+
+    const [productVariantId, setProductVariantId] = useState(
+        routeVariantId || ""
+    );
     const [stock, setStock] = useState(null);
     const [movements, setMovements] = useState([]);
 
@@ -24,37 +29,18 @@ function InventoryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    useEffect(() => {
+        if (routeVariantId) {
+            loadInventory(routeVariantId);
+        }
+    }, [routeVariantId]);
+
     async function handleSearchStock(e) {
         e.preventDefault();
 
         if (!productVariantId) return;
 
-        try {
-            setIsLoading(true);
-
-            const [stockData, movementData] = await Promise.all([
-                getStockByVariantId(productVariantId),
-                getMovementsByVariantId(productVariantId)
-            ]);
-
-            setStock(stockData);
-            setMovements(movementData);
-        } catch (error) {
-            setStock(null);
-            setMovements([]);
-
-            dispatch(
-                showToast({
-                    type: "error",
-                    title: "Error",
-                    message:
-                        error.response?.data?.message ||
-                        "Failed to load inventory."
-                })
-            );
-        } finally {
-            setIsLoading(false);
-        }
+        await loadInventory(productVariantId);
     }
 
     async function handleStockIn() {
@@ -108,13 +94,18 @@ function InventoryPage() {
             setQuantity(0);
             setNote("");
 
-            const [stockData, movementData] = await Promise.all([
+           const [stockData, movementData] = await Promise.all([
                 getStockByVariantId(productVariantId),
                 getMovementsByVariantId(productVariantId)
             ]);
 
             setStock(stockData);
-            setMovements(movementData);
+
+            setMovements(
+                Array.isArray(movementData)
+                    ? movementData
+                    : movementData.items || movementData.data || []
+            );
         } catch (error) {
             dispatch(
                 showToast({
@@ -130,6 +121,40 @@ function InventoryPage() {
         }
     }
 
+
+    async function loadInventory(variantId) {
+        try {
+            setIsLoading(true);
+
+            const [stockData, movementData] = await Promise.all([
+                getStockByVariantId(variantId),
+                getMovementsByVariantId(variantId)
+            ]);
+
+            setStock(stockData);
+
+            setMovements(
+                Array.isArray(movementData)
+                    ? movementData
+                    : movementData.items || movementData.data || []
+            );
+        } catch (error) {
+            setStock(null);
+            setMovements([]);
+
+            dispatch(
+                showToast({
+                    type: "error",
+                    title: "Error",
+                    message:
+                        error.response?.data?.message ||
+                        "Failed to load inventory."
+                })
+            );
+        } finally {
+            setIsLoading(false);
+        }
+    }
     return (
         <div>
             <PageHeader

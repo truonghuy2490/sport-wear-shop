@@ -4,7 +4,8 @@ function ProductForm({
     categories,
     onChange,
     onSubmit,
-    isSubmitting
+    isSubmitting,
+    submitText = "Create Product"
 }) {
     return (
         <form onSubmit={onSubmit}>
@@ -136,7 +137,7 @@ function ProductForm({
                             className="btn btn-dark"
                             disabled={isSubmitting}
                         >
-                            {isSubmitting ? "Creating..." : "Create Product"}
+                            {isSubmitting ? "Saving..." : submitText}
                         </button>
                     </div>
                 </div>
