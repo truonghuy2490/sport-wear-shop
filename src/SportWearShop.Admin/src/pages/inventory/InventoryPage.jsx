@@ -388,7 +388,7 @@ function InventoryPage() {
 
                                                     <td>
                                                         {new Date(
-                                                            movement.createdAtUtc
+                                                            `${movement.createdAtUtc}Z`
                                                         ).toLocaleString()}
                                                     </td>
                                                 </tr>

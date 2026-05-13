@@ -44,7 +44,6 @@ function ProductCreatePage() {
     const [categories, setCategories] = useState([]);
 
     const emptyVariantForm = {
-        sku: "",
         colorCode: "",
         colorName: "",
         sizeCode: "",
@@ -52,8 +51,7 @@ function ProductCreatePage() {
         listPrice: 0,
         salePrice: null,
         weightGrams: null,
-        status: "ACTIVE",
-        initialStockQuantity: 0
+        status: "ACTIVE"
     };
 
     const [variantForms, setVariantForms] = useState([
@@ -229,7 +227,6 @@ function ProductCreatePage() {
 
         const request = {
             variants: variantForms.map(variant => ({
-                sku: variant.sku.trim(),
                 colorCode: variant.colorCode.trim(),
                 colorName: variant.colorName.trim(),
                 sizeCode: variant.sizeCode.trim(),
@@ -243,8 +240,7 @@ function ProductCreatePage() {
                     variant.weightGrams === "" || variant.weightGrams === null
                         ? null
                         : Number(variant.weightGrams),
-                status: variant.status,
-                initialStockQuantity: Number(variant.initialStockQuantity)
+                status: variant.status
             }))
         };
 
@@ -459,6 +455,7 @@ function ProductCreatePage() {
 
             {currentStep === 2 && (
                 <VariantForm
+                    mode="create"
                     variants={variantForms}
                     product={createdProduct}
                     onChange={handleVariantChange}
