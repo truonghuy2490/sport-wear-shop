@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
 import {
@@ -16,6 +16,7 @@ function InventoryPage() {
     const dispatch = useDispatch();
 
     const { productVariantId: routeVariantId } = useParams();
+    const navigate = useNavigate();
 
     const [productVariantId, setProductVariantId] = useState(
         routeVariantId || ""
@@ -157,10 +158,20 @@ function InventoryPage() {
     }
     return (
         <div>
-            <PageHeader
-                title="Inventory"
-                description="Manage product variant stock and movement history."
-            />
+            <div className="d-flex justify-content-between align-items-center mb-4">
+                <PageHeader
+                    title="Inventory"
+                    description="Manage product variant stock and movement history."
+                />
+
+                <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={() => navigate(-1)}
+                >
+                    Back
+                </button>
+            </div>
 
             <div className="card border-0 shadow-sm mb-4">
                 <div className="card-body">
@@ -182,7 +193,7 @@ function InventoryPage() {
                                 />
                             </div>
 
-                            <div className="col-md-3">
+                            {/* <div className="col-md-3">
                                 <button
                                     type="submit"
                                     className="btn btn-dark w-100"
@@ -190,7 +201,7 @@ function InventoryPage() {
                                 >
                                     {isLoading ? "Loading..." : "Search"}
                                 </button>
-                            </div>
+                            </div> */}
                         </div>
                     </form>
                 </div>
@@ -385,7 +396,7 @@ function InventoryPage() {
                                                     <td>
                                                         {movement.note || "-"}
                                                     </td>
-
+                                                            
                                                     <td>
                                                         {new Date(
                                                             `${movement.createdAtUtc}Z`

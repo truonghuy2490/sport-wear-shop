@@ -163,7 +163,7 @@ function VariantForm({
                                 </div>
                                 
 
-                                <div className="col-md-3">
+                                {/* <div className="col-md-3">
                                     <label className="form-label">Status</label>
                                     <select
                                         className="form-select"
@@ -175,7 +175,7 @@ function VariantForm({
                                         <option value="ACTIVE">ACTIVE</option>
                                         <option value="INACTIVE">INACTIVE</option>
                                     </select>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     ))}

@@ -39,7 +39,7 @@ function BrandPage() {
 
             setBrands(Array.isArray(brandItems) ? brandItems : []);
 
-            setTotalPages(data.totalPages || 1);
+            setTotalPages(data.totalPages || data.totalPage || 1);
         } catch (error) {
             console.error("Failed to load brands:", error);
 
@@ -226,29 +226,31 @@ function BrandPage() {
                                 </table>
                             </div>
 
-                            {totalPages > 1 && (
-                                <div className="d-flex justify-content-end align-items-center gap-2 mt-3">
+                            <div className="d-flex justify-content-between align-items-center mt-3">
+                                <div className="text-muted small">
+                                    Page {pageNumber} of {totalPages}
+                                </div>
+
+                                <div>
                                     <button
-                                        className="btn btn-sm btn-outline-secondary"
-                                        disabled={pageNumber === 1}
-                                        onClick={() => setPageNumber(pageNumber - 1)}
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary me-2"
+                                        disabled={pageNumber <= 1}
+                                        onClick={() => setPageNumber((prev) => prev - 1)}
                                     >
                                         Previous
                                     </button>
 
-                                    <span className="text-muted small">
-                                        Page {pageNumber} of {totalPages}
-                                    </span>
-
                                     <button
+                                        type="button"
                                         className="btn btn-sm btn-outline-secondary"
-                                        disabled={pageNumber === totalPages}
-                                        onClick={() => setPageNumber(pageNumber + 1)}
+                                        disabled={pageNumber >= totalPages}
+                                        onClick={() => setPageNumber((prev) => prev + 1)}
                                     >
                                         Next
                                     </button>
                                 </div>
-                            )}
+                            </div>
                         </>
                     )}
                 </div>

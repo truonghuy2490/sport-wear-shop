@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDispatch } from "react-redux";
+import { Link, useNavigate } from "react-router-dom";
 
 import { getRootCategories, deleteCategory } from "../../api/categoryApi";
 
@@ -9,27 +10,37 @@ import StatusBadge from "../../components/common/StatusBadge";
 
 import { showToast } from "../../redux/toast/toastSlice";
 
-import { Link, useNavigate } from "react-router-dom";
-
 function CategoryPage() {
     const [categories, setCategories] = useState([]);
     const [searchKeyword, setSearchKeyword] = useState("");
     const [isLoading, setIsLoading] = useState(true);
-    const navigate = useNavigate();
+
+    const [pageNumber, setPageNumber] = useState(1);
+    const [pageSize] = useState(10);
+    const [totalPages, setTotalPages] = useState(1);
 
     const dispatch = useDispatch();
+    const navigate = useNavigate();
 
     useEffect(() => {
         loadCategories();
-    }, []);
+    }, [pageNumber]);
 
     async function loadCategories() {
         try {
             setIsLoading(true);
 
-            const data = await getRootCategories();
+            const data = await getRootCategories(pageNumber, pageSize);
 
-            setCategories(data);
+            const categoryItems =
+                data.items ||
+                data.data ||
+                data.results ||
+                data.categories ||
+                data;
+
+            setCategories(Array.isArray(categoryItems) ? categoryItems : []);
+            setTotalPages(data.totalPages || data.totalPage || 1);
         } catch (error) {
             dispatch(
                 showToast({
@@ -54,12 +65,7 @@ function CategoryPage() {
 
         try {
             await deleteCategory(categoryId);
-
-            setCategories((prevCategories) =>
-                prevCategories.filter(
-                    (category) => category.categoryId !== categoryId
-                )
-            );
+            await loadCategories();
 
             dispatch(
                 showToast({
@@ -81,37 +87,14 @@ function CategoryPage() {
         }
     }
 
-    function getCategoryLevel(category) {
-        let level = 0;
-        let parentId = category.parentCategoryId;
+    const filteredCategories = categories.filter((category) => {
+        const keyword = searchKeyword.toLowerCase();
 
-        while (parentId) {
-            const parent = categories.find(
-                (item) => item.categoryId === parentId
-            );
-
-            if (!parent) break;
-
-            level += 1;
-            parentId = parent.parentCategoryId;
-        }
-
-        return level;
-    }
-
-    const filteredCategories = categories.filter(
-        (category) =>
-            category.categoryName
-                .toLowerCase()
-                .includes(searchKeyword.toLowerCase()) ||
-            category.categoryCode
-                .toLowerCase()
-                .includes(searchKeyword.toLowerCase())
-    );
-
-    const sortedCategories = [...filteredCategories].sort(
-        (a, b) => a.sortOrder - b.sortOrder
-    );
+        return (
+            category.categoryName?.toLowerCase().includes(keyword) ||
+            category.categoryCode?.toLowerCase().includes(keyword)
+        );
+    });
 
     return (
         <div>
@@ -124,11 +107,8 @@ function CategoryPage() {
 
             <div className="card border-0 shadow-sm">
                 <div className="card-body">
-
                     <div className="d-flex justify-content-between align-items-center mb-3">
-                        <h5 className="mb-0 fw-semibold">
-                            Category List
-                        </h5>
+                        <h5 className="mb-0 fw-semibold">Category List</h5>
 
                         <SearchBox
                             value={searchKeyword}
@@ -142,67 +122,48 @@ function CategoryPage() {
                             Loading categories...
                         </div>
                     ) : (
-                        <div className="table-responsive">
-                            <table className="table table-hover align-middle">
-                                <thead className="table-light">
-                                    <tr>
-                                        <th>#</th>
-                                        <th>Category Name</th>
-                                        <th>Code</th>
-                                        <th>Description</th>
-                                        <th>Sort Order</th>
-                                        <th>Status</th>
-                                        <th className="text-end">
-                                            Actions
-                                        </th>
-                                    </tr>
-                                </thead>
-
-                                <tbody>
-                                    {sortedCategories.length === 0 ? (
+                        <>
+                            <div className="table-responsive">
+                                <table className="table table-hover align-middle">
+                                    <thead className="table-light">
                                         <tr>
-                                            <td
-                                                colSpan="7"
-                                                className="text-center text-muted py-4"
-                                            >
-                                                No categories found.
-                                            </td>
+                                            <th>#</th>
+                                            <th>Category Name</th>
+                                            <th>Code</th>
+                                            <th>Description</th>
+                                            <th>Status</th>
+                                            <th className="text-end">Actions</th>
                                         </tr>
-                                    ) : (
-                                        sortedCategories.map((category, index) => {
-                                            const level = getCategoryLevel(category);
+                                    </thead>
 
-                                            return (
+                                    <tbody>
+                                        {filteredCategories.length === 0 ? (
+                                            <tr>
+                                                <td
+                                                    colSpan="6"
+                                                    className="text-center text-muted py-4"
+                                                >
+                                                    No categories found.
+                                                </td>
+                                            </tr>
+                                        ) : (
+                                            filteredCategories.map((category, index) => (
                                                 <tr key={category.categoryId}>
                                                     <td>
-                                                        {index + 1}
+                                                        {(pageNumber - 1) *
+                                                            pageSize +
+                                                            index +
+                                                            1}
                                                     </td>
 
-                                                    <td
-                                                        className="fw-medium"
-                                                        style={{
-                                                            paddingLeft: `${level * 32 + 16}px`
-                                                        }}
-                                                    >
-                                                        {level > 0 && (
-                                                            <span className="text-muted me-2">
-                                                                └─
-                                                            </span>
-                                                        )}
-
+                                                    <td className="fw-medium">
                                                         {category.categoryName}
                                                     </td>
 
-                                                    <td>
-                                                        {category.categoryCode}
-                                                    </td>
+                                                    <td>{category.categoryCode}</td>
 
                                                     <td>
                                                         {category.description || "-"}
-                                                    </td>
-
-                                                    <td>
-                                                        {category.sortOrder}
                                                     </td>
 
                                                     <td>
@@ -219,34 +180,67 @@ function CategoryPage() {
                                                             View
                                                         </Link>
 
-                                                        <Link
-                                                            to={`/categories/${category.categoryId}/edit`}
-                                                            className="btn btn-sm btn-outline-dark me-2"
-                                                        >
-                                                            Edit
-                                                        </Link>
+                                                        {category.isActive && (
+                                                            <>
+                                                                <Link
+                                                                    to={`/categories/${category.categoryId}/edit`}
+                                                                    className="btn btn-sm btn-outline-dark me-2"
+                                                                >
+                                                                    Edit
+                                                                </Link>
 
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-sm btn-outline-danger"
-                                                            onClick={() =>
-                                                                handleDeleteCategory(
-                                                                    category.categoryId
-                                                                )
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() =>
+                                                                        handleDeleteCategory(
+                                                                            category.categoryId
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </td>
                                                 </tr>
-                                            );
-                                        })
-                                    )}
-                                </tbody>
-                            </table>
-                        </div>
-                    )}
+                                            ))
+                                        )}
+                                    </tbody>
+                                </table>
+                            </div>
 
+                            <div className="d-flex justify-content-between align-items-center mt-3">
+                                <div className="text-muted small">
+                                    Page {pageNumber} of {totalPages}
+                                </div>
+
+                                <div>
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary me-2"
+                                        disabled={pageNumber <= 1}
+                                        onClick={() =>
+                                            setPageNumber((prev) => prev - 1)
+                                        }
+                                    >
+                                        Previous
+                                    </button>
+
+                                    <button
+                                        type="button"
+                                        className="btn btn-sm btn-outline-secondary"
+                                        disabled={pageNumber >= totalPages}
+                                        onClick={() =>
+                                            setPageNumber((prev) => prev + 1)
+                                        }
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
             </div>
         </div>

@@ -5,8 +5,14 @@ export async function getCategories() {
     return response.data;
 }
 
-export async function getRootCategories() {
-    const response = await axiosClient.get("/categories/root");
+export async function getRootCategories(pageNumber = 1, pageSize = 10) {
+    const response = await axiosClient.get("/categories/root", {
+        params: {
+            pageNumber,
+            pageSize
+        }
+    });
+
     return response.data;
 }
 
