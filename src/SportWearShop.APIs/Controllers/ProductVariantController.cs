@@ -129,4 +129,19 @@ public class ProductVariantsController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPatch("api/product-variants/{productVariantId:long}/status")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> UpdateStatus(
+        long productVariantId,
+        [FromBody] UpdateProductVariantStatusRequestModel request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.UpdateStatusAsync(
+            productVariantId,
+            request.Status,
+            cancellationToken);
+
+        return Ok(result);
+    }
 }

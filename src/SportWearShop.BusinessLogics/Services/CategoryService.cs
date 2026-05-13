@@ -118,12 +118,24 @@ public class CategoryService : ICategoryService
         return category;
     }
     
-    public async Task<List<CategoryResponseModel>> GetRootCategoriesAsync(
+    public async Task<PagingResponseModel<CategoryResponseModel>> GetRootCategoriesAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Categories.FindAsync(
-            filter: category => category.ParentCategoryId == null
+        var options = new QueryOptions<Category>
+        {
+            Filter = category => category.ParentCategoryId == null
                                 && category.IsActive,
+            SortBy = category => category.SortOrder,
+            Ascending = true,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true
+        };
+
+        var result = await _unitOfWork.Categories.FindWithPagingAsync(
+            options,
             selector: category => new CategoryResponseModel
             {
                 CategoryId = category.CategoryId,
@@ -134,10 +146,13 @@ public class CategoryService : ICategoryService
                 SortOrder = category.SortOrder,
                 IsActive = category.IsActive
             },
-            sortBy: category => category.SortOrder,
-            ascending: true,
-            asNoTracking: true,
-            cancellationToken: cancellationToken);
+            cancellationToken);
+
+        return new PagingResponseModel<CategoryResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
 
     public async Task<List<CategoryResponseModel>> GetChildrenAsync(

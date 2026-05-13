@@ -38,8 +38,6 @@ public class InventoryService : IInventoryService
             "Retrieving inventory stock. ProductVariantId={ProductVariantId}",
             productVariantId);
 
-        
-
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: s => s.ProductVariantId == productVariantId 
                                 && s.ProductVariant.Status != ProductVariantStatus.Deleted,
@@ -53,19 +51,34 @@ public class InventoryService : IInventoryService
             },
             asNoTracking: true,
             cancellationToken: cancellationToken
-            // ,includes: new Expression<Func<Repositories.Entities.InventoryStock, object>> []
-            // {
-            //     s => s.ProductVariant
-            // }
         );
         if (stock == null)
         {
-            _logger.LogWarning(
-                "Inventory stock not found. ProductVariantId={ProductVariantId}",
-                productVariantId);
+            var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
+                predicate: v => v.ProductVariantId == productVariantId
+                                && v.Status != ProductVariantStatus.Deleted,
+                selector: v => new
+                {
+                    v.ProductVariantId,
+                    v.Sku
+                },
+                asNoTracking: true,
+                cancellationToken: cancellationToken);
 
-            throw new NotFoundException(
-                $"Inventory stock for product variant ID {productVariantId} was not found.");
+            if (variant == null)
+            {
+                throw new NotFoundException(
+                    $"Product variant with ID {productVariantId} was not found.");
+            }
+
+            return new InventoryStockResponseModel
+            {
+                ProductVariantId = variant.ProductVariantId,
+                Sku = variant.Sku,
+                QuantityOnHand = 0,
+                QuantityReserved = 0,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
         }
 
         return stock;
@@ -423,25 +436,41 @@ public class InventoryService : IInventoryService
     // --- Helper ---
     private async Task<InventoryStock> GetTrackedStockAsync(
         long productVariantId,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: stock => stock.ProductVariantId == productVariantId
                                     && stock.ProductVariant.Status != ProductVariantStatus.Deleted,
             selector: stock => stock,
             asNoTracking: false,
-            cancellationToken: cancellationToken
-        );
+            cancellationToken: cancellationToken);
 
-        if (stock == null)
+        if (stock != null)
         {
-            _logger.LogWarning(
-                "Inventory stock for product variant ID ProductVariantId={ProductVariantId} was not found.", 
-                productVariantId);
-            throw new NotFoundException(
-                $"Inventory stock for product variant ID {productVariantId} was not found.");
+            return stock;
         }
+
+        var variantExists = await _unitOfWork.ProductVariants.AnyAsync(
+            variant => variant.ProductVariantId == productVariantId
+                    && variant.Status != ProductVariantStatus.Deleted,
+            cancellationToken);
+
+        if (!variantExists)
+        {
+            throw new NotFoundException(
+                $"Product variant with ID {productVariantId} was not found.");
+        }
+
+        stock = new InventoryStock
+        {
+            ProductVariantId = productVariantId,
+            QuantityOnHand = 0,
+            QuantityReserved = 0,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+
+        await _unitOfWork.InventoryStocks.AddAsync(stock, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         return stock;
     }

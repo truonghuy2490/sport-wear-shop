@@ -652,11 +652,11 @@ namespace SportWearShop.BusinessLogics.Services
             product.Status = ProductStatus.Deleted;
             product.UpdatedAtUtc = now;
 
-            foreach (var variant in product.ProductVariants)
-            {
-                variant.Status = ProductVariantStatus.Deleted;
-                variant.UpdatedAtUtc = now;
-            }
+            // foreach (var variant in product.ProductVariants)
+            // {
+            //     variant.Status = ProductVariantStatus.Deleted;
+            //     variant.UpdatedAtUtc = now;
+            // }
 
             _unitOfWork.Products.Update(product);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -667,6 +667,52 @@ namespace SportWearShop.BusinessLogics.Services
                 product.ProductVariants.Count);
         }
         
+
+        public async Task<ProductDetailResponseModel> UpdateStatusAsync(
+            long productId,
+            ProductStatus status,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Updating product status. ProductId={ProductId}, Status={Status}",
+                productId,
+                status);
+
+            var product = await _unitOfWork.Products.FirstOrDefaultAsync(
+                predicate: p => p.ProductId == productId,
+                selector: p => p,
+                asNoTracking: false,
+                cancellationToken: cancellationToken);
+
+            if (product == null)
+            {
+                _logger.LogWarning(
+                    "Product not found. ProductId={ProductId}",
+                    productId);
+
+                throw new NotFoundException($"Product with ID {productId} was not found.");
+            }
+
+            if (product.Status == ProductStatus.Deleted)
+            {
+                throw new BadRequestException("Deleted product cannot be updated.");
+            }
+
+            product.Status = status;
+            product.UpdatedAtUtc = DateTime.UtcNow;
+
+            _unitOfWork.Products.Update(product);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return new ProductDetailResponseModel
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductCode = product.ProductCode,
+                Status = product.Status.ToString()
+            };
+        }
+
         private static Expression<Func<Product, object>> GetSortExpression(ProductSortBy sortBy)
         {
             return sortBy switch
