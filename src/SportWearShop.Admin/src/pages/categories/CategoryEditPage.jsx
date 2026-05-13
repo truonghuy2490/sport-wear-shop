@@ -1,140 +1,177 @@
 import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
-import { useDispatch } from "react-redux";
-
+import { useNavigate, useParams } from "react-router-dom";
 import {
-    getCategories,
     getCategoryById,
-    updateCategory
+    getCategoryChildren,
+    createCategory,
+    updateCategory,
+    deleteCategory
 } from "../../api/categoryApi";
-
-import { showToast } from "../../redux/toast/toastSlice";
+import {
+    createCategoryRequestModel,
+    updateCategoryRequestModel
+} from "../../models/categoryModel";
 
 function CategoryEditPage() {
     const { categoryId } = useParams();
-
     const navigate = useNavigate();
-    const dispatch = useDispatch();
 
-    const [categories, setCategories] = useState([]);
-
-    const [formData, setFormData] = useState({
-        parentCategoryId: "",
-        categoryName: "",
-        categoryCode: "",
-        description: "",
-        sortOrder: 0,
-        isActive: true
+    const [parentForm, setParentForm] = useState({
+        ...updateCategoryRequestModel
     });
+
+    const [childForms, setChildForms] = useState([]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [error, setError] = useState("");
 
     useEffect(() => {
-        loadData();
+        loadCategory();
     }, [categoryId]);
 
-    async function loadData() {
+    async function loadCategory() {
         try {
             setIsLoading(true);
+            setError("");
 
-            const [categoryData, categoryList] = await Promise.all([
-                getCategoryById(categoryId),
-                getCategories()
-            ]);
+            const parent = await getCategoryById(categoryId);
+            const children = await getCategoryChildren(categoryId);
 
-            setCategories(categoryList);
-
-            setFormData({
-                parentCategoryId: categoryData.parentCategoryId || "",
-                categoryName: categoryData.categoryName || "",
-                categoryCode: categoryData.categoryCode || "",
-                description: categoryData.description || "",
-                sortOrder: categoryData.sortOrder || 0,
-                isActive: categoryData.isActive
+            setParentForm({
+                parentCategoryId: parent.parentCategoryId,
+                categoryName: parent.categoryName,
+                categoryCode: parent.categoryCode,
+                description: parent.description || "",
+                sortOrder: parent.sortOrder,
+                isActive: parent.isActive
             });
-        } catch (error) {
-            dispatch(
-                showToast({
-                    type: "error",
-                    title: "Error",
-                    message:
-                        error.response?.data?.message ||
-                        "Failed to load category form."
-                })
+
+            setChildForms(
+                children.map(child => ({
+                    categoryId: child.categoryId,
+                    parentCategoryId: child.parentCategoryId,
+                    categoryName: child.categoryName,
+                    categoryCode: child.categoryCode,
+                    description: child.description || "",
+                    sortOrder: child.sortOrder,
+                    isActive: child.isActive,
+                    isNew: false
+                }))
+            );
+        } catch (err) {
+            console.error(err);
+            setError(
+                err?.response?.data?.message ||
+                "Load category failed. Please try again."
             );
         } finally {
             setIsLoading(false);
         }
     }
 
-    function getCategoryLevel(category) {
-        let level = 1;
-        let parentId = category.parentCategoryId;
-
-        while (parentId) {
-            const parent = categories.find(
-                (item) => item.categoryId === parentId
-            );
-
-            if (!parent) break;
-
-            level += 1;
-            parentId = parent.parentCategoryId;
-        }
-
-        return level;
+    function handleParentChange(field, value) {
+        setParentForm(prev => ({
+            ...prev,
+            [field]: value
+        }));
     }
 
-    const parentOptions = categories.filter(
-        (category) =>
-            category.categoryId !== Number(categoryId) &&
-            getCategoryLevel(category) < 3
-    );
+    function handleChildChange(index, field, value) {
+        setChildForms(prev => {
+            const updated = [...prev];
 
-    function handleChange(e) {
-        const { name, value, type, checked } = e.target;
+            updated[index] = {
+                ...updated[index],
+                [field]: value
+            };
 
-        setFormData((prev) => ({
+            return updated;
+        });
+    }
+
+    function handleAddChild() {
+        setChildForms(prev => [
             ...prev,
-            [name]: type === "checkbox" ? checked : value
-        }));
+            {
+                ...createCategoryRequestModel,
+                parentCategoryId: Number(categoryId),
+                sortOrder: prev.length + 1,
+                isActive: true,
+                isNew: true
+            }
+        ]);
+    }
+
+    async function handleRemoveChild(index) {
+        const child = childForms[index];
+
+        const confirmed = window.confirm(
+            "Are you sure you want to remove this child category?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            if (child.categoryId && !child.isNew) {
+                await deleteCategory(child.categoryId);
+            }
+
+            setChildForms(prev =>
+                prev.filter((_, i) => i !== index)
+            );
+        } catch (err) {
+            console.error(err);
+
+            setError(
+                err?.response?.data?.message ||
+                "Remove child category failed."
+            );
+        }
     }
 
     async function handleSubmit(e) {
         e.preventDefault();
 
-        const request = {
-            ...formData,
-            parentCategoryId: formData.parentCategoryId
-                ? Number(formData.parentCategoryId)
-                : null,
-            sortOrder: Number(formData.sortOrder)
-        };
-
         try {
             setIsSubmitting(true);
+            setError("");
 
-            await updateCategory(categoryId, request);
+            await updateCategory(categoryId, {
+                ...parentForm,
+                parentCategoryId: parentForm.parentCategoryId || null,
+                sortOrder: Number(parentForm.sortOrder || 0),
+                isActive: Boolean(parentForm.isActive)
+            });
 
-            dispatch(
-                showToast({
-                    type: "success",
-                    title: "Success",
-                    message: "Category updated successfully."
-                })
+            const validChildren = childForms.filter(child =>
+                child.categoryName?.trim() &&
+                child.categoryCode?.trim()
             );
 
-            navigate(`/categories/${categoryId}`);
-        } catch (error) {
-            dispatch(
-                showToast({
-                    type: "error",
-                    title: "Error",
-                    message:
-                        error.response?.data?.message ||
-                        "Failed to update category."
-                })
+            for (const child of validChildren) {
+                const childRequest = {
+                    parentCategoryId: Number(categoryId),
+                    categoryName: child.categoryName,
+                    categoryCode: child.categoryCode,
+                    description: child.description || "",
+                    sortOrder: Number(child.sortOrder || 0),
+                    isActive: Boolean(child.isActive)
+                };
+
+                if (child.isNew || !child.categoryId) {
+                    await createCategory(childRequest);
+                } else {
+                    await updateCategory(child.categoryId, childRequest);
+                }
+            }
+
+            navigate("/categories");
+        } catch (err) {
+            console.error(err);
+            setError(
+                err?.response?.data?.message ||
+                "Update category failed. Please try again."
             );
         } finally {
             setIsSubmitting(false);
@@ -143,162 +180,269 @@ function CategoryEditPage() {
 
     if (isLoading) {
         return (
-            <div className="text-center py-5 text-muted">
-                Loading category form...
+            <div className="container-fluid px-4 py-4">
+                <div className="card border-0 shadow-sm">
+                    <div className="card-body p-4 text-muted">
+                        Loading category...
+                    </div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div>
+        <div className="container-fluid px-4 py-4">
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 className="fw-bold mb-1">
-                        Edit Category
-                    </h3>
-
+                    <h3 className="fw-bold mb-1">Edit Category</h3>
                     <p className="text-muted mb-0">
-                        Update category information and hierarchy.
+                        Update parent category and manage its child categories.
                     </p>
                 </div>
 
-                <Link
-                    to={`/categories/${categoryId}`}
+                <button
+                    type="button"
                     className="btn btn-outline-secondary"
+                    onClick={() => navigate("/categories")}
                 >
                     Back
-                </Link>
+                </button>
             </div>
 
-            <div className="card border-0 shadow-sm">
-                <div className="card-body p-4">
-                    <form onSubmit={handleSubmit}>
-                        <div className="row g-3">
-                            <div className="col-md-6">
-                                <label className="form-label fw-medium">
-                                    Category Name
-                                </label>
+            {error && (
+                <div className="alert alert-danger">
+                    {error}
+                </div>
+            )}
 
-                                <input
-                                    type="text"
-                                    name="categoryName"
-                                    className="form-control"
-                                    value={formData.categoryName}
-                                    onChange={handleChange}
-                                    required
-                                />
+            <form onSubmit={handleSubmit}>
+                <div className="card border-0 shadow-sm">
+                    <div className="card-body p-4">
+                        <div className="d-flex justify-content-between align-items-start mb-4">
+                            <div>
+                                <h5 className="fw-semibold mb-1">
+                                    Category information
+                                </h5>
+
+                                <p className="text-muted mb-0">
+                                    Edit the main category, then update or add child categories below.
+                                </p>
                             </div>
 
-                            <div className="col-md-6">
-                                <label className="form-label fw-medium">
-                                    Category Code
-                                </label>
+                            <button
+                                type="button"
+                                className="btn btn-outline-dark btn-sm"
+                                onClick={handleAddChild}
+                            >
+                                + Add Child
+                            </button>
+                        </div>
 
-                                <input
-                                    type="text"
-                                    name="categoryCode"
-                                    className="form-control"
-                                    value={formData.categoryCode}
-                                    onChange={handleChange}
-                                    required
-                                />
-                            </div>
-
-                            <div className="col-md-6">
-                                <label className="form-label fw-medium">
+                        <div className="border rounded-3 p-3 mb-4 bg-light">
+                            <div className="d-flex justify-content-between mb-3">
+                                <h6 className="fw-semibold mb-0">
                                     Parent Category
-                                </label>
-
-                                <select
-                                    name="parentCategoryId"
-                                    className="form-select"
-                                    value={formData.parentCategoryId}
-                                    onChange={handleChange}
-                                >
-                                    <option value="">
-                                        Root Category
-                                    </option>
-
-                                    {parentOptions.map((category) => (
-                                        <option
-                                            key={category.categoryId}
-                                            value={category.categoryId}
-                                        >
-                                            {"— ".repeat(getCategoryLevel(category) - 1)}
-                                            {category.categoryName}
-                                        </option>
-                                    ))}
-                                </select>
+                                </h6>
                             </div>
 
-                            <div className="col-md-6">
-                                <label className="form-label fw-medium">
-                                    Sort Order
-                                </label>
-
-                                <input
-                                    type="number"
-                                    name="sortOrder"
-                                    className="form-control"
-                                    value={formData.sortOrder}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            <div className="col-md-12">
-                                <label className="form-label fw-medium">
-                                    Description
-                                </label>
-
-                                <textarea
-                                    name="description"
-                                    className="form-control"
-                                    rows="3"
-                                    value={formData.description}
-                                    onChange={handleChange}
-                                />
-                            </div>
-
-                            <div className="col-md-12">
-                                <div className="form-check">
+                            <div className="row g-3">
+                                <div className="col-md-6">
+                                    <label className="form-label">Category Name</label>
                                     <input
-                                        type="checkbox"
-                                        name="isActive"
-                                        id="isActive"
-                                        className="form-check-input"
-                                        checked={formData.isActive}
-                                        onChange={handleChange}
+                                        type="text"
+                                        className="form-control"
+                                        value={parentForm.categoryName}
+                                        onChange={(e) =>
+                                            handleParentChange("categoryName", e.target.value)
+                                        }
+                                        required
                                     />
+                                </div>
 
-                                    <label
-                                        htmlFor="isActive"
-                                        className="form-check-label"
+                                <div className="col-md-6">
+                                    <label className="form-label">Category Code</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={parentForm.categoryCode}
+                                        onChange={(e) =>
+                                            handleParentChange("categoryCode", e.target.value)
+                                        }
+                                        required
+                                    />
+                                </div>
+
+                                <div className="col-md-8">
+                                    <label className="form-label">Description</label>
+                                    <input
+                                        type="text"
+                                        className="form-control"
+                                        value={parentForm.description || ""}
+                                        onChange={(e) =>
+                                            handleParentChange("description", e.target.value)
+                                        }
+                                        placeholder="Optional"
+                                    />
+                                </div>
+
+                                <div className="col-md-2">
+                                    <label className="form-label">Sort Order</label>
+                                    <input
+                                        type="number"
+                                        className="form-control"
+                                        value={parentForm.sortOrder}
+                                        onChange={(e) =>
+                                            handleParentChange("sortOrder", e.target.value)
+                                        }
+                                        min="0"
+                                    />
+                                </div>
+
+                                <div className="col-md-2">
+                                    <label className="form-label">Status</label>
+                                    <select
+                                        className="form-select"
+                                        value={parentForm.isActive ? "true" : "false"}
+                                        onChange={(e) =>
+                                            handleParentChange("isActive", e.target.value === "true")
+                                        }
                                     >
-                                        Active
-                                    </label>
+                                        <option value="true">Active</option>
+                                        <option value="false">Inactive</option>
+                                    </select>
                                 </div>
                             </div>
                         </div>
 
+                        {childForms.length > 0 && (
+                            <div className="mb-3">
+                                <h6 className="fw-semibold mb-1">
+                                    Child Categories
+                                </h6>
+                                <p className="text-muted small mb-3">
+                                    Existing child categories will be updated. New child categories will be created.
+                                </p>
+                            </div>
+                        )}
+
+                        {childForms.map((form, index) => (
+                            <div
+                                key={form.categoryId || index}
+                                className="border rounded-3 p-3 mb-3"
+                            >
+                                <div className="d-flex justify-content-between mb-3">
+                                    <h6 className="fw-semibold mb-0">
+                                        {form.isNew
+                                            ? `New Child Category #${index + 1}`
+                                            : `Child Category #${index + 1}`}
+                                    </h6>
+
+                                    <button
+                                        type="button"
+                                        className="btn btn-outline-danger btn-sm"
+                                        onClick={() => handleRemoveChild(index)}
+                                    >
+                                        Remove
+                                    </button>
+                                </div>
+
+                                <div className="row g-3">
+                                    <div className="col-md-6">
+                                        <label className="form-label">Category Name</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={form.categoryName}
+                                            onChange={(e) =>
+                                                handleChildChange(index, "categoryName", e.target.value)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="col-md-6">
+                                        <label className="form-label">Category Code</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={form.categoryCode}
+                                            onChange={(e) =>
+                                                handleChildChange(index, "categoryCode", e.target.value)
+                                            }
+                                        />
+                                    </div>
+
+                                    <div className="col-md-8">
+                                        <label className="form-label">Description</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            value={form.description || ""}
+                                            onChange={(e) =>
+                                                handleChildChange(index, "description", e.target.value)
+                                            }
+                                            placeholder="Optional"
+                                        />
+                                    </div>
+
+                                    <div className="col-md-2">
+                                        <label className="form-label">Sort Order</label>
+                                        <input
+                                            type="number"
+                                            className="form-control"
+                                            value={form.sortOrder}
+                                            onChange={(e) =>
+                                                handleChildChange(index, "sortOrder", e.target.value)
+                                            }
+                                            min="0"
+                                        />
+                                    </div>
+
+                                    <div className="col-md-2">
+                                        <label className="form-label">Status</label>
+                                        <select
+                                            className="form-select"
+                                            value={form.isActive ? "true" : "false"}
+                                            onChange={(e) =>
+                                                handleChildChange(index, "isActive", e.target.value === "true")
+                                            }
+                                        >
+                                            <option value="true">Active</option>
+                                            <option value="false">Inactive</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+
+                        {childForms.length === 0 && (
+                            <div className="border rounded-3 p-4 text-center text-muted mb-3">
+                                No child category yet. Click{" "}
+                                <span className="fw-semibold">+ Add Child</span>{" "}
+                                to create one.
+                            </div>
+                        )}
+
                         <div className="d-flex justify-content-end gap-2 mt-4">
-                            <Link
-                                to="/categories"
+                            <button
+                                type="button"
                                 className="btn btn-outline-secondary"
+                                onClick={() => navigate("/categories")}
+                                disabled={isSubmitting}
                             >
                                 Cancel
-                            </Link>
+                            </button>
 
                             <button
                                 type="submit"
                                 className="btn btn-dark"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Saving..." : "Save Changes"}
+                                {isSubmitting ? "Saving..." : "Update Category"}
                             </button>
                         </div>
-                    </form>
+                    </div>
                 </div>
-            </div>
+            </form>
         </div>
     );
 }

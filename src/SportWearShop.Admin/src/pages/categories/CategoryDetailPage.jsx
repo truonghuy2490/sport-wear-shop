@@ -1,18 +1,37 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams, useNavigate } from "react-router-dom";
 
-import { getCategoryById } from "../../api/categoryApi";
+import { getCategoryById, deleteCategory } from "../../api/categoryApi";
 import StatusBadge from "../../components/common/StatusBadge";
 
 function CategoryDetailPage() {
     const { categoryId } = useParams();
-
+    const navigate = useNavigate();
     const [category, setCategory] = useState(null);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
         loadCategoryDetail();
     }, [categoryId]);
+
+    async function handleDeleteCategory(categoryId) {
+        const confirmed = window.confirm(
+            "Are you sure you want to delete this category?"
+        );
+
+        if (!confirmed) return;
+
+        try {
+            await deleteCategory(categoryId);
+            await loadCategoryDetail();
+        } catch (err) {
+            console.error(err);
+            alert(
+                err?.response?.data?.message ||
+                "Delete category failed. Please try again."
+            );
+        }
+    }
 
     async function loadCategoryDetail() {
         try {
@@ -148,6 +167,7 @@ function CategoryDetailPage() {
                                         <th>Code</th>
                                         <th>Sort Order</th>
                                         <th>Status</th>
+                                        <th className="text-end">Actions</th>
                                     </tr>
                                 </thead>
 
@@ -155,15 +175,41 @@ function CategoryDetailPage() {
                                     {category.children.map((child, index) => (
                                         <tr key={child.categoryId}>
                                             <td>{index + 1}</td>
+
                                             <td className="fw-medium">
                                                 {child.categoryName}
                                             </td>
+
                                             <td>{child.categoryCode}</td>
+
                                             <td>{child.sortOrder}</td>
+
                                             <td>
-                                                <StatusBadge
-                                                    isActive={child.isActive}
-                                                />
+                                                <StatusBadge isActive={child.isActive} />
+                                            </td>
+
+                                            <td className="text-end">
+                                                <div className="btn-group">
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-dark"
+                                                        onClick={() =>
+                                                            navigate(`/categories/${child.categoryId}/edit`)
+                                                        }
+                                                    >
+                                                        Edit
+                                                    </button>
+
+                                                    <button
+                                                        type="button"
+                                                        className="btn btn-sm btn-outline-danger"
+                                                        onClick={() =>
+                                                            handleDeleteCategory(child.categoryId)
+                                                        }
+                                                    >
+                                                        Delete
+                                                    </button>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}

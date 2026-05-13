@@ -244,51 +244,61 @@ public class CategoryService : ICategoryService
             categoryId);
 
         var category = await _unitOfWork.Categories.FirstOrDefaultAsync(
-            predicate: category => category.CategoryId == categoryId && category.IsActive,
+            predicate: category => category.CategoryId == categoryId,
             selector: category => category,
             asNoTracking: false,
             cancellationToken: cancellationToken);
 
-        if (category == null) {
+        if (category == null)
+        {
             _logger.LogWarning(
                 "Update category failed. Category not found. CategoryId={CategoryId}",
                 categoryId);
 
-            throw new NotFoundException($"Category with ID {categoryId} not found."); 
+            throw new NotFoundException($"Category with ID {categoryId} not found.");
         }
 
-        // unique category code check
-        var isCategoryExist = await _unitOfWork.Categories.AnyAsync(
-            predicate: category => category.CategoryCode == request.CategoryCode && category.IsActive,
-            cancellationToken: cancellationToken
-        );
+        request.CategoryName = request.CategoryName.Trim();
+        request.CategoryCode = request.CategoryCode.Trim();
 
-        if (isCategoryExist) {
+        var isCategoryCodeExist = await _unitOfWork.Categories.AnyAsync(
+            predicate: category =>
+                category.CategoryId != categoryId &&
+                category.CategoryCode == request.CategoryCode &&
+                category.IsActive,
+            cancellationToken: cancellationToken);
+
+        if (isCategoryCodeExist)
+        {
             _logger.LogWarning(
                 "Update category failed. Duplicate CategoryCode={CategoryCode}",
                 request.CategoryCode);
 
-            throw new ConflictException("Category code already exists."); 
+            throw new ConflictException("Category code already exists.");
         }
 
-        // parent category existence check
         if (request.ParentCategoryId.HasValue)
         {
-            if (request.ParentCategoryId.Value == category.CategoryId){
+            if (request.ParentCategoryId.Value == category.CategoryId)
+            {
                 _logger.LogWarning(
-                   "Update category failed. Category cannot be parent of itself. CategoryId={CategoryId}",
-                   categoryId);
+                    "Update category failed. Category cannot be parent of itself. CategoryId={CategoryId}",
+                    categoryId);
+
                 throw new ConflictException("Category cannot be parent of itself.");
             }
 
             var parentExists = await _unitOfWork.Categories.AnyAsync(
-                category => category.CategoryId == request.ParentCategoryId.Value && category.IsActive,
-                cancellationToken);
+                predicate: category =>
+                    category.CategoryId == request.ParentCategoryId.Value &&
+                    category.IsActive,
+                cancellationToken: cancellationToken);
 
-            if (!parentExists){
+            if (!parentExists)
+            {
                 _logger.LogWarning(
-                   "Update category failed. Parent category not found. ParentCategoryId={ParentCategoryId}",
-                   request.ParentCategoryId);
+                    "Update category failed. Parent category not found. ParentCategoryId={ParentCategoryId}",
+                    request.ParentCategoryId);
 
                 throw new NotFoundException("Parent category does not exist.");
             }
@@ -320,7 +330,6 @@ public class CategoryService : ICategoryService
             IsActive = category.IsActive
         };
     }
-
     public async Task DeleteAsync(
         int categoryId,
         CancellationToken cancellationToken = default)
