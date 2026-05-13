@@ -19,18 +19,35 @@
 
         <div class="card border-0 shadow-sm rounded-4 mb-5">
             <div class="card-body p-4 p-md-5">
-                <span class="text-uppercase text-muted small fw-semibold">
-                    SportWearShop Collection
-                </span>
+                @if (Model.SelectedBrand is not null)
+                {
+                    <span class="text-uppercase text-muted small fw-semibold">
+                        Brand Collection
+                    </span>
 
-                <h2 class="mt-2 mb-3">
-                    Performance sportwear and everyday essentials.
-                </h2>
+                    <h2 class="mt-2 mb-3 text-uppercase">
+                        @Model.SelectedBrand.BrandName Collection
+                        @* <span class="fs-6 text-muted">(@totalRecords)</span> *@
+                    </h2>
 
-                <p class="text-muted mb-0">
-                    Discover products designed for training, movement, and daily comfort.
-                    Browse by gender, price, sale status, or latest releases.
-                </p>
+                    <p class="text-muted mb-0">
+                        Browse all @Model.SelectedBrand.BrandName products available in SportWearShop.
+                    </p>
+                }
+                else
+                {
+                    <span class="text-uppercase text-muted small fw-semibold">
+                        SportWearShop Collection
+                    </span>
+
+                    <h2 class="mt-2 mb-3">
+                        Performance sportwear and everyday essentials.
+                    </h2>
+
+                    <p class="text-muted mb-0">
+                        Discover products designed for training, movement, and daily comfort.
+                    </p>
+                }
             </div>
         </div>
 
@@ -54,6 +71,48 @@
                                 <input asp-for="Query.SearchTerm"
                                        class="form-control"
                                        placeholder="Product name, code..." />
+                            </div>
+                            <!-- BRAND -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">
+                                    Brand
+                                    @if (Model.SelectedBrand is not null)
+                                    {
+                                        <span>(1)</span>
+                                    }
+                                </label>
+
+                                <div class="form-check mb-2">
+                                    <input class="form-check-input"
+                                        type="radio"
+                                        name="Query.BrandIds"
+                                        value=""
+                                        id="brand-all"
+                                        checked="@(Model.Query.BrandIds?.Any() != true)" />
+
+                                    <label class="form-check-label" for="brand-all">
+                                        All Brands
+                                    </label>
+                                </div>
+
+                                @foreach (var brand in Model.Brands)
+                                {
+                                    var isChecked = Model.Query.BrandIds?.FirstOrDefault() == brand.BrandId;
+
+                                    <div class="form-check mb-2">
+                                        <input class="form-check-input"
+                                            type="radio"
+                                            name="Query.BrandIds"
+                                            value="@brand.BrandId"
+                                            id="brand-@brand.BrandId"
+                                            checked="@isChecked" />
+
+                                        <label class="form-check-label d-flex justify-content-between"
+                                            for="brand-@brand.BrandId">
+                                            <span>@brand.BrandName</span>
+                                        </label>
+                                    </div>
+                                }
                             </div>
 
                             <div class="mb-3">
@@ -283,17 +342,18 @@
 
                             <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
                                 <a class="page-link"
-                                   asp-page="/Products/Index"
-                                   asp-route-Query.PageNumber="@(currentPage - 1)"
-                                   asp-route-Query.PageSize="@pageSize"
-                                   asp-route-Query.SearchTerm="@Model.Query.SearchTerm"
-                                   asp-route-Query.Gender="@Model.Query.Gender"
-                                   asp-route-Query.IsOnSale="@Model.Query.IsOnSale"
-                                   asp-route-Query.IsNewRelease="@Model.Query.IsNewRelease"
-                                   asp-route-Query.MinPrice="@Model.Query.MinPrice"
-                                   asp-route-Query.MaxPrice="@Model.Query.MaxPrice"
-                                   asp-route-Query.SortBy="@Model.Query.SortBy"
-                                   asp-route-Query.IsAscending="@Model.Query.IsAscending">
+                                    asp-page="/Products/Index"
+                                    asp-route-Query.PageNumber="@(currentPage - 1)"
+                                    asp-route-Query.PageSize="@pageSize"
+                                    asp-route-Query.SearchTerm="@Model.Query.SearchTerm"
+                                    asp-route-Query.Gender="@Model.Query.Gender"
+                                    asp-route-Query.IsOnSale="@Model.Query.IsOnSale"
+                                    asp-route-Query.IsNewRelease="@Model.Query.IsNewRelease"
+                                    asp-route-Query.MinPrice="@Model.Query.MinPrice"
+                                    asp-route-Query.MaxPrice="@Model.Query.MaxPrice"
+                                    asp-route-Query.SortBy="@Model.Query.SortBy"
+                                    asp-route-Query.IsAscending="@Model.Query.IsAscending"
+                                    asp-route-Query.BrandIds="@(Model.Query.BrandIds?.FirstOrDefault())">
                                     Previous
                                 </a>
                             </li>
