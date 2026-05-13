@@ -1,7 +1,3 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using SportWearShop.Shared.ViewModels;
 using SportWearShop.Shared.ViewModels.ProductModels;
@@ -58,23 +54,4 @@ public class IndexModel : PageModel
             ErrorMessage = "Something went wrong while loading featured products.";
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
-=======
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-
-namespace SportWearShop.Web.Pages
-{
-    public class IndexModel : PageModel
-    {
-        public void OnGet()
-        {
-
-        }
-    }
-}
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227

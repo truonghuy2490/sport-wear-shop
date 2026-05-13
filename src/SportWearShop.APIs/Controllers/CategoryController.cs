@@ -1,8 +1,4 @@
-<<<<<<< HEAD
 ﻿using Microsoft.AspNetCore.Authorization;
-=======
-using Microsoft.AspNetCore.Authorization;
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -26,9 +22,15 @@ public class CategoryController : ControllerBase
     // AUTHORIZATION: Allow anonymous, client, admin, staff
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        CancellationToken cancellationToken)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _categoryService.GetAllAsync(cancellationToken);
+        var result = await _categoryService.GetAllAsync(
+            pageNumber,
+            pageSize,
+            cancellationToken);
+
         return Ok(result);
     }
 
@@ -74,10 +76,7 @@ public class CategoryController : ControllerBase
     {
         var result = await _categoryService.CreateAsync(request, cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.CategoryId },
-            result);
+        return Ok(result);
     }
 
     // PUT: api/categories
@@ -103,5 +102,14 @@ public class CategoryController : ControllerBase
     {
         await _categoryService.DeleteAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("tree")]
+    public async Task<IActionResult> GetTreeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _categoryService.GetTreeAsync(cancellationToken);
+
+        return Ok(result);
     }
 }

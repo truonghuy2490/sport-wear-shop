@@ -13,7 +13,7 @@ namespace SportWearShop.Repositories.SeedData
     {
         public static async Task SeedAsync(
             AppDbContext context,
-            RoleManager<AppRole> roleManager)
+            RoleManager<AppRole> roleManager, UserManager<AppUser> userManager)
         {
             await context.Database.MigrateAsync();
 
@@ -25,8 +25,11 @@ namespace SportWearShop.Repositories.SeedData
             await SeedProductVariantsAsync(context);
             await SeedProductImagesAsync(context);
             await SeedInventoryStocksAsync(context);
+            await SeedUsersAsync(userManager);
+            
             // Các table khác (Cart, Order...) để sau vì phụ thuộc User
         }
+
 
         private static async Task SeedRolesAsync(
             RoleManager<AppRole> roleManager)
@@ -49,6 +52,70 @@ namespace SportWearShop.Repositories.SeedData
                         Name = roleName
                     });
                 }
+            }
+        }
+
+        private static async Task SeedUsersAsync(
+            UserManager<AppUser> userManager)
+        {
+            var users = new[]
+            {
+                new
+                {
+                    Email = "admin@sportwearshop.com",
+                    FirstName = "System",
+                    LastName = "Admin",
+                    Role = "Admin"
+                },
+                new
+                {
+                    Email = "staff@sportwearshop.com",
+                    FirstName = "Shop",
+                    LastName = "Staff",
+                    Role = "Staff"
+                },
+                new
+                {
+                    Email = "customer@sportwearshop.com",
+                    FirstName = "Demo",
+                    LastName = "Customer",
+                    Role = "Customer"
+                }
+            };
+
+            foreach (var seedUser in users)
+            {
+                var existingUser = await userManager.FindByEmailAsync(seedUser.Email);
+
+                if (existingUser is not null)
+                {
+                    continue;
+                }
+
+                var user = new AppUser
+                {
+                    UserName = seedUser.Email,
+                    Email = seedUser.Email,
+                    FirstName = seedUser.FirstName,
+                    LastName = seedUser.LastName,
+                    EmailConfirmed = true,
+                    IsActive = true
+                };
+
+                var result = await userManager.CreateAsync(
+                    user,
+                    "Password@123"
+                );
+
+                if (!result.Succeeded)
+                {
+                    var errors = string.Join(", ",
+                        result.Errors.Select(e => e.Description));
+
+                    throw new Exception(errors);
+                }
+
+                await userManager.AddToRoleAsync(user, seedUser.Role);
             }
         }
 

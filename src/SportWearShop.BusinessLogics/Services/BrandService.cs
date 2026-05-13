@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
+using SportWearShop.Repositories.ThirdPartyServices;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
@@ -15,20 +18,40 @@ public class BrandService : IBrandService
 {
     private readonly IUnitOfWork _unitOfWork;
     private readonly ILogger<BrandService> _logger;
+    private readonly ICloudinaryService _cloudinaryService;
 
     public BrandService(
         IUnitOfWork unitOfWork,
-        ILogger<BrandService> logger)
+        ILogger<BrandService> logger,
+        ICloudinaryService cloudinaryService)
     {
         _unitOfWork = unitOfWork;
         _logger = logger;
+        _cloudinaryService = cloudinaryService;
     }
 
-    public async Task<List<BrandResponseModel>> GetAllAsync(
+    public async Task<PagingResponseModel<BrandResponseModel>> GetAllAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        var brands = await _unitOfWork.Brands.FindAsync(
-            filter: brand => brand.IsActive,
+        _logger.LogInformation(
+            "Retrieving active brands. PageNumber={PageNumber}, PageSize={PageSize}",
+            pageNumber,
+            pageSize);
+
+        var options = new QueryOptions<Brand>
+        {
+            Filter = brand => brand.IsActive,
+            SortBy = brand => brand.BrandName,
+            Ascending = true,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true
+        };
+
+        var result = await _unitOfWork.Brands.FindWithPagingAsync(
+            options,
             selector: brand => new BrandResponseModel
             {
                 BrandId = brand.BrandId,
@@ -37,19 +60,18 @@ public class BrandService : IBrandService
                 BrandImage = brand.BrandImage,
                 IsActive = brand.IsActive
             },
-            sortBy: brands => brands.BrandName,
-            ascending: true,
-            asNoTracking: true,
-            cancellationToken: cancellationToken);
+            cancellationToken);
 
-        if (!brands.Any())
-        {
-            _logger.LogWarning("No active brands found.");
-            throw new NotFoundException("No active brands found.");
-        }
+        _logger.LogInformation(
+            "Retrieved active brands. ReturnedItems={ReturnedItems}, TotalCount={TotalCount}",
+            result.Items.Count,
+            result.TotalCount);
 
-        _logger.LogInformation("Retrieved {Count} active brands.", brands.Count);
-        return brands;
+        return new PagingResponseModel<BrandResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
 
     public async Task<BrandDetailResponseModel?> GetByIdAsync(
@@ -111,13 +133,11 @@ public class BrandService : IBrandService
                 normalizedBrandCode);
 
             throw new ConflictException("Brand code already exists.");
-            // have some problem with adidas original and adidas performance 
-            // maybe ADIDAS_ORIGINAL and ADIDAS_PERFORMANCE will be better for brand code
         }
 
         var isBrandNameExist = await _unitOfWork.Brands.AnyAsync(
-            predicate: brand => brand.BrandName == normalizedBrandName && brand.IsActive,
-            cancellationToken: cancellationToken);
+                predicate: brand => brand.BrandName == normalizedBrandName && brand.IsActive,
+                cancellationToken: cancellationToken);
 
         if (isBrandNameExist)
         {
@@ -128,11 +148,21 @@ public class BrandService : IBrandService
             throw new ConflictException("Brand name already exists.");
         }
 
+        string? brandImageUrl = null;
+
+        if (request.BrandImageFile is { Length: > 0 })
+        {
+            brandImageUrl = await _cloudinaryService.UploadFileAsync(
+                request.BrandImageFile,
+                folder: "sport-wear-shop/brands",
+                cancellationToken: cancellationToken);
+        }
+
         var brand = new Brand
         {
             BrandName = normalizedBrandName,
             BrandCode = normalizedBrandCode,
-            BrandImage = request.BrandImage,
+            BrandImage = brandImageUrl,
             IsActive = true,
             CreatedAtUtc = DateTime.UtcNow,
             UpdatedAtUtc = DateTime.UtcNow
@@ -181,43 +211,66 @@ public class BrandService : IBrandService
             throw new NotFoundException($"Brand with ID {brandId} not found.");
         }
 
-        var normalizedBrandCode = request.BrandCode.Trim().ToUpper();
-        var normalizedBrandName = request.BrandName.Trim();
 
-        var isBrandCodeExist = await _unitOfWork.Brands.AnyAsync(
-            predicate: brand => brand.BrandCode == normalizedBrandCode
-                                && brand.BrandId != brandId
-                                && brand.IsActive,
-            cancellationToken: cancellationToken);
-
-        if (isBrandCodeExist)
+        if (!string.IsNullOrWhiteSpace(request.BrandCode))
         {
-            _logger.LogWarning(
-                "Update brand failed. Duplicate BrandCode={BrandCode}",
-                normalizedBrandCode);
+            
+            var normalizedBrandCode = request.BrandCode.Trim();
+            var isBrandCodeExist = await _unitOfWork.Brands.AnyAsync(
+                predicate: otherBrand =>
+                    otherBrand.BrandCode == normalizedBrandCode &&
+                    otherBrand.BrandId != brandId,
+                cancellationToken: cancellationToken);
 
-            throw new ConflictException("Brand code already exists.");
+            if (isBrandCodeExist)
+            {
+                _logger.LogWarning(
+                    "Update brand failed. Duplicate BrandCode={BrandCode}",
+                    normalizedBrandCode);
+
+                throw new ConflictException("Brand code already exists.");
+            }
+
+            brand.BrandCode = normalizedBrandCode;
         }
 
-        var isBrandNameExist = await _unitOfWork.Brands.AnyAsync(
-            predicate: brand => brand.BrandName == normalizedBrandName
-                                && brand.BrandId != brandId
-                                && brand.IsActive,
-            cancellationToken: cancellationToken);
-
-        if (isBrandNameExist)
+        if (!string.IsNullOrWhiteSpace(request.BrandName))
         {
-            _logger.LogWarning(
-                "Update brand failed. Duplicate BrandName={BrandName}",
-                normalizedBrandName);
+            
+            var normalizedBrandName = request.BrandName.Trim();
+            var isBrandNameExist = await _unitOfWork.Brands.AnyAsync(
+                predicate: otherBrand =>
+                    otherBrand.BrandName == normalizedBrandName &&
+                    otherBrand.BrandId != brandId,
+                cancellationToken: cancellationToken);
 
-            throw new ConflictException("Brand name already exists.");
+            if (isBrandNameExist)
+            {
+                _logger.LogWarning(
+                    "Update brand failed. Duplicate BrandName={BrandName}",
+                    normalizedBrandName);
+
+                throw new ConflictException("Brand name already exists.");
+            }
+
+            brand.BrandName = normalizedBrandName;
         }
 
-        brand.BrandName = normalizedBrandName;
-        brand.BrandCode = normalizedBrandCode;
-        brand.BrandImage = request.BrandImage;
-        brand.IsActive = request.IsActive;
+        if (request.BrandImageFile is { Length: > 0 })
+        {
+            var imageUrl = await _cloudinaryService.UploadFileAsync(
+                request.BrandImageFile,
+                folder: "sport-wear-shop/brands",
+                cancellationToken: cancellationToken);
+
+            brand.BrandImage = imageUrl;
+        }
+
+        if (request.IsActive.HasValue)
+        {
+            brand.IsActive = request.IsActive.Value;
+        }
+
         brand.UpdatedAtUtc = DateTime.UtcNow;
 
         _unitOfWork.Brands.Update(brand);
@@ -246,7 +299,7 @@ public class BrandService : IBrandService
             brandId);
 
         var brand = await _unitOfWork.Brands.FirstOrDefaultAsync(
-            predicate: brand => brand.BrandId == brandId && brand.IsActive,
+            predicate: brand => brand.BrandId == brandId,
             selector: brand => brand,
             asNoTracking: false,
             cancellationToken: cancellationToken);
@@ -259,6 +312,14 @@ public class BrandService : IBrandService
 
             throw new NotFoundException($"Brand with ID {brandId} not found.");
         }
+        if (!brand.IsActive)
+        {
+            _logger.LogWarning(
+                "Delete brand failed. Brand has been deactive. BrandId={BrandId}",
+                brandId);
+            throw new ConflictException("Cannot delete brand while being deactive.");
+        }
+
 
         var hasProducts = await _unitOfWork.Products.AnyAsync(
             predicate: product => product.BrandId == brand.BrandId
@@ -270,7 +331,6 @@ public class BrandService : IBrandService
             _logger.LogWarning(
                 "Delete brand failed. Brand has active products. BrandId={BrandId}",
                 brandId);
-
             throw new ConflictException("Cannot delete brand with active products.");
         }
 
