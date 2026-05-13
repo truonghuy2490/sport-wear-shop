@@ -1,412 +1,376 @@
-@page "/products"
+@page
+@using System.Linq
 @model SportWearShop.Web.Pages.Products.IndexModel
 
 @{
     ViewData["Title"] = "Products";
-}
 
-<h1 class="mb-4">Products</h1>
+    var products = Model.Products?.Items
+        ?? Enumerable.Empty<SportWearShop.Shared.ViewModels.ProductModels.ProductResponseModel>();
 
-@if (Model.Products?.Items == null || !Model.Products.Items.Any())
-{
-    <p>No products found.</p>
-}
-else
-{
-    <div class="row">
-        @foreach (var product in Model.Products.Items)
-        {
-            var displayPrice = product.MinSalePrice ?? product.MinPrice;
-
-            <div class="col-md-3 mb-4">
-                <div class="card h-100 shadow-sm">
-                    <img src="@(string.IsNullOrWhiteSpace(product.ThumbnailUrl) 
-                                ? "/images/no-image.png" 
-                                : product.ThumbnailUrl)"
-                         class="card-img-top"
-                         alt="@product.ProductName" />
-
-                    <div class="card-body d-flex flex-column">
-                        <small class="text-muted">
-                            @product.BrandName / @product.CategoryName
-                        </small>
-
-                        <h5 class="mt-2">@product.ProductName</h5>
-
-                        <p class="mb-1">
-                            <span class="badge bg-secondary">@product.Gender</span>
-                            <span class="badge bg-info text-dark">@product.TotalVariants variants</span>
-                        </p>
-
-                        <div class="mt-auto">
-                            @if (product.MinSalePrice.HasValue)
-                            {
-                                <p class="mb-1">
-                                    <span class="text-muted text-decoration-line-through">
-                                        @product.MinPrice.ToString("N0") ₫
-                                    </span>
-                                </p>
-
-                                <p class="fw-bold text-danger">
-                                    @product.MinSalePrice.Value.ToString("N0") ₫
-                                </p>
-                            }
-                            else
-                            {
-                                <p class="fw-bold text-danger">
-                                    @product.MinPrice.ToString("N0") ₫
-                                </p>
-                            }
-
-                            <a asp-page="/Products/Details"
-                                asp-route-slug="@product.Slug"
-                                asp-route-productId="@product.ProductId"
-                                class="btn btn-dark w-100">
-                                    View Details
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        }
-    </div>
-}
-@* @page
-@model SportWearShop.Web.Pages.Products.IndexModel
-@{
-    ViewData["Title"] = "Sport Wear Shop - Products";
+    var currentPage = Model.Products?.PageNumber ?? Model.Query.PageNumber;
+    var pageSize = Model.Products?.PageSize ?? Model.Query.PageSize;
+    var totalPages = Model.Products?.TotalPages ?? 1;
+    var totalRecords = Model.Products?.TotalCount ?? products.Count();
 }
 
 <section class="shop-page-section">
-    <div class="shell-container">
-        <div class="card border-0 shadow-sm rounded-4 mt-5">
+    <div class="container py-5">
+
+        <div class="card border-0 shadow-sm rounded-4 mb-5">
             <div class="card-body p-4 p-md-5">
-                <span class="text-uppercase text-muted small fw-semibold">Premium Sportswear</span>
-                <h2 class="mt-2 mb-3">Discover high-performance gear for every athlete.</h2>
-                <p class="text-muted mb-2">
-                    From running shoes to training apparel, our collection combines cutting-edge technology 
-                    with modern style. Each product is crafted to enhance your performance while keeping 
-                    you comfortable throughout your workout.
-                </p>
+                <span class="text-uppercase text-muted small fw-semibold">
+                    SportWearShop Collection
+                </span>
+
+                <h2 class="mt-2 mb-3">
+                    Performance sportwear and everyday essentials.
+                </h2>
+
                 <p class="text-muted mb-0">
-                    Browse through our curated selection and find the perfect gear for your fitness journey. 
-                    Whether you're a casual jogger or a dedicated athlete, we have something for everyone.
+                    Discover products designed for training, movement, and daily comfort.
+                    Browse by gender, price, sale status, or latest releases.
                 </p>
             </div>
         </div>
 
-        <div class="shop-layout">
-            <div class="container py-4">
-                <div class="row g-4">
+        <div class="row g-4">
 
-                    <!-- LEFT: FILTER -->
-                    <div class="col-12 col-lg-3">
-                        <div class="card border-0 shadow-sm rounded-4">
-                            <div class="card-body">
-                                <h5 class="fw-bold mb-4">Filter Products</h5>
+            <!-- LEFT: FILTER -->
+            <div class="col-12 col-lg-3">
+                <div class="card border-0 shadow-sm rounded-4">
+                    <div class="card-body">
+                        <h5 class="fw-bold mb-4">Filter Products</h5>
 
-                                <form method="get">
-                                    <div class="mb-3">
-                                        <label for="keyword" class="form-label">Search</label>
-                                        <input type="text"
-                                               id="keyword"
-                                               name="keyword"
-                                               value="@Model.Query.Keyword"
-                                               class="form-control"
-                                               placeholder="Product name..." />
-                                    </div>
+                        <form method="get">
 
-                                    <div class="mb-3">
-                                        <label for="gender" class="form-label">Gender</label>
-                                        <select id="gender" name="gender" class="form-select">
-                                            <option value="">All Genders</option>
-                                            <option value="MEN" selected="@(Model.Query.Gender == "MEN")">Men</option>
-                                            <option value="WOMEN" selected="@(Model.Query.Gender == "WOMEN")">Women</option>
-                                            <option value="UNISEX" selected="@(Model.Query.Gender == "UNISEX")">Unisex</option>
-                                        </select>
-                                    </div>
+                            <input type="hidden" asp-for="Query.PageNumber" value="1" />
+                            <input type="hidden" asp-for="Query.PageSize" />
 
-                                    <div class="mb-3">
-                                        <label for="brandId" class="form-label">Brand</label>
-                                        <select id="brandId" name="brandId" class="form-select">
-                                            <option value="">All Brands</option>
-                                            <option value="1" selected="@(Model.Query.BrandId == 1)">Nike</option>
-                                            <option value="2" selected="@(Model.Query.BrandId == 2)">Adidas</option>
-                                            <option value="3" selected="@(Model.Query.BrandId == 3)">PUMA</option>
-                                            <option value="4" selected="@(Model.Query.BrandId == 4)">Under Armour</option>
-                                            <option value="5" selected="@(Model.Query.BrandId == 5)">New Balance</option>
-                                            <option value="6" selected="@(Model.Query.BrandId == 6)">ASICS</option>
-                                            <option value="7" selected="@(Model.Query.BrandId == 7)">Reebok</option>
-                                            <option value="8" selected="@(Model.Query.BrandId == 8)">FILA</option>
-                                            <option value="9" selected="@(Model.Query.BrandId == 9)">Converse</option>
-                                            <option value="10" selected="@(Model.Query.BrandId == 10)">Vans</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="row">
-                                        <div class="col-6 mb-3">
-                                            <label for="minPrice" class="form-label">Min Price</label>
-                                            <input type="number"
-                                                   step="100000"
-                                                   id="minPrice"
-                                                   name="minPrice"
-                                                   value="@Model.Query.MinPrice"
-                                                   class="form-control"
-                                                   placeholder="0" />
-                                        </div>
-
-                                        <div class="col-6 mb-3">
-                                            <label for="maxPrice" class="form-label">Max Price</label>
-                                            <input type="number"
-                                                   step="100000"
-                                                   id="maxPrice"
-                                                   name="maxPrice"
-                                                   value="@Model.Query.MaxPrice"
-                                                   class="form-control"
-                                                   placeholder="10000000" />
-                                        </div>
-                                    </div>
-
-                                    <div class="d-grid gap-2">
-                                        <button type="submit" class="btn btn-dark">Apply Filters</button>
-                                        <a href="/Products" class="btn btn-outline-secondary">
-                                            Clear All
-                                        </a>
-                                    </div>
-                                </form>
+                            <div class="mb-3">
+                                <label asp-for="Query.SearchTerm" class="form-label">
+                                    Search
+                                </label>
+                                <input asp-for="Query.SearchTerm"
+                                       class="form-control"
+                                       placeholder="Product name, code..." />
                             </div>
-                        </div>
-                    </div>
 
-                    <!-- RIGHT: PRODUCT GRID -->
-                    <div class="col-12 col-lg-9">
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <h2 class="mb-0">Products</h2>
-                            <div class="d-flex gap-2">
-                                <span class="badge rounded-pill text-bg-dark px-3 py-2">
-                                    Total: @Model.Products.TotalCount
-                                </span>
-                                <span class="badge rounded-pill text-bg-light border px-3 py-2">
-                                    Page @Model.Products.PageNumber / @Model.Products.TotalPages
-                                </span>
+                            <div class="mb-3">
+                                <label asp-for="Query.Gender" class="form-label">
+                                    Gender
+                                </label>
+                                <select asp-for="Query.Gender" class="form-select">
+                                    <option value="">All Genders</option>
+                                    <option value="0">Unisex</option>
+                                    <option value="1">Men</option>
+                                    <option value="2">Woman</option>
+                                    <option value="3">Kids</option>
+                                </select>
                             </div>
-                        </div>
 
-                        <div class="d-flex justify-content-between align-items-center mb-4">
-                            <div class="text-muted">
-                                Showing @Model.Products.Items.Count() product(s)
+                            <div class="mb-3">
+                                <label asp-for="Query.IsOnSale" class="form-label">
+                                    Sale Status
+                                </label>
+                                <select asp-for="Query.IsOnSale" class="form-select">
+                                    <option value="">All Products</option>
+                                    <option value="true">On Sale</option>
+                                    <option value="false">Not On Sale</option>
+                                </select>
                             </div>
-                        </div>
 
-                        <div class="row g-4" id="products-grid">
-                            @if (Model.Products.Items.Any())
-                            {
-                                @foreach (var product in Model.Products.Items)
-                                {
-                                    <div class="col-12 col-sm-6 col-xl-4">
-                                        <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
-                                            <div class="position-relative p-3"
-                                                 style="background-color: #f8f9fa; min-height: 220px;">
-                                                <div class="d-flex justify-content-between align-items-start mb-3">
-                                                    @if (product.Status == "ACTIVE" && product.TotalStock > 0)
-                                                    {
-                                                        <span class="badge text-bg-dark">In Stock</span>
-                                                    }
-                                                    else if (product.TotalStock <= 0)
-                                                    {
-                                                        <span class="badge text-bg-secondary">Out of Stock</span>
-                                                    }
-                                                    else
-                                                    {
-                                                        <span></span>
-                                                    }
+                            <div class="mb-3">
+                                <label asp-for="Query.IsNewRelease" class="form-label">
+                                    Release
+                                </label>
+                                <select asp-for="Query.IsNewRelease" class="form-select">
+                                    <option value="">All Releases</option>
+                                    <option value="true">New Release</option>
+                                    <option value="false">Normal</option>
+                                </select>
+                            </div>
 
-                                                    @if (!string.IsNullOrEmpty(product.Gender))
-                                                    {
-                                                        <small class="text-muted fw-semibold">@product.Gender</small>
-                                                    }
-                                                </div>
-
-                                                <div class="d-flex justify-content-center align-items-center h-100">
-                                                    <div class="text-center">
-                                                        <img src="@(product.ThumbnailUrl ?? "/images/placeholder.jpg")" 
-                                                             class="img-fluid mb-3" 
-                                                             alt="@product.ProductName"
-                                                             style="max-height: 120px; object-fit: contain;"
-                                                             onerror="this.src='/images/placeholder.jpg'" />
-                                                        <p class="text-muted small mb-2">@product.CategoryName</p>
-                                                        <h6 class="fw-semibold mb-0">@product.BrandName</h6>
-                                                    </div>
-                                                </div>
-                                            </div>
-
-                                            <div class="card-body d-flex flex-column">
-                                                <p class="text-uppercase text-muted small mb-2">@product.CategoryName</p>
-                                                <h5 class="card-title mb-3">@product.ProductName</h5>
-
-                                                <div class="mb-3">
-                                                    <span class="fw-bold fs-5">@String.Format("{0:N0}", product.MinPrice) VND</span>
-                                                    @if (product.MaxPrice > product.MinPrice)
-                                                    {
-                                                        <span class="text-muted text-decoration-line-through ms-2">
-                                                            @String.Format("{0:N0}", product.MaxPrice) VND
-                                                        </span>
-                                                    }
-                                                </div>
-
-                                                <div class="mb-3">
-                                                    <div class="text-warning small">
-                                                        @for (int i = 1; i <= 5; i++)
-                                                        {
-                                                            if (i <= Math.Floor(product.AverageRating))
-                                                            {
-                                                                <i class="fas fa-star"></i>
-                                                            }
-                                                            else if (i - 0.5 <= product.AverageRating)
-                                                            {
-                                                                <i class="fas fa-star-half-alt"></i>
-                                                            }
-                                                            else
-                                                            {
-                                                                <i class="far fa-star"></i>
-                                                            }
-                                                        }
-                                                        <span class="text-muted ms-1">(@product.AverageRating.ToString("0.0"))</span>
-                                                    </div>
-                                                </div>
-
-                                                <div class="mt-auto">
-                                                    <a href="/Products/Details?id=@product.ProductId"
-                                                       class="btn btn-dark w-100 rounded-3">
-                                                        View Details
-                                                    </a>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                }
-                            }
-                            else
-                            {
-                                <div class="col-12">
-                                    <div class="alert alert-light border rounded-4 mb-0 text-center py-5">
-                                        <i class="fas fa-box-open fa-3x text-muted mb-3 d-block"></i>
-                                        <h5>No products found</h5>
-                                        <p class="text-muted">Try adjusting your filters or search criteria.</p>
-                                        <a href="/Products" class="btn btn-dark mt-2">Clear Filters</a>
-                                    </div>
+                            <div class="row">
+                                <div class="col-6 mb-3">
+                                    <label asp-for="Query.MinPrice" class="form-label">
+                                        Min Price
+                                    </label>
+                                    <input asp-for="Query.MinPrice"
+                                           type="number"
+                                           step="1000"
+                                           class="form-control"
+                                           placeholder="0" />
                                 </div>
-                            }
-                        </div>
 
-                        <!-- Pagination -->
-                        @if (Model.Products.TotalPages > 1)
-                        {
-                            <nav class="mt-4 d-flex justify-content-center" aria-label="Shop pagination">
-                                <ul class="pagination">
-                                    @if (Model.Products.HasPreviousPage)
-                                    {
-                                        <li class="page-item">
-                                            <a class="page-link"
-                                               asp-page="/Products/Index"
-                                               asp-route-keyword="@Model.Query.Keyword"
-                                               asp-route-gender="@Model.Query.Gender"
-                                               asp-route-brandId="@Model.Query.BrandId"
-                                               asp-route-minPrice="@Model.Query.MinPrice"
-                                               asp-route-maxPrice="@Model.Query.MaxPrice"
-                                               asp-route-pageNumber="@(Model.Products.PageNumber - 1)"
-                                               asp-route-pageSize="@Model.Products.PageSize">
-                                                Previous
-                                            </a>
-                                        </li>
-                                    }
+                                <div class="col-6 mb-3">
+                                    <label asp-for="Query.MaxPrice" class="form-label">
+                                        Max Price
+                                    </label>
+                                    <input asp-for="Query.MaxPrice"
+                                           type="number"
+                                           step="1000"
+                                           class="form-control"
+                                           placeholder="999999" />
+                                </div>
+                            </div>
 
-                                    @{
-                                        int startPage = Math.Max(1, Model.Products.PageNumber - 2);
-                                        int endPage = Math.Min(Model.Products.TotalPages, startPage + 4);
-                                        
-                                        if (startPage > 1)
-                                        {
-                                            <li class="page-item">
-                                                <a class="page-link"
-                                                   asp-page="/Products/Index"
-                                                   asp-route-keyword="@Model.Query.Keyword"
-                                                   asp-route-gender="@Model.Query.Gender"
-                                                   asp-route-brandId="@Model.Query.BrandId"
-                                                   asp-route-minPrice="@Model.Query.MinPrice"
-                                                   asp-route-maxPrice="@Model.Query.MaxPrice"
-                                                   asp-route-pageNumber="1"
-                                                   asp-route-pageSize="@Model.Products.PageSize">
-                                                    1
-                                                </a>
-                                            </li>
-                                            @if (startPage > 2)
-                                            {
-                                                <li class="page-item disabled"><span class="page-link">...</span></li>
-                                            }
-                                        }
-                                    }
+                            <div class="mb-3">
+                                <label asp-for="Query.SortBy" class="form-label">
+                                    Sort By
+                                </label>
+                                <select asp-for="Query.SortBy" class="form-select">
+                                    <option value="1">Created Date</option>
+                                    <option value="2">Updated Date</option>
+                                    <option value="3">Product Name</option>
+                                    <option value="4">Product Code</option>
+                                    <option value="5">Brand</option>
+                                    <option value="6">Category</option>
+                                    <option value="7">Price</option>
+                                </select>
+                            </div>
 
-                                    @for (int i = startPage; i <= endPage; i++)
-                                    {
-                                        <li class="page-item @(i == Model.Products.PageNumber ? "active" : "")">
-                                            <a class="page-link"
-                                               asp-page="/Products/Index"
-                                               asp-route-keyword="@Model.Query.Keyword"
-                                               asp-route-gender="@Model.Query.Gender"
-                                               asp-route-brandId="@Model.Query.BrandId"
-                                               asp-route-minPrice="@Model.Query.MinPrice"
-                                               asp-route-maxPrice="@Model.Query.MaxPrice"
-                                               asp-route-pageNumber="@i"
-                                               asp-route-pageSize="@Model.Products.PageSize">
-                                                @i
-                                            </a>
-                                        </li>
-                                    }
+                            <div class="mb-4">
+                                <label asp-for="Query.IsAscending" class="form-label">
+                                    Order
+                                </label>
+                                <select asp-for="Query.IsAscending" class="form-select">
+                                    <option value="false">Descending</option>
+                                    <option value="true">Ascending</option>
+                                </select>
+                            </div>
 
-                                    @if (endPage < Model.Products.TotalPages)
-                                    {
-                                        @if (endPage < Model.Products.TotalPages - 1)
-                                        {
-                                            <li class="page-item disabled"><span class="page-link">...</span></li>
-                                        }
-                                        <li class="page-item">
-                                            <a class="page-link"
-                                               asp-page="/Products/Index"
-                                               asp-route-keyword="@Model.Query.Keyword"
-                                               asp-route-gender="@Model.Query.Gender"
-                                               asp-route-brandId="@Model.Query.BrandId"
-                                               asp-route-minPrice="@Model.Query.MinPrice"
-                                               asp-route-maxPrice="@Model.Query.MaxPrice"
-                                               asp-route-pageNumber="@Model.Products.TotalPages"
-                                               asp-route-pageSize="@Model.Products.PageSize">
-                                                @Model.Products.TotalPages
-                                            </a>
-                                        </li>
-                                    }
+                            <div class="d-grid gap-2">
+                                <button type="submit" class="btn btn-dark">
+                                    Filter
+                                </button>
 
-                                    @if (Model.Products.HasNextPage)
-                                    {
-                                        <li class="page-item">
-                                            <a class="page-link"
-                                               asp-page="/Products/Index"
-                                               asp-route-keyword="@Model.Query.Keyword"
-                                               asp-route-gender="@Model.Query.Gender"
-                                               asp-route-brandId="@Model.Query.BrandId"
-                                               asp-route-minPrice="@Model.Query.MinPrice"
-                                               asp-route-maxPrice="@Model.Query.MaxPrice"
-                                               asp-route-pageNumber="@(Model.Products.PageNumber + 1)"
-                                               asp-route-pageSize="@Model.Products.PageSize">
-                                                Next
-                                            </a>
-                                        </li>
-                                    }
-                                </ul>
-                            </nav>
-                        }
+                                <a asp-page="/Products/Index"
+                                   class="btn btn-outline-secondary">
+                                    Clear
+                                </a>
+                            </div>
+                        </form>
                     </div>
                 </div>
             </div>
+
+            <!-- RIGHT: PRODUCT GRID -->
+            <div class="col-12 col-lg-9">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h2 class="mb-1">Products</h2>
+                        <p class="text-muted mb-0">
+                            Browse all available sportwear products.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
+                    <div class="d-flex flex-wrap gap-2">
+                        <span class="badge rounded-pill text-bg-dark px-3 py-2">
+                            Total: @totalRecords
+                        </span>
+
+                        <span class="badge rounded-pill text-bg-light border px-3 py-2">
+                            Page @currentPage / @totalPages
+                        </span>
+                    </div>
+
+                    <div class="text-muted">
+                        Showing @products.Count() product(s)
+                    </div>
+                </div>
+
+                <div class="row g-4">
+                    @if (products.Any())
+                    {
+                        foreach (var product in products)
+                        {
+                            <div class="col-12 col-sm-6 col-xl-4">
+                                <div class="card h-100 border-0 shadow-sm rounded-4 overflow-hidden">
+
+                                    <div class="position-relative bg-light" style="min-height: 240px;">
+                                        @if (!string.IsNullOrWhiteSpace(product.ThumbnailUrl))
+                                        {
+                                            <img src="@product.ThumbnailUrl"
+                                                 alt="@product.ProductName"
+                                                 class="w-100 h-100"
+                                                 style="object-fit: cover; min-height: 240px;" />
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex justify-content-center align-items-center text-center h-100 p-4"
+                                                 style="min-height: 240px;">
+                                                <div>
+                                                    <p class="text-muted mb-2">@product.CategoryName</p>
+                                                    <h6 class="fw-semibold mb-0">@product.ProductName</h6>
+                                                </div>
+                                            </div>
+                                        }
+
+                                        @if (product.MinSalePrice.HasValue)
+                                        {
+                                            <span class="badge text-bg-danger position-absolute top-0 start-0 m-3">
+                                                Sale
+                                            </span>
+                                        }
+
+                                        <span class="badge text-bg-light border position-absolute top-0 end-0 m-3">
+                                            @product.Gender
+                                        </span>
+                                    </div>
+
+                                    <div class="card-body d-flex flex-column">
+                                        <p class="text-uppercase text-muted small mb-2">
+                                            @product.BrandName · @product.CategoryName
+                                        </p>
+
+                                        <h5 class="card-title mb-2">
+                                            @product.ProductName
+                                        </h5>
+
+                                        <p class="text-muted small mb-3">
+                                            Code: @product.ProductCode
+                                        </p>
+
+                                        <div class="mb-3">
+                                            @if (product.MinSalePrice.HasValue)
+                                            {
+                                                <span class="fw-bold fs-5 text-danger">
+                                                    @product.MinSalePrice.Value.ToString("N0") ₫
+                                                </span>
+
+                                                <span class="text-muted text-decoration-line-through ms-2">
+                                                    @product.MinPrice.ToString("N0") ₫
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="fw-bold fs-5">
+                                                    @product.MinPrice.ToString("N0") ₫
+                                                </span>
+                                            }
+                                        </div>
+
+                                        <div class="mt-auto">
+                                            <a asp-page="/Products/Details"
+                                                asp-route-productId="@product.ProductId"
+                                                class="btn btn-dark w-100 rounded-3">
+                                                    View Product Details
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="alert alert-light border rounded-4 mb-0">
+                                No products found with the selected filters.
+                            </div>
+                        </div>
+                    }
+                </div>
+
+                @if (totalPages > 1)
+                {
+                    <nav class="mt-4 d-flex justify-content-center" aria-label="Shop pagination">
+                        <ul class="pagination">
+
+                            <li class="page-item @(currentPage <= 1 ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-page="/Products/Index"
+                                   asp-route-Query.PageNumber="@(currentPage - 1)"
+                                   asp-route-Query.PageSize="@pageSize"
+                                   asp-route-Query.SearchTerm="@Model.Query.SearchTerm"
+                                   asp-route-Query.Gender="@Model.Query.Gender"
+                                   asp-route-Query.IsOnSale="@Model.Query.IsOnSale"
+                                   asp-route-Query.IsNewRelease="@Model.Query.IsNewRelease"
+                                   asp-route-Query.MinPrice="@Model.Query.MinPrice"
+                                   asp-route-Query.MaxPrice="@Model.Query.MaxPrice"
+                                   asp-route-Query.SortBy="@Model.Query.SortBy"
+                                   asp-route-Query.IsAscending="@Model.Query.IsAscending">
+                                    Previous
+                                </a>
+                            </li>
+
+                            @for (var i = 1; i <= totalPages; i++)
+                            {
+                                <li class="page-item @(i == currentPage ? "active" : "")">
+                                    <a class="page-link"
+                                       asp-page="/Products/Index"
+                                       asp-route-Query.PageNumber="@i"
+                                       asp-route-Query.PageSize="@pageSize"
+                                       asp-route-Query.SearchTerm="@Model.Query.SearchTerm"
+                                       asp-route-Query.Gender="@Model.Query.Gender"
+                                       asp-route-Query.IsOnSale="@Model.Query.IsOnSale"
+                                       asp-route-Query.IsNewRelease="@Model.Query.IsNewRelease"
+                                       asp-route-Query.MinPrice="@Model.Query.MinPrice"
+                                       asp-route-Query.MaxPrice="@Model.Query.MaxPrice"
+                                       asp-route-Query.SortBy="@Model.Query.SortBy"
+                                       asp-route-Query.IsAscending="@Model.Query.IsAscending">
+                                        @i
+                                    </a>
+                                </li>
+                            }
+
+                            <li class="page-item @(currentPage >= totalPages ? "disabled" : "")">
+                                <a class="page-link"
+                                   asp-page="/Products/Index"
+                                   asp-route-Query.PageNumber="@(currentPage + 1)"
+                                   asp-route-Query.PageSize="@pageSize"
+                                   asp-route-Query.SearchTerm="@Model.Query.SearchTerm"
+                                   asp-route-Query.Gender="@Model.Query.Gender"
+                                   asp-route-Query.IsOnSale="@Model.Query.IsOnSale"
+                                   asp-route-Query.IsNewRelease="@Model.Query.IsNewRelease"
+                                   asp-route-Query.MinPrice="@Model.Query.MinPrice"
+                                   asp-route-Query.MaxPrice="@Model.Query.MaxPrice"
+                                   asp-route-Query.SortBy="@Model.Query.SortBy"
+                                   asp-route-Query.IsAscending="@Model.Query.IsAscending">
+                                    Next
+                                </a>
+                            </li>
+
+                        </ul>
+                    </nav>
+                }
+            </div>
+        </div>
+
+
+    </div>
+</section>
+
+@if (!string.IsNullOrWhiteSpace(Model.ToastMessage))
+{
+    <div class="toast-container position-fixed top-0 end-0 p-3">
+        <div id="productToast"
+             class="toast align-items-center text-bg-@Model.ToastType border-0"
+             role="alert">
+            <div class="d-flex">
+                <div class="toast-body">
+                    @Model.ToastMessage
+                </div>
+                <button type="button"
+                        class="btn-close btn-close-white me-2 m-auto"
+                        data-bs-dismiss="toast">
+                </button>
+            </div>
         </div>
     </div>
-</section> *@
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const toastElement = document.getElementById("productToast");
+            const toast = new bootstrap.Toast(toastElement, {
+                delay: 4000
+            });
+
+            toast.show();
+        });
+    </script>
+}

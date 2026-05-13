@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SportWearShop.Shared.Enums;
 using SportWearShop.Shared.ViewModels;
 using SportWearShop.Shared.ViewModels.ProductModels;
 using SportWearShop.Web.Infrastructure.Api;
@@ -25,9 +26,14 @@ public class IndexModel : PageModel
         try
         {
             FeaturedProducts = await _productApiService.GetAllAsync(
-                pageNumber: 1,
-                pageSize: 8,
-                cancellationToken: cancellationToken);
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
         {
