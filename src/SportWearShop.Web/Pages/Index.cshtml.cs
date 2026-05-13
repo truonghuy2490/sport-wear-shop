@@ -14,8 +14,11 @@ public class IndexModel : PageModel
 
     public PagingResponseModel<ProductResponseModel>? FeaturedProducts { get; private set; }
 
-    public string? ErrorMessage { get; private set; }
+    public PagingResponseModel<ProductResponseModel>? NewArrivalProducts { get; private set; }
 
+    public PagingResponseModel<ProductResponseModel>? SaleProducts { get; private set; }
+
+    public string? ErrorMessage { get; private set; }
     public IndexModel(IProductApiService productApiService)
     {
         _productApiService = productApiService;
@@ -34,14 +37,28 @@ public class IndexModel : PageModel
                     IsAscending = false
                 },
                 cancellationToken);
-        }
-        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            ErrorMessage = "You are not authorized. Please login again.";
-        }
-        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
-        {
-            ErrorMessage = "You do not have permission to view this content.";
+
+            NewArrivalProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsNewRelease = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+
+            SaleProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsOnSale = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
