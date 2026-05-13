@@ -1,74 +1,45 @@
-import { useEffect, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 
-import { getBrandById, updateBrand } from "../../api/brandApi";
-import { updateBrandRequestModel } from "../../models/brandModel";
+import { createBrand } from "../../api/brandApi";
+import { createBrandRequestModel } from "../../models/brandModel";
 import { showToast } from "../../redux/toast/toastSlice";
 
-function BrandEditPage() {
-    const { brandId } = useParams();
-
+function BrandCreatePage() {
     const navigate = useNavigate();
     const dispatch = useDispatch();
 
     const [formData, setFormData] = useState({
-        ...updateBrandRequestModel
+        ...createBrandRequestModel
     });
 
-    const [currentImage, setCurrentImage] = useState("");
     const [previewImage, setPreviewImage] = useState("");
-
-    const [isLoading, setIsLoading] = useState(true);
+    const [selectedFileName, setSelectedFileName] = useState("");
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    useEffect(() => {
-        loadBrandDetail();
-    }, [brandId]);
-
-    async function loadBrandDetail() {
-        try {
-            setIsLoading(true);
-
-            const data = await getBrandById(brandId);
-
-            setFormData({
-                brandName: data.brandName || "",
-                brandCode: data.brandCode || "",
-                brandImageFile: null,
-                isActive: data.isActive ?? true
-            });
-
-            setCurrentImage(data.brandImage || "");
-            setPreviewImage(data.brandImage || "");
-        } catch (error) {
-            dispatch(
-                showToast({
-                    type: "error",
-                    title: "Error",
-                    message:
-                        error.response?.data?.message ||
-                        "Failed to load brand detail."
-                })
-            );
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
     function handleChange(e) {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
 
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "checkbox" ? checked : value
+            [name]: value
         }));
     }
 
     function handleImageChange(e) {
         const file = e.target.files?.[0];
 
-        if (!file) return;
+        if (!file) {
+            setFormData((prev) => ({
+                ...prev,
+                brandImageFile: null
+            }));
+
+            setPreviewImage("");
+            setSelectedFileName("");
+            return;
+        }
 
         setFormData((prev) => ({
             ...prev,
@@ -76,6 +47,7 @@ function BrandEditPage() {
         }));
 
         setPreviewImage(URL.createObjectURL(file));
+        setSelectedFileName(file.name);
     }
 
     async function handleSubmit(e) {
@@ -84,17 +56,17 @@ function BrandEditPage() {
         try {
             setIsSubmitting(true);
 
-            await updateBrand(brandId, formData);
+            const result = await createBrand(formData);
 
             dispatch(
                 showToast({
                     type: "success",
                     title: "Success",
-                    message: "Brand updated successfully."
+                    message: "Brand created successfully."
                 })
             );
 
-            navigate(`/brands/${brandId}`);
+            navigate(`/brands/${result.brandId}`);
         } catch (error) {
             dispatch(
                 showToast({
@@ -102,7 +74,7 @@ function BrandEditPage() {
                     title: "Error",
                     message:
                         error.response?.data?.message ||
-                        "Failed to update brand."
+                        "Failed to create brand."
                 })
             );
         } finally {
@@ -110,28 +82,17 @@ function BrandEditPage() {
         }
     }
 
-    if (isLoading) {
-        return (
-            <div className="text-center py-5 text-muted">
-                Loading brand form...
-            </div>
-        );
-    }
-
     return (
         <div>
             <div className="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 className="fw-bold mb-1">Edit Brand</h3>
+                    <h3 className="fw-bold mb-1">Create Brand</h3>
                     <p className="text-muted mb-0">
-                        Update brand information, image and status.
+                        Add a new brand to the system.
                     </p>
                 </div>
 
-                <Link
-                    to={`/brands/${brandId}`}
-                    className="btn btn-outline-secondary"
-                >
+                <Link to="/brands" className="btn btn-outline-secondary">
                     Back
                 </Link>
             </div>
@@ -184,10 +145,16 @@ function BrandEditPage() {
                                 />
 
                                 <small className="text-muted">
-                                    Leave empty to keep current image.
+                                    Upload brand logo or image.
                                 </small>
 
-                                {previewImage && (
+                                {selectedFileName && (
+                                    <div className="small text-muted mt-1">
+                                        Selected file: {selectedFileName}
+                                    </div>
+                                )}
+
+                                {previewImage ? (
                                     <div className="mt-3">
                                         <img
                                             src={previewImage}
@@ -197,9 +164,7 @@ function BrandEditPage() {
                                             className="rounded border object-fit-cover"
                                         />
                                     </div>
-                                )}
-
-                                {!previewImage && (
+                                ) : (
                                     <div
                                         className="mt-3 bg-light rounded border d-flex align-items-center justify-content-center"
                                         style={{
@@ -210,26 +175,6 @@ function BrandEditPage() {
                                         <i className="bi bi-image text-muted fs-3"></i>
                                     </div>
                                 )}
-                            </div>
-
-                            <div className="col-md-12">
-                                <div className="form-check">
-                                    <input
-                                        type="checkbox"
-                                        name="isActive"
-                                        className="form-check-input"
-                                        id="isActive"
-                                        checked={formData.isActive}
-                                        onChange={handleChange}
-                                    />
-
-                                    <label
-                                        htmlFor="isActive"
-                                        className="form-check-label"
-                                    >
-                                        Active
-                                    </label>
-                                </div>
                             </div>
                         </div>
 
@@ -246,7 +191,7 @@ function BrandEditPage() {
                                 className="btn btn-dark"
                                 disabled={isSubmitting}
                             >
-                                {isSubmitting ? "Saving..." : "Save Changes"}
+                                {isSubmitting ? "Creating..." : "Create Brand"}
                             </button>
                         </div>
                     </form>
@@ -256,4 +201,4 @@ function BrandEditPage() {
     );
 }
 
-export default BrandEditPage;
+export default BrandCreatePage;

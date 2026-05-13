@@ -22,11 +22,11 @@ function Sidebar() {
             label: "Brands",
             icon: "bi-patch-check"
         },
-        {
-            path: "/inventory",
-            label: "Inventory",
-            icon: "bi-archive"
-        },
+        // {
+        //     path: "/inventory",
+        //     label: "Inventory",
+        //     icon: "bi-archive"
+        // },
         {
             path: "/orders",
             label: "Orders",

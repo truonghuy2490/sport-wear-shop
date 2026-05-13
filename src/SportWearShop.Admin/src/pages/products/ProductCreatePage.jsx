@@ -24,7 +24,7 @@ import { showToast } from "../../redux/toast/toastSlice";
 import StepIndicator from "../../components/products/StepIndicator";
 import ProductForm from "../../components/products/ProductForm";
 import VariantForm from "../../components/products/VariantForm";
-import ImageStep from "../../components/products/ImageStep";
+import ImageForm from "../../components/products/ImageForm";
 
 
 function ProductCreatePage() {
@@ -470,7 +470,7 @@ function ProductCreatePage() {
             )}
 
             {currentStep === 3 && (
-                <ImageStep
+                <ImageForm
                     form={imageForm}
                     product={createdProduct}
                     variants={createdVariants}

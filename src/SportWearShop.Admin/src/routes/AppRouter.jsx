@@ -14,6 +14,7 @@ import DashboardPage from "../pages/dashboard/DashboardPage";
 import BrandPage from "../pages/brands/BrandPage";
 import BrandDetailPage from "../pages/brands/BrandDetailPage";
 import BrandEditPage from "../pages/brands/BrandEditPage";
+import BrandCreatePage from "../pages/brands/BrandCreatePage";
 
 import CategoryPage from "../pages/categories/CategoryPage";
 import CategoryDetailPage from "../pages/categories/CategoryDetailPage";
@@ -173,6 +174,16 @@ function AppRouter() {
                     <ProtectedRoute>
                         <Layout>
                             <BrandEditPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+            <Route
+                path="/brands/create"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <BrandCreatePage />
                         </Layout>
                     </ProtectedRoute>
                 }

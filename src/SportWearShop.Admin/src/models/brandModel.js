@@ -1,13 +1,13 @@
 export const createBrandRequestModel = {
     brandName: "",
     brandCode: "",
-    brandImage: ""
+    brandImageFile: null
 };
 
 export const updateBrandRequestModel = {
     brandName: "",
     brandCode: "",
-    brandImage: "",
+    brandImageFile: null,
     isActive: true
 };
 

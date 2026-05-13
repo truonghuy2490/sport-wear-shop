@@ -462,8 +462,6 @@ public class ProductVariantService : IProductVariantService{
 
     }
 
-
-
     public async Task<ProductVariantDetailResponseModel> UpdateSortOrdersAsync(
         long productVariantId,
         UpdateProductImageSortOrdersRequestModel request,

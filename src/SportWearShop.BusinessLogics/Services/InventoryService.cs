@@ -42,7 +42,7 @@ public class InventoryService : IInventoryService
 
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: s => s.ProductVariantId == productVariantId 
-                                && s.ProductVariant.Status == ProductVariantStatus.Active, // GPT said can use this without including XD
+                                && s.ProductVariant.Status != ProductVariantStatus.Deleted,
             selector: s => new InventoryStockResponseModel
             {
                 ProductVariantId = s.ProductVariantId,
@@ -86,7 +86,7 @@ public class InventoryService : IInventoryService
 
         var isVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
             pv => pv.ProductVariantId == productVariantId
-                && pv.Status == ProductVariantStatus.Active,
+                && pv.Status != ProductVariantStatus.Deleted,
             cancellationToken);
 
         if (!isVariantExist)
@@ -428,7 +428,7 @@ public class InventoryService : IInventoryService
     {
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: stock => stock.ProductVariantId == productVariantId
-                                    && stock.ProductVariant.Status == ProductVariantStatus.Active,
+                                    && stock.ProductVariant.Status != ProductVariantStatus.Deleted,
             selector: stock => stock,
             asNoTracking: false,
             cancellationToken: cancellationToken

@@ -1,4 +1,4 @@
-function ImageStep({
+function ImageForm({
     form,
     product,
     variants,
@@ -213,4 +213,4 @@ function ImageStep({
     );
 }
 
-export default ImageStep;
+export default ImageForm;
