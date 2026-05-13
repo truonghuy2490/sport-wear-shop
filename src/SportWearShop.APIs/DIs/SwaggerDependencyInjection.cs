@@ -7,6 +7,7 @@ public static class SwaggerDependencyInjection
     public static IServiceCollection AddSwaggerDocumentation(
         this IServiceCollection services)
     {
+        // swagger configuration
         services.AddSwaggerGen(options =>
         {
             options.SwaggerDoc("v1", new OpenApiInfo

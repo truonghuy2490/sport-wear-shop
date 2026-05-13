@@ -5,7 +5,7 @@ using SportWearShop.BusinessLogics.ResponseModels.ProductModels;
 
 namespace SportWearShop.APIs.Controllers;
 
-[Route("api/products")]
+[Route("api")]
 [ApiController]
 public class ProductsController : ControllerBase
 {
@@ -19,15 +19,13 @@ public class ProductsController : ControllerBase
 
     // GET: api/products
     // AUTHORIZATION: Allow anonymous, client, admin, staff
-    [HttpGet]
+    [HttpGet("products")]
     public async Task<IActionResult> GetAllAsync(
-        [FromQuery] int pageNumber = 1,
-        [FromQuery] int pageSize = 10,
+        [FromQuery] ProductQueryRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var result = await _productService.GetAllAsync(
-            pageNumber,
-            pageSize,
+            request,
             cancellationToken);
 
         return Ok(result);
@@ -35,7 +33,7 @@ public class ProductsController : ControllerBase
 
     // GET: api/products/1
     // AUTHORIZATION: Allow anonymous, client, admin, staff
-    [HttpGet("{productId:long}")]
+    [HttpGet("products/{productId:long}")]
     public async Task<IActionResult> GetDetailsAsync(
         [FromRoute] long productId,
         CancellationToken cancellationToken = default)
@@ -50,7 +48,7 @@ public class ProductsController : ControllerBase
     // POST: api/products
     // AUTHORIZATION: Admin, Staff
     [Authorize(Policy = "AdminOrStaff")]
-    [HttpPost]
+    [HttpPost("products")]
     public async Task<IActionResult> CreateAsync(
         [FromBody] CreateProductRequestModel request,
         CancellationToken cancellationToken = default)
@@ -59,16 +57,13 @@ public class ProductsController : ControllerBase
             request,
             cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetDetailsAsync),
-            new { productId = result.ProductId },
-            result);
+        return Ok(result);
     }
 
     // PUT: api/products/1
     // AUTHORIZATION: Admin, Staff
     [Authorize(Policy = "AdminOrStaff")]
-    [HttpPut("{productId:long}")]
+    [HttpPut("products/{productId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productId,
         [FromBody] UpdateProductRequestModel request,
@@ -81,12 +76,12 @@ public class ProductsController : ControllerBase
 
         return Ok(result);
     }
-
+    
 
     // DELETE: api/products/1
     // AUTHORIZATION: Admin
     [Authorize(Policy = "AdminOnly")]
-    [HttpDelete("{productId:long}")]
+    [HttpDelete("products/{productId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productId,
         CancellationToken cancellationToken = default)
@@ -96,5 +91,19 @@ public class ProductsController : ControllerBase
             cancellationToken);
 
         return NoContent();
+    }
+
+    [HttpGet("admin/products/{productId:long}")]
+    
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> GetAdminDetailsAsync(
+        long productId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.GetAdminDetailsAsync(
+            productId,
+            cancellationToken);
+
+        return Ok(result);
     }
 }

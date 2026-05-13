@@ -34,14 +34,15 @@ public class InventoryController : ControllerBase
 
     // GET: api/inventory/{productVariantId}/movements
     [Authorize(Policy = "AdminOrStaff")]
-    // AUTHORIZATION: Admin, Staff
     [HttpGet("{productVariantId:long}/movements")]
     public async Task<IActionResult> GetMovementsByVariantIdAsync(
         [FromRoute] long productVariantId,
+        [FromQuery] InventoryMovementQueryRequestModel request,
         CancellationToken cancellationToken = default)
     {
         var result = await _inventoryService.GetMovementsByVariantIdAsync(
             productVariantId,
+            request,
             cancellationToken);
 
         return Ok(result);

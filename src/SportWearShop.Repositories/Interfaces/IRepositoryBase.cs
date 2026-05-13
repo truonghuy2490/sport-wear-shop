@@ -1,4 +1,5 @@
 ﻿using System.Linq.Expressions;
+using SportWearShop.Repositories.Implementations;
 
 namespace SportWearShop.Repositories.Interfaces;
 
@@ -20,6 +21,11 @@ public interface IBaseRepository<T> where T : class
         bool asNoTracking = true,
         CancellationToken cancellationToken = default,
         params Expression<Func<T, object>>[] includes);
+        
+    Task<(List<TResult> Items, int TotalCount)> FindWithPagingAsync<TResult>(
+        QueryOptions<T> options,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken cancellationToken = default);
 
     Task AddAsync(
         T entity,

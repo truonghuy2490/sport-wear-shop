@@ -22,9 +22,15 @@ public class CategoryController : ControllerBase
     // AUTHORIZATION: Allow anonymous, client, admin, staff
     [HttpGet]
     public async Task<IActionResult> GetAllAsync(
-        CancellationToken cancellationToken)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 20,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _categoryService.GetAllAsync(cancellationToken);
+        var result = await _categoryService.GetAllAsync(
+            pageNumber,
+            pageSize,
+            cancellationToken);
+
         return Ok(result);
     }
 
@@ -70,10 +76,7 @@ public class CategoryController : ControllerBase
     {
         var result = await _categoryService.CreateAsync(request, cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetById),
-            new { id = result.CategoryId },
-            result);
+        return Ok(result);
     }
 
     // PUT: api/categories
@@ -99,5 +102,14 @@ public class CategoryController : ControllerBase
     {
         await _categoryService.DeleteAsync(id, cancellationToken);
         return NoContent();
+    }
+
+    [HttpGet("tree")]
+    public async Task<IActionResult> GetTreeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _categoryService.GetTreeAsync(cancellationToken);
+
+        return Ok(result);
     }
 }

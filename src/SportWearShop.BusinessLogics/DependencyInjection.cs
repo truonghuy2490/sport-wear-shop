@@ -2,6 +2,7 @@
 using Microsoft.Extensions.DependencyInjection;
 using SportWearShop.BusinessLogics.Interfaces;
 using SportWearShop.BusinessLogics.Services;
+using SportWearShop.BusinessLogics.Validators;
 using SportWearShop.BussinessLogics.Services;
 using SportWearShop.Repositories;
 using SportWearShop.Repositories.Security;
@@ -19,7 +20,7 @@ public static class DependencyInjection
     {
         services.AddRepositoryLayer(configuration);
 
-        
+        // Services
         services.AddScoped<ICategoryService, CategoryService>();
         services.AddScoped<IBrandService, BrandService>();
             
@@ -36,7 +37,9 @@ public static class DependencyInjection
         services.AddScoped<IAuthService, AuthService>();
         services.AddScoped<IUserService, UserService>();
         
-
+        services.AddScoped<IOrderService, OrderService>();
+        services.AddScoped<ICheckoutService, CheckoutService>();
+        
         return services;
     }
 }

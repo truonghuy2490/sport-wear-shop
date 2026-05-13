@@ -23,6 +23,18 @@ builder.Services.AddSwaggerDocumentation();
 // Authen + Author
 builder.Services.AddAuthenticationServices(builder.Configuration);
 
+// CORS configuration for SportWearShop.Admin
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactAdminCors", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:5173")
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
 // seed data
@@ -35,6 +47,9 @@ app.UseSwaggerMiddlewares();
 app.UseMiddleware<GlobalExceptionHandler>();
 
 app.UseHttpsRedirection();
+
+// CORS config 
+app.UseCors("ReactAdminCors");
 
 // authen + author
 app.UseAuthenticationMiddlewares();

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.InventoryModels;
 
 namespace SportWearShop.BusinessLogics.Interfaces;
@@ -17,8 +18,9 @@ public interface IInventoryService
         long productVariantId,
         CancellationToken cancellationToken = default);
 
-    Task<List<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
+    Task<PagingResponseModel<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
         long productVariantId,
+        InventoryMovementQueryRequestModel request,
         CancellationToken cancellationToken = default);
 
 

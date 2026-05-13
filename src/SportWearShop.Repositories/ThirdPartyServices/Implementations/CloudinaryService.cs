@@ -124,9 +124,6 @@ public class CloudinaryService : ICloudinaryService
         var uri = new Uri(imageUrl);
         var path = uri.AbsolutePath;
 
-        // Example:
-        // /demo/image/upload/v1234567890/sport-wear-shop/products/abc.png
-
         var uploadIndex = path.IndexOf("/upload/", StringComparison.OrdinalIgnoreCase);
 
         if (uploadIndex == -1)
