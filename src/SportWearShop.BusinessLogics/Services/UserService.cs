@@ -277,7 +277,7 @@ public class UserService : IUserService
     {
         var user = await _userManager.Users
                 .AsNoTracking()
-                .FirstOrDefaultAsync( u => u.Id == userId && u.IsActive, cancellationToken);
+                .FirstOrDefaultAsync( u => u.Id == userId, cancellationToken);
         if (user is null)
             throw new NotFoundException("User not found.");
 

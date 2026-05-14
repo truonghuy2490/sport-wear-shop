@@ -1,11 +1,4 @@
-<<<<<<< HEAD
 using Microsoft.AspNetCore.Authorization;
-=======
-<<<<<<< HEAD
-using Microsoft.AspNetCore.Authorization;
-=======
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using SportWearShop.BusinessLogics.Interfaces;
@@ -26,13 +19,17 @@ public class ProductVariantsController : ControllerBase
 
     // GET /api/products/{productId}/variants
     // AUTHORIZATION: Allow anonymous, client, admin, staff
-    [HttpGet("api/products/{productId:long}/product-variants")]
+    [HttpGet("products/{productId:long}/variants")]
     public async Task<IActionResult> GetByProductIdAsync(
-        [FromRoute] long productId,
+        long productId,
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
         CancellationToken cancellationToken = default)
     {
         var result = await _productVariantService.GetByProductIdAsync(
             productId,
+            pageNumber,
+            pageSize,
             cancellationToken);
 
         return Ok(result);
@@ -40,29 +37,19 @@ public class ProductVariantsController : ControllerBase
 
     // POST: /api/products/{productId}/product-variants
     // AUTHORIZATION: Admin, Staff
-<<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
-=======
-<<<<<<< HEAD
-    [Authorize(Policy = "AdminOrStaff")]
-=======
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
-    [HttpPost("api/products/{productId:long}/product-variants")]
-    public async Task<IActionResult> CreateAsync(
-        [FromRoute] long productId, 
-        [FromBody] CreateProductVariantRequestModel request,
+    [HttpPost("api/products/{productId:long}/product-variants/batch")]
+    public async Task<IActionResult> CreateManyAsync(
+        [FromRoute] long productId,
+        [FromBody] CreateProductVariantsRequestModel request,
         CancellationToken cancellationToken = default)
     {
-        var result = await _productVariantService.CreateAsync(
+        var result = await _productVariantService.CreateManyAsync(
             productId,
             request,
             cancellationToken);
 
-        return CreatedAtAction(
-            nameof(GetByIdAsync),
-            new { productVariantId = result.ProductVariantId },
-            result);
+        return Ok(result);
     }
 
     // GET /api/product-variants/{productVariantId}
@@ -83,14 +70,7 @@ public class ProductVariantsController : ControllerBase
 
     // PUT: api/product-variants/1
     // AUTHORIZATION: Admin, Staff
-<<<<<<< HEAD
     [Authorize(Policy = "AdminOrStaff")]
-=======
-<<<<<<< HEAD
-    [Authorize(Policy = "AdminOrStaff")]
-=======
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpPut("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> UpdateAsync(
         [FromRoute] long productVariantId,
@@ -109,14 +89,7 @@ public class ProductVariantsController : ControllerBase
 
     // DELETE: api/product-variants/1
     // AUTHORIZATION: Admin
-<<<<<<< HEAD
     [Authorize(Policy = "AdminOnly")]
-=======
-<<<<<<< HEAD
-    [Authorize(Policy = "AdminOnly")]
-=======
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
     [HttpDelete("api/product-variants/{productVariantId:long}")]
     public async Task<IActionResult> DeleteAsync(
         [FromRoute] long productVariantId,
@@ -128,9 +101,8 @@ public class ProductVariantsController : ControllerBase
 
         return NoContent();
     }
-<<<<<<< HEAD
 
-    [HttpPut("{productVariantId:long}/images/sort-orders")]
+    [HttpPut("api/product-variants/{productVariantId:long}/images/sort-orders")]
     [Authorize(Policy = "AdminOrStaff")]
     public async Task<IActionResult> UpdateImageSortOrdersAsync(
         [FromRoute] long productVariantId,
@@ -144,6 +116,32 @@ public class ProductVariantsController : ControllerBase
 
         return Ok(result);
     }
-=======
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
+
+    [HttpGet("api/admin/product-variants/{productVariantId:long}")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> GetAdminByIdAsync(
+        long productVariantId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.GetAdminByIdAsync(
+            productVariantId,
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPatch("api/product-variants/{productVariantId:long}/status")]
+    [Authorize(Policy = "AdminOrStaff")]
+    public async Task<IActionResult> UpdateStatus(
+        long productVariantId,
+        [FromBody] UpdateProductVariantStatusRequestModel request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productVariantService.UpdateStatusAsync(
+            productVariantId,
+            request.Status,
+            cancellationToken);
+
+        return Ok(result);
+    }
 }

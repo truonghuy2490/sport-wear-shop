@@ -1,4 +1,5 @@
-﻿using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
+﻿using SportWearShop.BusinessLogics.ResponseModels;
+using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -7,7 +8,9 @@ namespace SportWearShop.BusinessLogics.Interfaces;
 
 public interface IBrandService
 {
-    Task<List<BrandResponseModel>> GetAllAsync(
+    Task<PagingResponseModel<BrandResponseModel>> GetAllAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<BrandDetailResponseModel?> GetByIdAsync(

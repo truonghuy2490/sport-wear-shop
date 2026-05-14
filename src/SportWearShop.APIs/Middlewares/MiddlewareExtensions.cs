@@ -18,8 +18,9 @@ public static class MiddlewareExtensions
         var services = scope.ServiceProvider;
         var dbContext = services.GetRequiredService<AppDbContext>();
         var roleManager = services.GetRequiredService<RoleManager<AppRole>>();
+        var userManager = services.GetRequiredService<UserManager<AppUser>>();
 
-        await SeedDataInitializer.SeedAsync(dbContext, roleManager);
+        await SeedDataInitializer.SeedAsync(dbContext, roleManager, userManager);
 
         return app;
     }

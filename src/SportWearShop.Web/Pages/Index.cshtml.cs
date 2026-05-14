@@ -1,8 +1,5 @@
-<<<<<<< HEAD
-=======
-<<<<<<< HEAD
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using SportWearShop.Shared.Enums;
 using SportWearShop.Shared.ViewModels;
 using SportWearShop.Shared.ViewModels.ProductModels;
 using SportWearShop.Web.Infrastructure.Api;
@@ -17,8 +14,11 @@ public class IndexModel : PageModel
 
     public PagingResponseModel<ProductResponseModel>? FeaturedProducts { get; private set; }
 
-    public string? ErrorMessage { get; private set; }
+    public PagingResponseModel<ProductResponseModel>? NewArrivalProducts { get; private set; }
 
+    public PagingResponseModel<ProductResponseModel>? SaleProducts { get; private set; }
+
+    public string? ErrorMessage { get; private set; }
     public IndexModel(IProductApiService productApiService)
     {
         _productApiService = productApiService;
@@ -29,17 +29,36 @@ public class IndexModel : PageModel
         try
         {
             FeaturedProducts = await _productApiService.GetAllAsync(
-                pageNumber: 1,
-                pageSize: 8,
-                cancellationToken: cancellationToken);
-        }
-        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Unauthorized)
-        {
-            ErrorMessage = "You are not authorized. Please login again.";
-        }
-        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.Forbidden)
-        {
-            ErrorMessage = "You do not have permission to view this content.";
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+
+            NewArrivalProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsNewRelease = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+
+            SaleProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsOnSale = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
         }
         catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
@@ -58,23 +77,4 @@ public class IndexModel : PageModel
             ErrorMessage = "Something went wrong while loading featured products.";
         }
     }
-<<<<<<< HEAD
 }
-=======
-}
-=======
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-
-namespace SportWearShop.Web.Pages
-{
-    public class IndexModel : PageModel
-    {
-        public void OnGet()
-        {
-
-        }
-    }
-}
->>>>>>> 0f1984f89c4758af659b95b7677becfbc0e7f653
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227

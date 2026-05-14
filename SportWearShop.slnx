@@ -9,4 +9,7 @@
     <Project Path="src/SportWearShop.BusinessLogics/SportWearShop.BusinessLogics.csproj" />
     <Project Path="src/SportWearShop.Repositories/SportWearShop.Repositories.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SportWearShop.UnitTests/SportWearShop.UnitTests.csproj" />
+  </Folder>
 </Solution>

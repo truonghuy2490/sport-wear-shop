@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace SportWearShop.BusinessLogics.ResponseModels.BrandModels;
 
@@ -10,5 +11,5 @@ public class CreateBrandRequestModel
 
     public string BrandCode { get; set; } = null!;
 
-    public string? BrandImage { get; set; }
+    public IFormFile? BrandImageFile { get; set; }
 }

@@ -1,14 +1,17 @@
 ﻿using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.InventoryModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System;
 using System.Collections.Generic;
 using System.Linq.Expressions;
 using System.Text;
+using LinqKit;
 
 namespace SportWearShop.BusinessLogics.Services;
 
@@ -35,11 +38,9 @@ public class InventoryService : IInventoryService
             "Retrieving inventory stock. ProductVariantId={ProductVariantId}",
             productVariantId);
 
-        
-
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: s => s.ProductVariantId == productVariantId 
-                                && s.ProductVariant.Status == ProductVariantStatus.Active, // GPT said can use this without including XD
+                                && s.ProductVariant.Status != ProductVariantStatus.Deleted,
             selector: s => new InventoryStockResponseModel
             {
                 ProductVariantId = s.ProductVariantId,
@@ -50,37 +51,56 @@ public class InventoryService : IInventoryService
             },
             asNoTracking: true,
             cancellationToken: cancellationToken
-            // ,includes: new Expression<Func<Repositories.Entities.InventoryStock, object>> []
-            // {
-            //     s => s.ProductVariant
-            // }
         );
         if (stock == null)
         {
-            _logger.LogWarning(
-                "Inventory stock not found. ProductVariantId={ProductVariantId}",
-                productVariantId);
+            var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
+                predicate: v => v.ProductVariantId == productVariantId
+                                && v.Status != ProductVariantStatus.Deleted,
+                selector: v => new
+                {
+                    v.ProductVariantId,
+                    v.Sku
+                },
+                asNoTracking: true,
+                cancellationToken: cancellationToken);
 
-            throw new NotFoundException(
-                $"Inventory stock for product variant ID {productVariantId} was not found.");
+            if (variant == null)
+            {
+                throw new NotFoundException(
+                    $"Product variant with ID {productVariantId} was not found.");
+            }
+
+            return new InventoryStockResponseModel
+            {
+                ProductVariantId = variant.ProductVariantId,
+                Sku = variant.Sku,
+                QuantityOnHand = 0,
+                QuantityReserved = 0,
+                UpdatedAtUtc = DateTime.UtcNow
+            };
         }
 
         return stock;
     }
 
-    public async Task<List<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
+    public async Task<PagingResponseModel<InventoryMovementResponseModel>> GetMovementsByVariantIdAsync(
         long productVariantId,
-        CancellationToken cancellationToken = default
-    )
+        InventoryMovementQueryRequestModel request,
+        CancellationToken cancellationToken = default)
     {
+        ArgumentNullException.ThrowIfNull(request);
+
         _logger.LogInformation(
-            "Retrieving inventory movements. ProductVariantId={ProductVariantId}",
-            productVariantId);
+            "Retrieving inventory movements. ProductVariantId={ProductVariantId}, PageNumber={PageNumber}, PageSize={PageSize}",
+            productVariantId,
+            request.PageNumber,
+            request.PageSize);
+
         var isVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
-            predicate: pv => pv.ProductVariantId == productVariantId
-                                && pv.Status == ProductVariantStatus.Active,
-            cancellationToken: cancellationToken
-        );
+            pv => pv.ProductVariantId == productVariantId
+                && pv.Status != ProductVariantStatus.Deleted,
+            cancellationToken);
 
         if (!isVariantExist)
         {
@@ -91,31 +111,87 @@ public class InventoryService : IInventoryService
             throw new NotFoundException(
                 $"Product variant with ID {productVariantId} was not found.");
         }
+        
+        var filter = PredicateBuilder.New<InventoryMovement>(true);
+        filter = filter.And(movement => movement.ProductVariantId == productVariantId);
 
-        var movements = await _unitOfWork.InventoryMovements.FindAsync(
-            filter: m => m.ProductVariantId == productVariantId,
-            selector: m => new InventoryMovementResponseModel
+        if (request.MovementType.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.MovementType == request.MovementType.Value);
+        }
+
+        if (request.ReferenceType.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.ReferenceType == request.ReferenceType.Value);
+        }
+
+        if (request.ReferenceId.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.ReferenceId == request.ReferenceId.Value);
+        }
+
+        if (request.MinQuantity.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.Quantity >= request.MinQuantity.Value);
+        }
+
+        if (request.MaxQuantity.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.Quantity <= request.MaxQuantity.Value);
+        }
+
+        if (request.CreatedFromUtc.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.CreatedAtUtc >= request.CreatedFromUtc.Value);
+        }
+
+        if (request.CreatedToUtc.HasValue)
+        {
+            filter = filter.And(movement =>
+                movement.CreatedAtUtc <= request.CreatedToUtc.Value);
+        }
+
+        var options = new QueryOptions<InventoryMovement>
+        {
+            Filter = filter,
+            SortBy = GetInventoryMovementSortExpression(request.SortBy),
+            Ascending = request.IsAscending,
+            PageNumber = request.PageNumber,
+            PageSize = request.PageSize,
+            AsNoTracking = true,
+            Includes = new List<Expression<Func<InventoryMovement, object>>>
             {
-                InventoryMovementId = m.InventoryMovementId,
-                ProductVariantId = m.ProductVariantId,
-                Sku = m.ProductVariant.Sku,
-                MovementType = m.MovementType.ToString(),
-                Quantity = m.Quantity,
-                ReferenceType = m.ReferenceType.ToString(),
-                ReferenceId = m.ReferenceId,
-                Note = m.Note,
-                CreatedAtUtc = m.CreatedAtUtc
-            },
-            asNoTracking: true,
-            sortBy: m => m.CreatedAtUtc,
-            ascending: true,
-            includes: new Expression<Func<InventoryMovement, object>>[]
-            {
-                m => m.ProductVariant
+                movement => movement.ProductVariant
             }
-        );
+        };
 
-        return movements;
+        var result = await _unitOfWork.InventoryMovements.FindWithPagingAsync(
+            options,
+            selector: movement => new InventoryMovementResponseModel
+            {
+                InventoryMovementId = movement.InventoryMovementId,
+                ProductVariantId = movement.ProductVariantId,
+                Sku = movement.ProductVariant.Sku,
+                MovementType = movement.MovementType.ToString(),
+                Quantity = movement.Quantity,
+                ReferenceType = movement.ReferenceType.ToString(),
+                ReferenceId = movement.ReferenceId,
+                Note = movement.Note,
+                CreatedAtUtc = movement.CreatedAtUtc
+            },
+            cancellationToken);
+
+        return new PagingResponseModel<InventoryMovementResponseModel>(
+            result.Items,
+            result.TotalCount,
+            request.PageNumber,
+            request.PageSize);
     }
 
     // Stock Movement by Staff: Stock In, Stock Out
@@ -360,27 +436,55 @@ public class InventoryService : IInventoryService
     // --- Helper ---
     private async Task<InventoryStock> GetTrackedStockAsync(
         long productVariantId,
-        CancellationToken cancellationToken = default
-    )
+        CancellationToken cancellationToken = default)
     {
         var stock = await _unitOfWork.InventoryStocks.FirstOrDefaultAsync(
             predicate: stock => stock.ProductVariantId == productVariantId
-                                    && stock.ProductVariant.Status == ProductVariantStatus.Active,
+                                    && stock.ProductVariant.Status != ProductVariantStatus.Deleted,
             selector: stock => stock,
             asNoTracking: false,
-            cancellationToken: cancellationToken
-        );
+            cancellationToken: cancellationToken);
 
-        if (stock == null)
+        if (stock != null)
         {
-            _logger.LogWarning(
-                "Inventory stock for product variant ID ProductVariantId={ProductVariantId} was not found.", 
-                productVariantId);
-            throw new NotFoundException(
-                $"Inventory stock for product variant ID {productVariantId} was not found.");
+            return stock;
         }
 
+        var variantExists = await _unitOfWork.ProductVariants.AnyAsync(
+            variant => variant.ProductVariantId == productVariantId
+                    && variant.Status != ProductVariantStatus.Deleted,
+            cancellationToken);
+
+        if (!variantExists)
+        {
+            throw new NotFoundException(
+                $"Product variant with ID {productVariantId} was not found.");
+        }
+
+        stock = new InventoryStock
+        {
+            ProductVariantId = productVariantId,
+            QuantityOnHand = 0,
+            QuantityReserved = 0,
+            UpdatedAtUtc = DateTime.UtcNow
+        };
+
+        await _unitOfWork.InventoryStocks.AddAsync(stock, cancellationToken);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
         return stock;
+    }
+
+    private static Expression<Func<InventoryMovement, object>> GetInventoryMovementSortExpression(
+        InventoryMovementSortBy sortBy)
+    {
+        return sortBy switch
+        {
+            InventoryMovementSortBy.Quantity => movement => movement.Quantity,
+            InventoryMovementSortBy.MovementType => movement => movement.MovementType,
+            InventoryMovementSortBy.ReferenceType => movement => movement.ReferenceType,
+            _ => movement => movement.CreatedAtUtc
+        };
     }
 
 }

@@ -1,17 +1,25 @@
-﻿using SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
+﻿using SportWearShop.BusinessLogics.ResponseModels;
+using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
+using SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
 
 namespace SportWearShop.BusinessLogics.Interfaces;
 
 public interface ICategoryService
 {
-    Task<List<CategoryResponseModel>> GetAllAsync(
+    Task<PagingResponseModel<CategoryResponseModel>> GetAllAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
-
     Task<CategoryDetailResponseModel?> GetByIdAsync(
         int categoryId,
         CancellationToken cancellationToken = default);
+    
+    Task<List<CategoryTreeResponseModel>> GetTreeAsync(
+        CancellationToken cancellationToken = default);
 
-    Task<List<CategoryResponseModel>> GetRootCategoriesAsync(
+    Task<PagingResponseModel<CategoryResponseModel>> GetRootCategoriesAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<List<CategoryResponseModel>> GetChildrenAsync(

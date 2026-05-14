@@ -76,7 +76,6 @@ public class RefreshTokenHandler : DelegatingHandler
         }
         response.Dispose();
 
-        // using new access token from cookies
         accessToken = _authCookieService.GetAccessToken();
 
         if (!string.IsNullOrWhiteSpace(accessToken))

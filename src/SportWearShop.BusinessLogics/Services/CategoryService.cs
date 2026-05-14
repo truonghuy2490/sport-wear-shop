@@ -1,9 +1,12 @@
 ﻿using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
+using SportWearShop.BusinessLogics.ResponseModels.BrandModels;
 using SportWearShop.BusinessLogics.ResponseModels.CategoryModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System.Linq.Expressions;
 
@@ -21,12 +24,28 @@ public class CategoryService : ICategoryService
         _unitOfWork = unitOfWork;
     }
 
-    public async Task<List<CategoryResponseModel>> GetAllAsync(
+    public async Task<PagingResponseModel<CategoryResponseModel>> GetAllAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        _logger.LogInformation("Fetching all active categories.");
-        var categories = await _unitOfWork.Categories.FindAsync(
-            filter: category => category.IsActive,
+        _logger.LogInformation(
+            "Retrieving active categories. PageNumber={PageNumber}, PageSize={PageSize}",
+            pageNumber,
+            pageSize);
+
+        var options = new QueryOptions<Category>
+        {
+            Filter = category => category.IsActive,
+            SortBy = category => category.SortOrder,
+            Ascending = true,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true
+        };
+
+        var result = await _unitOfWork.Categories.FindWithPagingAsync(
+            options,
             selector: category => new CategoryResponseModel
             {
                 CategoryId = category.CategoryId,
@@ -37,22 +56,19 @@ public class CategoryService : ICategoryService
                 SortOrder = category.SortOrder,
                 IsActive = category.IsActive
             },
-            sortBy: category => category.SortOrder,
-            ascending: true,
-            asNoTracking: true,
-            cancellationToken: cancellationToken
-        );
+            cancellationToken);
 
-        if (!categories.Any())
-        {
-            _logger.LogWarning("No active categories found.");
-            throw new NotFoundException("No active categories found.");
-        }
+        _logger.LogInformation(
+            "Retrieved active categories successfully. ReturnedItems={ReturnedItems}, TotalCount={TotalCount}",
+            result.Items.Count,
+            result.TotalCount);
 
-        _logger.LogInformation("Retrieved {Count} active categories.", categories.Count);
-        return categories;
+        return new PagingResponseModel<CategoryResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
-
 
     public async Task<CategoryDetailResponseModel?> GetByIdAsync(
         int categoryId,
@@ -101,13 +117,25 @@ public class CategoryService : ICategoryService
         _logger.LogInformation("Successfully retrieved category detail for CategoryId={CategoryId}", categoryId);
         return category;
     }
-
-    public async Task<List<CategoryResponseModel>> GetRootCategoriesAsync(
+    
+    public async Task<PagingResponseModel<CategoryResponseModel>> GetRootCategoriesAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
-        return await _unitOfWork.Categories.FindAsync(
-            filter: category => category.ParentCategoryId == null
+        var options = new QueryOptions<Category>
+        {
+            Filter = category => category.ParentCategoryId == null
                                 && category.IsActive,
+            SortBy = category => category.SortOrder,
+            Ascending = true,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true
+        };
+
+        var result = await _unitOfWork.Categories.FindWithPagingAsync(
+            options,
             selector: category => new CategoryResponseModel
             {
                 CategoryId = category.CategoryId,
@@ -118,10 +146,13 @@ public class CategoryService : ICategoryService
                 SortOrder = category.SortOrder,
                 IsActive = category.IsActive
             },
-            sortBy: category => category.SortOrder,
-            ascending: true,
-            asNoTracking: true,
-            cancellationToken: cancellationToken);
+            cancellationToken);
+
+        return new PagingResponseModel<CategoryResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
 
     public async Task<List<CategoryResponseModel>> GetChildrenAsync(
@@ -228,51 +259,61 @@ public class CategoryService : ICategoryService
             categoryId);
 
         var category = await _unitOfWork.Categories.FirstOrDefaultAsync(
-            predicate: category => category.CategoryId == categoryId && category.IsActive,
+            predicate: category => category.CategoryId == categoryId,
             selector: category => category,
             asNoTracking: false,
             cancellationToken: cancellationToken);
 
-        if (category == null) {
+        if (category == null)
+        {
             _logger.LogWarning(
                 "Update category failed. Category not found. CategoryId={CategoryId}",
                 categoryId);
 
-            throw new NotFoundException($"Category with ID {categoryId} not found."); 
+            throw new NotFoundException($"Category with ID {categoryId} not found.");
         }
 
-        // unique category code check
-        var isCategoryExist = await _unitOfWork.Categories.AnyAsync(
-            predicate: category => category.CategoryCode == request.CategoryCode && category.IsActive,
-            cancellationToken: cancellationToken
-        );
+        request.CategoryName = request.CategoryName.Trim();
+        request.CategoryCode = request.CategoryCode.Trim();
 
-        if (isCategoryExist) {
+        var isCategoryCodeExist = await _unitOfWork.Categories.AnyAsync(
+            predicate: category =>
+                category.CategoryId != categoryId &&
+                category.CategoryCode == request.CategoryCode &&
+                category.IsActive,
+            cancellationToken: cancellationToken);
+
+        if (isCategoryCodeExist)
+        {
             _logger.LogWarning(
                 "Update category failed. Duplicate CategoryCode={CategoryCode}",
                 request.CategoryCode);
 
-            throw new ConflictException("Category code already exists."); 
+            throw new ConflictException("Category code already exists.");
         }
 
-        // parent category existence check
         if (request.ParentCategoryId.HasValue)
         {
-            if (request.ParentCategoryId.Value == category.CategoryId){
+            if (request.ParentCategoryId.Value == category.CategoryId)
+            {
                 _logger.LogWarning(
-                   "Update category failed. Category cannot be parent of itself. CategoryId={CategoryId}",
-                   categoryId);
+                    "Update category failed. Category cannot be parent of itself. CategoryId={CategoryId}",
+                    categoryId);
+
                 throw new ConflictException("Category cannot be parent of itself.");
             }
 
             var parentExists = await _unitOfWork.Categories.AnyAsync(
-                category => category.CategoryId == request.ParentCategoryId.Value && category.IsActive,
-                cancellationToken);
+                predicate: category =>
+                    category.CategoryId == request.ParentCategoryId.Value &&
+                    category.IsActive,
+                cancellationToken: cancellationToken);
 
-            if (!parentExists){
+            if (!parentExists)
+            {
                 _logger.LogWarning(
-                   "Update category failed. Parent category not found. ParentCategoryId={ParentCategoryId}",
-                   request.ParentCategoryId);
+                    "Update category failed. Parent category not found. ParentCategoryId={ParentCategoryId}",
+                    request.ParentCategoryId);
 
                 throw new NotFoundException("Parent category does not exist.");
             }
@@ -304,7 +345,6 @@ public class CategoryService : ICategoryService
             IsActive = category.IsActive
         };
     }
-
     public async Task DeleteAsync(
         int categoryId,
         CancellationToken cancellationToken = default)
@@ -362,5 +402,40 @@ public class CategoryService : ICategoryService
         _logger.LogInformation(
             "Category deleted successfully (soft delete). CategoryId={CategoryId}",
             categoryId);
+    }
+
+    public async Task<List<CategoryTreeResponseModel>> GetTreeAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var categories = await _unitOfWork.Categories.FindAsync(
+            filter: category => category.IsActive,
+            selector: category => new CategoryTreeResponseModel
+            {
+                CategoryId = category.CategoryId,
+                ParentCategoryId = category.ParentCategoryId,
+                CategoryName = category.CategoryName,
+                CategoryCode = category.CategoryCode,
+                SortOrder = category.SortOrder
+            },
+            sortBy: category => category.SortOrder,
+            ascending: true,
+            asNoTracking: true,
+            cancellationToken: cancellationToken);
+
+        var lookup = categories.ToLookup(category => category.ParentCategoryId);
+
+        List<CategoryTreeResponseModel> BuildTree(int? parentId)
+        {
+            return lookup[parentId]
+                .OrderBy(category => category.SortOrder)
+                .Select(category =>
+                {
+                    category.Children = BuildTree(category.CategoryId);
+                    return category;
+                })
+                .ToList();
+        }
+
+        return BuildTree(null);
     }
 }

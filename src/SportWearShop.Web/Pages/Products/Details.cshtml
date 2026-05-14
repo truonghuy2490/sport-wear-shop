@@ -1,194 +1,270 @@
-@page "/products/{slug}/{productId:long}"
+@page "{productId:long}"
 @model SportWearShop.Web.Pages.Products.DetailsModel
 
 @{
-    var product = Model.Product;
-    ViewData["Title"] = product?.ProductName ?? "Product Details";
-}
+    ViewData["Title"] = Model.Product?.ProductName ?? "Product Details";
 
-@if (product == null)
-{
-    <div class="alert alert-warning">
-        Product not found.
-    </div>
+    var product = Model.Product!;
 
-    return;
-}
-
-@{
-    var productImages = product.Images
-        .OrderBy(i => i.SortOrder)
+    var images = product.Images
+        .OrderByDescending(x => x.IsPrimary)
+        .ThenBy(x => x.SortOrder)
         .ToList();
 
-    var primaryImage = productImages.FirstOrDefault(i => i.IsPrimary)
-        ?? productImages.FirstOrDefault();
+    if (!images.Any())
+    {
+        images = product.Variants
+            .SelectMany(x => x.Images)
+            .OrderByDescending(x => x.IsPrimary)
+            .ThenBy(x => x.SortOrder)
+            .ToList();
+    }
 
-    var mainImageUrl = primaryImage?.ImageUrl ?? "/images/no-image.png";
+    var variants = product.Variants;
 
-    var activeVariants = product.Variants
-        .Where(v => v.Status == "ACTIVE")
-        .ToList();
-
-    var minListPrice = activeVariants.Any()
-        ? activeVariants.Min(v => v.ListPrice)
+    var minPrice = variants.Any()
+        ? variants.Min(x => x.ListPrice)
         : 0;
 
-    var minSalePrice = activeVariants
-        .Where(v => v.SalePrice.HasValue)
-        .Select(v => v.SalePrice!.Value)
-        .DefaultIfEmpty()
+    var minSalePrice = variants
+        .Where(x => x.SalePrice.HasValue)
+        .Select(x => x.SalePrice!.Value)
+        .DefaultIfEmpty(0)
         .Min();
 
-    var hasSale = minSalePrice > 0;
-
-    var colors = activeVariants
-        .GroupBy(v => new { v.ColorCode, v.ColorName })
-        .Select(g => g.Key)
+    var colors = variants
+        .GroupBy(x => new { x.ColorCode, x.ColorName })
+        .Select(g => g.First())
         .ToList();
 
-    var sizes = activeVariants
-        .GroupBy(v => new { v.SizeCode, v.SizeLabel })
-        .Select(g => g.Key)
+    var sizes = variants
+        .GroupBy(x => new { x.SizeCode, x.SizeLabel })
+        .Select(g => g.First())
         .ToList();
+
+    var totalStock = variants.Sum(x => x.AvailableStock);
 }
 
-<div class="row g-5">
+<section class="container-fluid px-0">
+    <div class="row g-0">
 
-    <!-- LEFT: PRODUCT IMAGES -->
-    <div class="col-lg-7">
-        <div class="row g-3">
-            <div class="col-12">
-                <img src="@mainImageUrl"
-                     alt="@(primaryImage?.AltText ?? product.ProductName)"
-                     class="img-fluid rounded bg-light border w-100" />
-            </div>
-
-            @foreach (var image in productImages.Skip(1))
-            {
-                <div class="col-6">
-                    <img src="@image.ImageUrl"
-                         alt="@(image.AltText ?? product.ProductName)"
-                         class="img-fluid rounded bg-light border w-100" />
+        <!-- LEFT: IMAGE GRID -->
+        <div class="col-12 col-lg-8 bg-light">
+            <div class="p-3 p-md-4">
+                <div class="mb-3 small">
+                    <a asp-page="/Products/Index" class="text-dark">← Back</a>
+                    <span class="mx-2 text-muted">/</span>
+                    <span>@product.Gender</span>
+                    <span class="mx-2 text-muted">/</span>
+                    <span>@product.CategoryName</span>
                 </div>
-            }
-        </div>
-    </div>
 
-    <!-- RIGHT: PRODUCT INFO -->
-    <div class="col-lg-5">
-        <div class="sticky-top" style="top: 90px;">
-
-            <p class="text-muted mb-1">
-                @product.BrandName
-            </p>
-
-            <h1 class="fw-bold mb-2">
-                @product.ProductName
-            </h1>
-
-            <p class="text-muted mb-3">
-                @product.CategoryName · @product.Gender
-            </p>
-
-            <!-- PRICE -->
-            <div class="mb-4">
-                @if (hasSale)
-                {
-                    <span class="fs-5 text-muted text-decoration-line-through me-2">
-                        @minListPrice.ToString("N0") ₫
-                    </span>
-
-                    <span class="fs-4 fw-bold text-danger">
-                        @minSalePrice.ToString("N0") ₫
-                    </span>
-                }
-                else
-                {
-                    <span class="fs-4 fw-bold">
-                        @minListPrice.ToString("N0") ₫
-                    </span>
-                }
+                <div class="row g-2">
+                    @if (images.Any())
+                    {
+                        foreach (var image in images.Take(4))
+                        {
+                            <div class="col-12 col-md-6">
+                                <div class="bg-white d-flex align-items-center justify-content-center"
+                                     style="height: 520px;">
+                                    <img src="@image.ImageUrl"
+                                         alt="@(image.AltText ?? product.ProductName)"
+                                         class="img-fluid w-100 h-100"
+                                         style="object-fit: cover;" />
+                                </div>
+                            </div>
+                        }
+                    }
+                    else
+                    {
+                        <div class="col-12">
+                            <div class="bg-white d-flex align-items-center justify-content-center"
+                                 style="height: 650px;">
+                                <div class="text-center text-muted">
+                                    <h5>No Image</h5>
+                                    <p>@product.ProductName</p>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
             </div>
+        </div>
 
-            <!-- COLOR -->
-            @if (colors.Any())
-            {
-                <div class="mb-4">
-                    <div class="fw-semibold mb-2">
-                        Color
+        <!-- RIGHT: PRODUCT INFO -->
+        <div class="col-12 col-lg-4">
+            <div class="position-sticky top-0 p-4 p-md-5" style="min-height: 100vh;">
+
+                <div class="d-flex justify-content-between align-items-start mb-3">
+                    <div>
+                        <div class="small text-muted mb-2">
+                            @product.Gender · @product.CategoryName
+                        </div>
+
+                        <h1 class="h4 fw-bold text-uppercase mb-2">
+                            @product.ProductName
+                        </h1>
                     </div>
 
+                </div>
+
+                <div class="mb-3">
+                    @if (minSalePrice > 0)
+                    {
+                        <span class="fw-bold fs-5 text-danger">
+                            @minSalePrice.ToString("N0") ₫
+                        </span>
+
+                        <span class="text-muted text-decoration-line-through ms-2">
+                            @minPrice.ToString("N0") ₫
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="fw-bold fs-5">
+                            @minPrice.ToString("N0") ₫
+                        </span>
+                    }
+                </div>
+
+                @* <div class="mb-4">
+                    <span class="badge text-bg-light border me-1">New</span>
+
+                    @if (minSalePrice > 0)
+                    {
+                        <span class="badge text-bg-danger me-1">Sale</span>
+                    }
+
+                    <span class="badge text-bg-light border">
+                        Stock: @totalStock
+                    </span>
+                </div> *@
+
+                <p class="small fw-semibold mb-4">
+                    @(product.Description ?? "This product is designed for comfort, performance, and everyday styling.")
+                </p>
+
+                <hr />
+
+                <!-- COLOURS -->
+                <div class="mb-4">
+                    <h6 class="fw-bold mb-3">Colours</h6>
+
                     <div class="d-flex flex-wrap gap-2">
-                        @foreach (var color in colors)
+                        @foreach (var color in Model.AvailableColorVariants)
                         {
-                            <button type="button" class="btn btn-outline-dark btn-sm">
+                            var isSelected = Model.ColorCode == color.ColorCode;
+
+                            <a asp-page="/Products/Details"
+                            asp-route-productId="@product.ProductId"
+                            asp-route-colorCode="@color.ColorCode"
+                            class="btn @(isSelected ? "btn-dark" : "btn-light") border p-2">
                                 @color.ColorName
-                            </button>
+                            </a>
                         }
                     </div>
                 </div>
-            }
 
-            <!-- SIZE -->
-            @if (sizes.Any())
-            {
+                <!-- SIZES -->
                 <div class="mb-4">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <span class="fw-semibold">Select Size</span>
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="fw-bold mb-0">Sizes</h6>
                         <a href="#" class="small text-dark">Size guide</a>
                     </div>
 
                     <div class="row g-2">
-                        @foreach (var size in sizes)
+                        @foreach (var size in Model.AvailableSizeVariants)
                         {
-                            var available = activeVariants.Any(v =>
-                                v.SizeCode == size.SizeCode &&
-                                v.AvailableStock > 0);
+                            var isSelected = Model.SizeCode == size.SizeCode;
+                            var isAvailable = size.AvailableStock > 0;
 
                             <div class="col-4">
-                                <button type="button"
-                                        class="btn w-100 @(available ? "btn-outline-dark" : "btn-outline-secondary disabled")">
-                                    @size.SizeLabel
-                                </button>
+                                @if (isAvailable)
+                                {
+                                    <a asp-page="/Products/Details"
+                                    asp-route-productId="@product.ProductId"
+                                    asp-route-colorCode="@Model.ColorCode"
+                                    asp-route-sizeCode="@size.SizeCode"
+                                    class="btn @(isSelected ? "btn-dark" : "btn-light") border w-100">
+                                        @size.SizeLabel
+                                    </a>
+                                }
+                                else
+                                {
+                                    <button class="btn btn-outline-secondary border w-100" disabled>
+                                        @size.SizeLabel
+                                    </button>
+                                }
                             </div>
                         }
                     </div>
                 </div>
-            }
 
-            <!-- CTA -->
-            <div class="d-grid gap-2 mb-4">
-                <button type="button" class="btn btn-dark btn-lg rounded-pill">
-                    Add to Bag
-                </button>
+                <!-- Stock -->
+                @if (Model.SelectedVariant is not null)
+                {
+                    var stockText = Model.SelectedVariant.AvailableStock switch
+                    {
+                        <= 0 => "Out of stock",
+                        <= 10 => $"Only {Model.SelectedVariant.AvailableStock} left",
+                        _ => "Low in stock"
+                    };
 
-                <button type="button" class="btn btn-outline-dark btn-lg rounded-pill">
-                    Favorite ♡
-                </button>
-            </div>
+                    <div class="mb-4">
+                        <div class="text-dark fw-semibold small">
+                            @stockText
+                        </div>
+                    </div>
+                }
+                @if (Model.SelectedVariant is not null)
+                {
+                    <div class="small text-muted mb-2">
+                        SKU: @Model.SelectedVariant.Sku
+                    </div>
+                }
 
-            <!-- DESCRIPTION -->
-            @if (!string.IsNullOrWhiteSpace(product.Description))
-            {
-                <div class="mb-4">
-                    <h5 class="fw-bold">Description</h5>
-                    <p class="text-muted">
-                        @product.Description
-                    </p>
+                <div class="border p-3 mb-4">
+                    <small>
+                        <strong>True to size.</strong>
+                        We recommend ordering your usual size.
+                    </small>
                 </div>
-            }
 
-            <!-- PRODUCT DETAILS -->
-            <div class="border-top pt-3">
-                <h5 class="fw-bold">Product Details</h5>
+                <div class="d-flex gap-2 mb-4">
+                    <button 
+                        class="btn btn-dark flex-grow-1 py-3 fw-bold"
+                        disabled="@(Model.SelectedVariant is null || Model.SelectedVariant.AvailableStock <= 0)">
+                        Add to bag
+                    </button>
 
-                <ul class="text-muted mb-0">
-                    <li>Product code: @product.ProductCode</li>
-                    <li>Material: @(product.BaseMaterial ?? "N/A")</li>
-                    <li>Status: @product.Status</li>
-                </ul>
+                    
+                </div>
+
+                <hr />
+
+                <div class="small">
+                    <div class="d-flex justify-content-between py-3 border-bottom">
+                        <span>Brand</span>
+                        <strong>@product.BrandName</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-3 border-bottom">
+                        <span>Material</span>
+                        <strong>@(product.BaseMaterial ?? "N/A")</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-3 border-bottom">
+                        <span>Product code</span>
+                        <strong>@product.ProductCode</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-between py-3 border-bottom">
+                        <span>Status</span>
+                        <strong>@product.Status</strong>
+                    </div>
+                </div>
+
             </div>
-
         </div>
     </div>
-</div>
+</section>

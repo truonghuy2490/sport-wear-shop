@@ -1,13 +1,13 @@
 ﻿using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels;
+using SportWearShop.Repositories.Enums;
 
 namespace SportWearShop.BusinessLogics.Interfaces
 {
     public interface IProductService
     {
         Task<PagingResponseModel<ProductResponseModel>> GetAllAsync(
-            int pageNumber,
-            int pageSize,
+            ProductQueryRequestModel request,
             CancellationToken cancellationToken = default);
 
         Task<ProductDetailResponseModel> GetDetailsAsync(
@@ -26,6 +26,15 @@ namespace SportWearShop.BusinessLogics.Interfaces
 
         Task DeleteAsync(
             long productId,
+            CancellationToken cancellationToken = default);
+
+        Task<AdminProductDetailResponseModel> GetAdminDetailsAsync(
+            long productId,
+            CancellationToken cancellationToken = default);     
+
+        Task<ProductDetailResponseModel> UpdateStatusAsync(
+            long productId,
+            ProductStatus status,
             CancellationToken cancellationToken = default);
     }
 

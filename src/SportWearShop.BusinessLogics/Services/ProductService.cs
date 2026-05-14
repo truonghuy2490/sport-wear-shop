@@ -9,8 +9,10 @@ using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductRatingMod
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 using System.Linq.Expressions;
+using LinqKit;
 
 namespace SportWearShop.BusinessLogics.Services
 {
@@ -27,84 +29,165 @@ namespace SportWearShop.BusinessLogics.Services
         }
 
         public async Task<PagingResponseModel<ProductResponseModel>> GetAllAsync(
-            int pageNumber,
-            int pageSize,
+            ProductQueryRequestModel request,
             CancellationToken cancellationToken = default)
         {
+            ArgumentNullException.ThrowIfNull(request);
+
             _logger.LogInformation(
-                "Retrieving products. Requested PageNumber={PageNumber}, PageSize={PageSize}",
-                pageNumber,
-                pageSize);
+                "Retrieving products. PageNumber={PageNumber}, PageSize={PageSize}, SearchTerm={SearchTerm}",
+                request.PageNumber,
+                request.PageSize,
+                request.SearchTerm);
+            var filter = PredicateBuilder.New<Product>(true);
+            filter = filter.And(
+                product => product.Status == (request.Status ?? ProductStatus.Active)
+            );
 
-            if (pageNumber <= 0) pageNumber = 1;
-            if (pageSize <= 0) pageSize = 10;
+            if (!string.IsNullOrWhiteSpace(request.SearchTerm))
+            {
+                var keyword = request.SearchTerm.Trim();
 
-            var totalCount = await _unitOfWork.Products.CountAsync(
-                product => product.Status == ProductStatus.Active,
-                cancellationToken);
+                filter = filter.And(product =>
+                    product.ProductName.Contains(keyword) ||
+                    product.ProductCode.Contains(keyword) ||
+                    product.Slug.Contains(keyword));
+            }
 
+            if (request.BrandIds is { Count: > 0 })
+            {
+                filter = filter.And(product =>
+                    request.BrandIds.Contains(product.BrandId));
+            }
 
-            var products = await _unitOfWork.Products.FindAsync(
-                filter: product => product.Status == ProductStatus.Active,
-                selector: product => new ProductResponseModel
-                {
-                    ProductId = product.ProductId,
-                    ProductName = product.ProductName,
-                    ProductCode = product.ProductCode,
-                    Slug = product.Slug,
-                    BrandName = product.Brand.BrandName,
-                    CategoryName = product.Category.CategoryName,
-                    Gender = product.Gender.ToString(),
-                    Status = product.Status.ToString(),
-                    ThumbnailUrl = product.ProductImages
-                        .Where(image => image.IsPrimary)
-                        .OrderBy(image => image.SortOrder)
-                        .Select(image => image.ImageUrl)
-                        .FirstOrDefault(),
-                    MinPrice = product.ProductVariants
-                        .Where(variant => variant.Status == ProductVariantStatus.Active)
-                        .Select(variant => variant.ListPrice)
-                        .DefaultIfEmpty()
-                        .Min(),
-                    MinSalePrice = product.ProductVariants
-                        .Where(variant => variant.Status == ProductVariantStatus.Active
-                                          && variant.SalePrice != null)
-                        .Select(variant => variant.SalePrice)
-                        .DefaultIfEmpty()
-                        .Min(),
-                    TotalVariants = product.ProductVariants.Count(
-                        variant => variant.Status == ProductVariantStatus.Active)
-                },
-                sortBy: product => product.CreatedAtUtc,
-                ascending: false,
-                asNoTracking: true,
-                cancellationToken: cancellationToken,
-                includes: new Expression<Func<Product, object>>[]
+            if (request.CategoryIds is { Count: > 0 })
+            {
+                filter = filter.And(product =>
+                    request.CategoryIds.Contains(product.CategoryId) ||
+                    request.CategoryIds.Contains(product.Category.ParentCategoryId ?? 0) ||
+                    request.CategoryIds.Contains(product.Category.ParentCategory!.ParentCategoryId ?? 0));
+            }
+
+            if (request.Gender.HasValue)
+            {
+                filter = filter.And(product =>
+                    product.Gender == request.Gender.Value);
+            }
+
+            if (request.MinPrice.HasValue)
+            {
+                filter = filter.And(product =>
+                    product.ProductVariants.Any(variant =>
+                        variant.Status == ProductVariantStatus.Active &&
+                        variant.ListPrice >= request.MinPrice.Value));
+            }
+
+            if (request.MaxPrice.HasValue)
+            {
+                filter = filter.And(product =>
+                    product.ProductVariants.Any(variant =>
+                        variant.Status == ProductVariantStatus.Active &&
+                        variant.ListPrice <= request.MaxPrice.Value));
+            }
+
+            if (request.IsOnSale == true)
+            {
+                filter = filter.And(product =>
+                    product.ProductVariants.Any(variant =>
+                        variant.Status == ProductVariantStatus.Active &&
+                        variant.SalePrice != null &&
+                        variant.SalePrice < variant.ListPrice));
+            }
+
+            if (request.IsNewRelease == true)
+            {
+                var newReleaseFromDate = DateTime.UtcNow.AddDays(-30);
+
+                filter = filter.And(product =>
+                    product.CreatedAtUtc >= newReleaseFromDate);
+            }
+
+            if (request.CreatedFromUtc.HasValue)
+            {
+                filter = filter.And(product =>
+                    product.CreatedAtUtc >= request.CreatedFromUtc.Value);
+            }
+
+            if (request.CreatedToUtc.HasValue)
+            {
+                filter = filter.And(product =>
+                    product.CreatedAtUtc <= request.CreatedToUtc.Value);
+            }
+
+            var options = new QueryOptions<Product>
+            {
+                Filter = filter,
+                SortBy = GetSortExpression(request.SortBy),
+                Ascending = request.IsAscending,
+                PageNumber = request.PageNumber,
+                PageSize = request.PageSize,
+                AsNoTracking = true,
+                Includes = new List<Expression<Func<Product, object>>>
                 {
                     product => product.Brand,
                     product => product.Category,
                     product => product.ProductImages,
                     product => product.ProductVariants
                 }
-            );
-            // TODO: 
-            // best practice : do pagination in database query, not in memory
-            var pagedProducts = products
-                .Skip((pageNumber - 1) * pageSize)
-                .Take(pageSize)
-                .ToList();
+            };
+
+            var result = await _unitOfWork.Products.FindWithPagingAsync(
+                options,
+                selector: product => new ProductResponseModel
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductCode = product.ProductCode,
+                    Slug = product.Slug,
+
+                    BrandName = product.Brand.BrandName,
+                    CategoryName = product.Category.CategoryName,
+
+                    Gender = product.Gender.ToString(),
+                    Status = product.Status.ToString(),
+
+                    ThumbnailUrl = product.ProductImages
+                        .Where(image => image.IsPrimary)
+                        .Select(image => image.ImageUrl)
+                        .FirstOrDefault(),
+
+                    MinPrice = product.ProductVariants
+                        .Where(variant => variant.Status == ProductVariantStatus.Active)
+                        .Select(variant => variant.ListPrice)
+                        .DefaultIfEmpty()
+                        .Min(),
+
+                    MinSalePrice = product.ProductVariants
+                        .Where(variant =>
+                            variant.Status == ProductVariantStatus.Active &&
+                            variant.SalePrice != null)
+                        .Select(variant => variant.SalePrice)
+                        .DefaultIfEmpty()
+                        .Min(),
+
+                    TotalVariants = product.ProductVariants.Count(
+                        variant => variant.Status == ProductVariantStatus.Active)
+                },
+                cancellationToken);
 
             _logger.LogInformation(
-                "Returning paged products. PageNumber={PageNumber}, PageSize={PageSize}, ReturnedItems={ReturnedItems}",
-                pageNumber,
-                pageSize,
-                pagedProducts.Count);
+                "Returning products. PageNumber={PageNumber}, PageSize={PageSize}, ReturnedItems={ReturnedItems}, TotalCount={TotalCount}",
+                request.PageNumber,
+                request.PageSize,
+                result.Items,
+                result.TotalCount);
 
             return new PagingResponseModel<ProductResponseModel>(
-                pagedProducts,
-                totalCount,
-                pageNumber,
-                pageSize);
+                result.Items,
+                result.TotalCount,
+                request.PageNumber,
+                request.PageSize
+            );
         }
 
         public async Task<ProductDetailResponseModel> GetDetailsAsync(
@@ -209,6 +292,122 @@ namespace SportWearShop.BusinessLogics.Services
             return product;
         }
 
+        public async Task<AdminProductDetailResponseModel> GetAdminDetailsAsync(
+            long productId,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Retrieving admin product details. ProductId={ProductId}",
+                productId);
+
+            var product = await _unitOfWork.Products.FirstOrDefaultAsync(
+                predicate: product => product.ProductId == productId,
+                selector: product => new AdminProductDetailResponseModel
+                {
+                    ProductId = product.ProductId,
+                    ProductName = product.ProductName,
+                    ProductCode = product.ProductCode,
+                    Slug = product.Slug,
+                    Description = product.Description,
+                    Gender = product.Gender.ToString(),
+                    BaseMaterial = product.BaseMaterial,
+
+                    BrandId = product.BrandId,
+                    BrandName = product.Brand.BrandName,
+
+                    CategoryId = product.CategoryId,
+                    CategoryName = product.Category.CategoryName,
+
+                    Status = product.Status.ToString(),
+                    CreatedAtUtc = product.CreatedAtUtc,
+                    UpdatedAtUtc = product.UpdatedAtUtc,
+
+                    Images = product.ProductImages
+                        .OrderBy(image => image.SortOrder)
+                        .Select(image => new AdminProductImageResponseModel
+                        {
+                            ProductImageId = image.ProductImageId,
+                            ProductVariantId = image.ProductVariantId,
+                            ImageUrl = image.ImageUrl,
+                            AltText = image.AltText,
+                            SortOrder = image.SortOrder,
+                            IsPrimary = image.IsPrimary
+                        })
+                        .ToList(),
+
+                    Variants = product.ProductVariants
+                        .OrderBy(variant => variant.ColorName)
+                        .ThenBy(variant => variant.SizeCode)
+                        .Select(variant => new AdminProductVariantResponseModel
+                        {
+                            ProductVariantId = variant.ProductVariantId,
+                            ProductId = variant.ProductId,
+                            Sku = variant.Sku,
+                            ColorCode = variant.ColorCode,
+                            ColorName = variant.ColorName,
+                            SizeCode = variant.SizeCode,
+                            SizeLabel = variant.SizeLabel,
+                            ListPrice = variant.ListPrice,
+                            SalePrice = variant.SalePrice,
+                            WeightGrams = variant.WeightGrams,
+                            Status = variant.Status.ToString(),
+
+                            QuantityOnHand = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityOnHand,
+
+                            QuantityReserved = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityReserved,
+
+                            AvailableQuantity = variant.InventoryStock == null
+                                ? 0
+                                : variant.InventoryStock.QuantityOnHand - variant.InventoryStock.QuantityReserved,
+
+                            Images = variant.ProductImages
+                                .OrderBy(image => image.SortOrder)
+                                .Select(image => new AdminProductImageResponseModel
+                                {
+                                    ProductImageId = image.ProductImageId,
+                                    ProductVariantId = image.ProductVariantId,
+                                    ImageUrl = image.ImageUrl,
+                                    AltText = image.AltText,
+                                    SortOrder = image.SortOrder,
+                                    IsPrimary = image.IsPrimary
+                                })
+                                .ToList()
+                        })
+                        .ToList()
+                },
+                asNoTracking: true,
+                cancellationToken: cancellationToken,
+                includes:
+                [
+                    product => product.Brand,
+                    product => product.Category,
+                    product => product.ProductImages,
+                    product => product.ProductVariants
+                ]);
+
+            if (product == null)
+            {
+                _logger.LogWarning(
+                    "Admin product details retrieval failed. Product not found. ProductId={ProductId}",
+                    productId);
+
+                throw new NotFoundException(
+                    $"Product with ID {productId} was not found.");
+            }
+
+            _logger.LogInformation(
+                "Retrieved admin product details successfully. ProductId={ProductId}, VariantCount={VariantCount}, ImageCount={ImageCount}",
+                product.ProductId,
+                product.Variants.Count,
+                product.Images.Count);
+
+            return product;
+        }
+
         public async Task<ProductResponseModel> CreateAsync(
             CreateProductRequestModel request,
             CancellationToken cancellationToken = default)
@@ -216,15 +415,12 @@ namespace SportWearShop.BusinessLogics.Services
             ArgumentNullException.ThrowIfNull(request);
 
             _logger.LogInformation(
-                "Creating product. ProductCode={ProductCode}, ProductName={ProductName}, BrandId={BrandId}, CategoryId={CategoryId}",
-                request.ProductCode,
+                "Creating product. ProductName={ProductName}, BrandId={BrandId}, CategoryId={CategoryId}",
                 request.ProductName,
                 request.BrandId,
                 request.CategoryId);
 
-            var normalizedProductCode = request.ProductCode.Trim().ToUpper();
             var normalizedProductName = request.ProductName.Trim();
-            var normalizedSlug = request.Slug.Trim().ToLower();
 
             var isBrandExist = await _unitOfWork.Brands.AnyAsync(
                 brand => brand.BrandId == request.BrandId && brand.IsActive,
@@ -232,54 +428,34 @@ namespace SportWearShop.BusinessLogics.Services
 
             if (!isBrandExist)
             {
-                _logger.LogWarning(
-                    "Create product failed. Brand not found. BrandId={BrandId}",
-                    request.BrandId);
-
                 throw new NotFoundException($"Brand with ID {request.BrandId} was not found.");
             }
 
-            var categoryExists = await _unitOfWork.Categories.AnyAsync(
+            var isCategoryExist = await _unitOfWork.Categories.AnyAsync(
                 category => category.CategoryId == request.CategoryId && category.IsActive,
                 cancellationToken);
 
-            if (!categoryExists)
+            if (!isCategoryExist)
             {
-                _logger.LogWarning(
-                    "Create product failed. Category not found. CategoryId={CategoryId}",
-                    request.CategoryId);
-
                 throw new NotFoundException($"Category with ID {request.CategoryId} was not found.");
             }
 
-            var productCodeExists = await _unitOfWork.Products.AnyAsync(
-                product => product.ProductCode == normalizedProductCode,
-                cancellationToken);
+            var normalizedSlug = string.IsNullOrWhiteSpace(request.Slug)
+                ? request.ProductName.Trim().ToLower().Replace(" ", "-")
+                : request.Slug.Trim().ToLower().Replace(" ", "-");
 
-            if (productCodeExists)
+            var originalSlug = normalizedSlug;
+            var slugCounter = 1;
+
+            while (await _unitOfWork.Products.AnyAsync(
+                    product => product.Slug == normalizedSlug,
+                    cancellationToken))
             {
-                _logger.LogWarning(
-                    "Create product failed. Duplicate ProductCode={ProductCode}",
-                    normalizedProductCode);
-
-                throw new ConflictException("Product code already exists.");
+                slugCounter++;
+                normalizedSlug = $"{originalSlug}-{slugCounter}";
             }
 
-            var slugExists = await _unitOfWork.Products.AnyAsync(
-                product => product.Slug == normalizedSlug,
-                cancellationToken);
-
-            if (slugExists)
-            {
-                _logger.LogWarning(
-                    "Create product failed. Duplicate Slug={Slug}",
-                    normalizedSlug);
-
-                throw new ConflictException("Product slug already exists.");
-            }
-
-            var gender = EnumHelper.ParseEnum<ProductGender>(request.Gender);
-
+            var gender = request.Gender;
             var now = DateTime.UtcNow;
 
             var product = new Product
@@ -287,17 +463,22 @@ namespace SportWearShop.BusinessLogics.Services
                 BrandId = request.BrandId,
                 CategoryId = request.CategoryId,
                 ProductName = normalizedProductName,
-                ProductCode = normalizedProductCode,
+                ProductCode = string.Empty,
                 Slug = normalizedSlug,
-                Description = request.Description,
+                Description = request.Description?.Trim(),
                 Gender = gender,
-                BaseMaterial = request.BaseMaterial,
+                BaseMaterial = request.BaseMaterial?.Trim(),
                 Status = ProductStatus.Draft,
                 CreatedAtUtc = now,
                 UpdatedAtUtc = now
             };
 
             await _unitOfWork.Products.AddAsync(product, cancellationToken);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            product.ProductCode = $"PRD-{product.ProductId:D6}";
+            product.UpdatedAtUtc = DateTime.UtcNow;
+
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
@@ -329,18 +510,13 @@ namespace SportWearShop.BusinessLogics.Services
             ArgumentNullException.ThrowIfNull(request);
 
             _logger.LogInformation(
-                "Updating product. ProductId={ProductId}, ProductCode={ProductCode}, ProductName={ProductName}",
+                "Updating product. ProductId={ProductId}, ProductName={ProductName}",
                 productId,
-                request.ProductCode,
                 request.ProductName);
-
-            var normalizedProductCode = request.ProductCode.Trim().ToUpper();
-            var normalizedProductName = request.ProductName.Trim();
-            var normalizedSlug = request.Slug.Trim().ToLower();
 
             var product = await _unitOfWork.Products.FirstOrDefaultAsync(
                 predicate: product => product.ProductId == productId
-                                      && product.Status != ProductStatus.Deleted,
+                                    && product.Status != ProductStatus.Deleted,
                 selector: product => product,
                 asNoTracking: false,
                 cancellationToken: cancellationToken);
@@ -354,83 +530,76 @@ namespace SportWearShop.BusinessLogics.Services
                 throw new NotFoundException($"Product with ID {productId} was not found.");
             }
 
-            var brandExists = await _unitOfWork.Brands.AnyAsync(
-                brand => brand.BrandId == request.BrandId && brand.IsActive,
-                cancellationToken);
-
-            if (!brandExists)
+            if (request.BrandId.HasValue)
             {
-                _logger.LogWarning(
-                    "Update product failed. Brand not found. BrandId={BrandId}, ProductId={ProductId}",
-                    request.BrandId,
-                    productId);
+                var brandExists = await _unitOfWork.Brands.AnyAsync(
+                    brand => brand.BrandId == request.BrandId.Value && brand.IsActive,
+                    cancellationToken);
 
-                throw new NotFoundException($"Brand with ID {request.BrandId} was not found.");
+                if (!brandExists)
+                {
+                    throw new NotFoundException($"Brand with ID {request.BrandId.Value} was not found.");
+                }
+
+                product.BrandId = request.BrandId.Value;
             }
 
-            var categoryExists = await _unitOfWork.Categories.AnyAsync(
-                category => category.CategoryId == request.CategoryId && category.IsActive,
-                cancellationToken);
-
-            if (!categoryExists)
+            if (request.CategoryId.HasValue)
             {
-                _logger.LogWarning(
-                    "Update product failed. Category not found. CategoryId={CategoryId}, ProductId={ProductId}",
-                    request.CategoryId,
-                    productId);
+                var categoryExists = await _unitOfWork.Categories.AnyAsync(
+                    category => category.CategoryId == request.CategoryId.Value && category.IsActive,
+                    cancellationToken);
 
-                throw new NotFoundException($"Category with ID {request.CategoryId} was not found.");
+                if (!categoryExists)
+                {
+                    throw new NotFoundException($"Category with ID {request.CategoryId.Value} was not found.");
+                }
+
+                product.CategoryId = request.CategoryId.Value;
             }
 
-            var productCodeExists = await _unitOfWork.Products.AnyAsync(
-                product => product.ProductCode == normalizedProductCode
-                           && product.ProductId != productId,
-                cancellationToken);
-
-            if (productCodeExists)
+            if (!string.IsNullOrWhiteSpace(request.ProductName))
             {
-                _logger.LogWarning(
-                    "Update product failed. Duplicate ProductCode={ProductCode}, ProductId={ProductId}",
-                    normalizedProductCode,
-                    productId);
-
-                throw new ConflictException("Product code already exists.");
+                product.ProductName = request.ProductName.Trim();
             }
 
-            var slugExists = await _unitOfWork.Products.AnyAsync(
-                product => product.Slug == normalizedSlug
-                           && product.ProductId != productId,
-                cancellationToken);
-
-            if (slugExists)
+            if (!string.IsNullOrWhiteSpace(request.Slug))
             {
-                _logger.LogWarning(
-                    "Update product failed. Duplicate Slug={Slug}, ProductId={ProductId}",
-                    normalizedSlug,
-                    productId);
+                var normalizedSlug = request.Slug.Trim().ToLower();
 
-                throw new ConflictException("Product slug already exists.");
+                var slugExists = await _unitOfWork.Products.AnyAsync(
+                    product => product.Slug == normalizedSlug
+                            && product.ProductId != productId,
+                    cancellationToken);
+
+                if (slugExists)
+                {
+                    throw new ConflictException("Product slug already exists.");
+                }
+
+                product.Slug = normalizedSlug;
             }
 
-            if (string.IsNullOrWhiteSpace(request.Gender))
+            if (request.Description != null)
             {
-                _logger.LogWarning(
-                    "Update product failed. Gender is required. ProductId={ProductId}",
-                    productId);
-
-                throw new BadRequestException("Gender is required.");
+                product.Description = request.Description.Trim();
             }
 
-            var gender = EnumHelper.ParseEnum<ProductGender>(request.Gender);
+            if (request.Gender.HasValue)
+            {
+                product.Gender = request.Gender.Value;
+            }
 
-            product.BrandId = request.BrandId.Value;
-            product.CategoryId = request.CategoryId.Value;
-            product.ProductName = normalizedProductName;
-            product.ProductCode = normalizedProductCode;
-            product.Slug = normalizedSlug;
-            product.Description = request.Description;
-            product.Gender = gender;
-            product.BaseMaterial = request.BaseMaterial;
+            if (request.Status.HasValue)
+            {
+                product.Status = request.Status.Value;
+            }
+
+            if (request.BaseMaterial != null)
+            {
+                product.BaseMaterial = request.BaseMaterial.Trim();
+            }
+
             product.UpdatedAtUtc = DateTime.UtcNow;
 
             _unitOfWork.Products.Update(product);
@@ -450,8 +619,8 @@ namespace SportWearShop.BusinessLogics.Services
                 Gender = product.Gender.ToString(),
                 Status = product.Status.ToString()
             };
-        }
-
+        }        
+        
         public async Task DeleteAsync(
             long productId,
             CancellationToken cancellationToken = default)
@@ -462,10 +631,11 @@ namespace SportWearShop.BusinessLogics.Services
 
             var product = await _unitOfWork.Products.FirstOrDefaultAsync(
                 predicate: product => product.ProductId == productId
-                                      && product.Status != ProductStatus.Deleted,
+                                    && product.Status != ProductStatus.Deleted,
                 selector: product => product,
                 asNoTracking: false,
-                cancellationToken: cancellationToken);
+                cancellationToken: cancellationToken,
+                includes: product => product.ProductVariants);
 
             if (product == null)
             {
@@ -477,15 +647,84 @@ namespace SportWearShop.BusinessLogics.Services
                     $"Product with ID {productId} was not found.");
             }
 
+            var now = DateTime.UtcNow;
+
             product.Status = ProductStatus.Deleted;
-            product.UpdatedAtUtc = DateTime.UtcNow;
+            product.UpdatedAtUtc = now;
+
+            // foreach (var variant in product.ProductVariants)
+            // {
+            //     variant.Status = ProductVariantStatus.Deleted;
+            //     variant.UpdatedAtUtc = now;
+            // }
 
             _unitOfWork.Products.Update(product);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
             _logger.LogInformation(
-                "Product deleted successfully (soft delete). ProductId={ProductId}",
-                productId);
+                "Product deleted successfully. ProductId={ProductId}, DeletedVariants={DeletedVariants}",
+                productId,
+                product.ProductVariants.Count);
+        }
+        
+
+        public async Task<ProductDetailResponseModel> UpdateStatusAsync(
+            long productId,
+            ProductStatus status,
+            CancellationToken cancellationToken = default)
+        {
+            _logger.LogInformation(
+                "Updating product status. ProductId={ProductId}, Status={Status}",
+                productId,
+                status);
+
+            var product = await _unitOfWork.Products.FirstOrDefaultAsync(
+                predicate: p => p.ProductId == productId,
+                selector: p => p,
+                asNoTracking: false,
+                cancellationToken: cancellationToken);
+
+            if (product == null)
+            {
+                _logger.LogWarning(
+                    "Product not found. ProductId={ProductId}",
+                    productId);
+
+                throw new NotFoundException($"Product with ID {productId} was not found.");
+            }
+
+            if (product.Status == ProductStatus.Deleted)
+            {
+                throw new BadRequestException("Deleted product cannot be updated.");
+            }
+
+            product.Status = status;
+            product.UpdatedAtUtc = DateTime.UtcNow;
+
+            _unitOfWork.Products.Update(product);
+            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            return new ProductDetailResponseModel
+            {
+                ProductId = product.ProductId,
+                ProductName = product.ProductName,
+                ProductCode = product.ProductCode,
+                Status = product.Status.ToString()
+            };
+        }
+
+        private static Expression<Func<Product, object>> GetSortExpression(ProductSortBy sortBy)
+        {
+            return sortBy switch
+            {
+                ProductSortBy.ProductName => p => p.ProductName,
+                ProductSortBy.ProductCode => p => p.ProductCode,
+                ProductSortBy.BrandName => p => p.Brand.BrandName,
+                ProductSortBy.CategoryName => p => p.Category.CategoryName,
+                ProductSortBy.UpdatedAtUtc => p => p.UpdatedAtUtc,
+                _ => p => p.CreatedAtUtc
+            };
         }
     }
+    
 }

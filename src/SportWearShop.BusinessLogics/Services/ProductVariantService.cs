@@ -3,10 +3,12 @@ using System.Linq.Expressions;
 using Microsoft.Extensions.Logging;
 using SportWearShop.BusinessLogics.Exceptions;
 using SportWearShop.BusinessLogics.Interfaces;
+using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductImageModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
 using SportWearShop.Repositories.Entities;
 using SportWearShop.Repositories.Enums;
+using SportWearShop.Repositories.Implementations;
 using SportWearShop.Repositories.UnitOfWorks;
 
 namespace SportWearShop.BussinessLogics.Services;
@@ -23,17 +25,21 @@ public class ProductVariantService : IProductVariantService{
         _logger = logger;
     }
 
-    public async Task<List<ProductVariantResponseModel>> GetByProductIdAsync(
+    public async Task<PagingResponseModel<ProductVariantResponseModel>> GetByProductIdAsync(
         long productId,
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default)
     {
         _logger.LogInformation(
-            "Retrieving product variants. ProductId={ProductId}",
-            productId);
+            "Retrieving product variants. ProductId={ProductId}, PageNumber={PageNumber}, PageSize={PageSize}",
+            productId,
+            pageNumber,
+            pageSize);
 
         var productExists = await _unitOfWork.Products.AnyAsync(
             product => product.ProductId == productId
-                       && product.Status == ProductStatus.Active,
+                    && product.Status == ProductStatus.Active,
             cancellationToken);
 
         if (!productExists)
@@ -45,9 +51,24 @@ public class ProductVariantService : IProductVariantService{
             throw new NotFoundException($"Product with ID {productId} was not found.");
         }
 
-        var variants = await _unitOfWork.ProductVariants.FindAsync(
-            filter: variant => variant.ProductId == productId
-                               && variant.Status == ProductVariantStatus.Active,
+        var options = new QueryOptions<ProductVariant>
+        {
+            Filter = variant => variant.ProductId == productId
+                                && variant.Status != ProductVariantStatus.Deleted,
+            SortBy = variant => variant.CreatedAtUtc,
+            Ascending = false,
+            PageNumber = pageNumber,
+            PageSize = pageSize,
+            AsNoTracking = true,
+            Includes = new List<Expression<Func<ProductVariant, object>>>
+            {
+                variant => variant.InventoryStock!,
+                variant => variant.ProductImages
+            }
+        };
+
+        var result = await _unitOfWork.ProductVariants.FindWithPagingAsync(
+            options,
             selector: variant => new ProductVariantResponseModel
             {
                 ProductVariantId = variant.ProductVariantId,
@@ -78,22 +99,19 @@ public class ProductVariantService : IProductVariantService{
                     })
                     .ToList()
             },
-            sortBy: variant => variant.CreatedAtUtc,
-            ascending: false,
-            asNoTracking: true,
-            cancellationToken: cancellationToken,
-            includes: new Expression<Func<ProductVariant, object>>[]
-            {
-                variant => variant.InventoryStock!,
-                variant => variant.ProductImages
-            });
+            cancellationToken);
 
         _logger.LogInformation(
-            "Retrieved product variants successfully. ProductId={ProductId}, Count={Count}",
+            "Retrieved product variants successfully. ProductId={ProductId}, ReturnedItems={ReturnedItems}, TotalCount={TotalCount}",
             productId,
-            variants.Count);
+            result.Items.Count,
+            result.TotalCount);
 
-        return variants;
+        return new PagingResponseModel<ProductVariantResponseModel>(
+            result.Items,
+            result.TotalCount,
+            pageNumber,
+            pageSize);
     }
 
     public async Task<ProductVariantDetailResponseModel?> GetByIdAsync(
@@ -106,7 +124,7 @@ public class ProductVariantService : IProductVariantService{
 
         var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
             predicate: v => v.ProductVariantId == productVariantId
-                         && v.Status == ProductVariantStatus.Active,
+                         && v.Status != ProductVariantStatus.Deleted,
             selector: v => new ProductVariantDetailResponseModel
             {
                 ProductVariantId = v.ProductVariantId,
@@ -162,21 +180,26 @@ public class ProductVariantService : IProductVariantService{
         return variant;
     }
 
-    public async Task<ProductVariantResponseModel> CreateAsync(
+    public async Task<List<ProductVariantResponseModel>> CreateManyAsync(
         long productId,
-        CreateProductVariantRequestModel request,
+        CreateProductVariantsRequestModel request,
         CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(request);
 
+        if (request.Variants == null || request.Variants.Count == 0)
+        {
+            throw new BadRequestException("At least one product variant is required.");
+        }
+
         _logger.LogInformation(
-            "Creating product variant. ProductId={ProductId}, Sku={Sku}",
+            "Creating multiple product variants. ProductId={ProductId}, Count={Count}",
             productId,
-            request.Sku);
+            request.Variants.Count);
 
         var productExists = await _unitOfWork.Products.AnyAsync(
             product => product.ProductId == productId
-                       && product.Status == ProductStatus.Active,
+                       && product.Status != ProductStatus.Deleted,
             cancellationToken);
 
         if (!productExists)
@@ -187,79 +210,106 @@ public class ProductVariantService : IProductVariantService{
             throw new NotFoundException($"Product with ID {productId} was not found.");
         }
 
-        var normalizedSku = request.Sku.Trim().ToUpper();
-        var normalizedColorCode = request.ColorCode.Trim().ToUpper();
-        var normalizedColorName = request.ColorName.Trim();
-        var normalizedSizeCode = request.SizeCode.Trim().ToUpper();
-        var normalizedSizeLabel = request.SizeLabel.Trim();
+        var normalizedRequests = request.Variants.Select(v =>
+        {
+            var colorCode = v.ColorCode.Trim().ToUpper();
+            var sizeCode = v.SizeCode.Trim().ToUpper();
+
+            return new
+            {
+                Original = v,
+                Sku = GenerateSku(productId, colorCode, sizeCode),
+                ColorCode = colorCode,
+                ColorName = v.ColorName.Trim(),
+                SizeCode = sizeCode,
+                SizeLabel = v.SizeLabel.Trim()
+            };
+        }).ToList();
+        
+        var duplicateSkuInRequest = normalizedRequests
+            .GroupBy(v => v.Sku)
+            .FirstOrDefault(g => g.Count() > 1);
+
+        if (duplicateSkuInRequest != null)
+        {
+            throw new ConflictException(
+                $"Duplicate SKU in request: '{duplicateSkuInRequest.Key}'.");
+        }
+
+        var duplicateColorSizeInRequest = normalizedRequests
+            .GroupBy(v => new { v.ColorCode, v.SizeCode })
+            .FirstOrDefault(g => g.Count() > 1);
+
+        if (duplicateColorSizeInRequest != null)
+        {
+            throw new ConflictException(
+                $"Duplicate color and size in request: ColorCode='{duplicateColorSizeInRequest.Key.ColorCode}', SizeCode='{duplicateColorSizeInRequest.Key.SizeCode}'.");
+        }
+
+        foreach (var item in normalizedRequests)
+        {
+            if (item.Original.SalePrice.HasValue &&
+                item.Original.SalePrice.Value > item.Original.ListPrice)
+            {
+                throw new BadRequestException(
+                    $"Sale price cannot be greater than list price. SKU='{item.Sku}'.");
+            }
+        }
+
+        var skus = normalizedRequests.Select(v => v.Sku).ToList();
 
         var skuExists = await _unitOfWork.ProductVariants.AnyAsync(
-            predicate: variant => variant.Sku.ToUpper() == normalizedSku,
-            cancellationToken: cancellationToken);
+            variant => skus.Contains(variant.Sku.ToUpper()),
+            cancellationToken);
 
         if (skuExists)
         {
-            _logger.LogWarning(
-                "Create product variant failed. SKU already exists. SKU={Sku}",
-                request.Sku);
-
-            throw new ConflictException($"SKU '{request.Sku}' already exists.");
+            throw new ConflictException("One or more SKUs already exist.");
         }
 
-        var variantCombinationExists = await _unitOfWork.ProductVariants.AnyAsync(
-            variant => variant.ProductId == productId
-                       && variant.ColorCode == normalizedColorCode
-                       && variant.SizeCode == normalizedSizeCode
-                       && variant.Status == ProductVariantStatus.Active,
-            cancellationToken);
-
-        if (variantCombinationExists)
+        foreach (var item in normalizedRequests)
         {
-            _logger.LogWarning(
-                "Create product variant failed. Variant with same color and size already exists. ProductId={ProductId}, ColorCode={ColorCode}, SizeCode={SizeCode}",
-                productId,
-                request.ColorCode,
-                request.SizeCode);
-            throw new ConflictException("Product variant color and size already exists.");
+            var variantCombinationExists = await _unitOfWork.ProductVariants.AnyAsync(
+                variant => variant.ProductId == productId
+                        && variant.ColorCode == item.ColorCode
+                        && variant.SizeCode == item.SizeCode
+                        && variant.Status != ProductVariantStatus.Deleted,
+                cancellationToken);
+
+            if (variantCombinationExists)
+            {
+                throw new ConflictException(
+                    $"Product variant color and size already exists. ColorCode='{item.ColorCode}', SizeCode='{item.SizeCode}'.");
+            }
         }
 
-        if (request.SalePrice.HasValue && request.SalePrice.Value > request.ListPrice)
-        {
-            _logger.LogWarning(
-                "Create product variant failed. Sale price cannot be greater than list price. ProductId={ProductId}, SalePrice={SalePrice}, ListPrice={ListPrice}",
-                productId,
-                request.SalePrice,
-                request.ListPrice);
-            throw new BadRequestException("Sale price cannot be greater than list price.");
-        }
+        var now = DateTime.UtcNow;
 
-        var now = DateTime.UtcNow;  
-
-        var variant = new ProductVariant
+        var variants = normalizedRequests.Select(item => new ProductVariant
         {
             ProductId = productId,
-            Sku = normalizedSku,
-            ColorCode = normalizedColorCode,
-            ColorName = normalizedColorName,
-            SizeCode = normalizedSizeCode,
-            SizeLabel = normalizedSizeLabel,
-            ListPrice = request.ListPrice,
-            SalePrice = request.SalePrice,
-            WeightGrams = request.WeightGrams,
+            Sku = item.Sku,
+            ColorCode = item.ColorCode,
+            ColorName = item.ColorName,
+            SizeCode = item.SizeCode,
+            SizeLabel = item.SizeLabel,
+            ListPrice = item.Original.ListPrice,
+            SalePrice = item.Original.SalePrice,
+            WeightGrams = item.Original.WeightGrams,
             Status = ProductVariantStatus.Draft,
             CreatedAtUtc = now,
             UpdatedAtUtc = now
-        };
-    
-        await _unitOfWork.ProductVariants.AddAsync(variant, cancellationToken);
+        }).ToList();
+
+        await _unitOfWork.ProductVariants.AddRangeAsync(variants, cancellationToken);
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
         _logger.LogInformation(
-            "Product variant created successfully. ProductVariantId={ProductVariantId}, Sku={Sku}",
-            variant.ProductVariantId,
-            variant.Sku);
+            "Multiple product variants created successfully. ProductId={ProductId}, Count={Count}",
+            productId,
+            variants.Count);
 
-        return new ProductVariantResponseModel
+        return variants.Select(variant => new ProductVariantResponseModel
         {
             ProductVariantId = variant.ProductVariantId,
             Sku = variant.Sku,
@@ -274,7 +324,7 @@ public class ProductVariantService : IProductVariantService{
             QuantityOnHand = 0,
             QuantityReserved = 0,
             Images = new List<ProductImageResponseModel>()
-        };
+        }).ToList();
     }
 
     public async Task<ProductVariantResponseModel> UpdateAsync(
@@ -289,8 +339,7 @@ public class ProductVariantService : IProductVariantService{
             productVariantId);
 
         var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
-            predicate: v => v.ProductVariantId == productVariantId
-                         && v.Status == ProductVariantStatus.Active,
+            predicate: v => v.ProductVariantId == productVariantId,
             selector: v => v,
             asNoTracking: false,
             cancellationToken: cancellationToken);
@@ -327,7 +376,7 @@ public class ProductVariantService : IProductVariantService{
                             && otherVariant.ColorCode == normalizedColorCode
                             && otherVariant.SizeCode == normalizedSizeCode
                             && otherVariant.ProductVariantId != productVariantId
-                            && otherVariant.Status == ProductVariantStatus.Active,
+                            && otherVariant.Status != ProductVariantStatus.Deleted,
             cancellationToken);
 
         if (variantCombinationExists)
@@ -392,7 +441,7 @@ public class ProductVariantService : IProductVariantService{
     {
         var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
             predicate: v => v.ProductVariantId == productVariantId
-                         && v.Status == ProductVariantStatus.Active,
+                         && v.Status != ProductVariantStatus.Deleted,
             selector: v => v,
             asNoTracking: false,
             cancellationToken: cancellationToken);
@@ -412,9 +461,6 @@ public class ProductVariantService : IProductVariantService{
         await _unitOfWork.SaveChangesAsync(cancellationToken);
 
     }
-<<<<<<< HEAD
-
-
 
     public async Task<ProductVariantDetailResponseModel> UpdateSortOrdersAsync(
         long productVariantId,
@@ -429,7 +475,7 @@ public class ProductVariantService : IProductVariantService{
 
         var isProductVariantExist = await _unitOfWork.ProductVariants.AnyAsync(
             predicate: variant => variant.ProductVariantId == productVariantId
-                                && variant.Status == ProductVariantStatus.Active,
+                                && variant.Status != ProductVariantStatus.Deleted,
             cancellationToken: cancellationToken);
 
         if (!isProductVariantExist)
@@ -496,7 +542,7 @@ public class ProductVariantService : IProductVariantService{
         foreach (var image in images)
         {
             var requestImage = request.Images.First(requestImage =>
-                requestImage.ProductImageId == image.ProductImageId);
+                    requestImage.ProductImageId == image.ProductImageId);
 
             image.SortOrder = requestImage.SortOrder;
             // image.IsPrimary = false;
@@ -523,6 +569,121 @@ public class ProductVariantService : IProductVariantService{
         return result!;
     }
 
-=======
->>>>>>> b9a449bbf09be8444339b1e75284695aec3d8227
-}
+    public async Task<AdminProductVariantDetailResponseModel> GetAdminByIdAsync(
+        long productVariantId,
+        CancellationToken cancellationToken = default)
+    {
+        _logger.LogInformation(
+            "Retrieving admin product variant details. ProductVariantId={ProductVariantId}",
+            productVariantId);
+
+        var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
+            predicate: variant => variant.ProductVariantId == productVariantId,
+            selector: variant => new AdminProductVariantDetailResponseModel
+            {
+                ProductVariantId = variant.ProductVariantId,
+                ProductId = variant.ProductId,
+                ProductName = variant.Product.ProductName,
+                ProductCode = variant.Product.ProductCode,
+
+                Sku = variant.Sku,
+                ColorCode = variant.ColorCode,
+                ColorName = variant.ColorName,
+                SizeCode = variant.SizeCode,
+                SizeLabel = variant.SizeLabel,
+                ListPrice = variant.ListPrice,
+                SalePrice = variant.SalePrice,
+                WeightGrams = variant.WeightGrams,
+                Status = variant.Status.ToString(),
+
+                QuantityOnHand = variant.InventoryStock == null
+                    ? 0
+                    : variant.InventoryStock.QuantityOnHand,
+
+                QuantityReserved = variant.InventoryStock == null
+                    ? 0
+                    : variant.InventoryStock.QuantityReserved,
+
+                AvailableQuantity = variant.InventoryStock == null
+                    ? 0
+                    : variant.InventoryStock.QuantityOnHand - variant.InventoryStock.QuantityReserved,
+
+                Images = variant.ProductImages
+                    .OrderBy(image => image.SortOrder)
+                    .Select(image => new AdminProductImageResponseModel
+                    {
+                        ProductImageId = image.ProductImageId,
+                        ProductVariantId = image.ProductVariantId,
+                        ImageUrl = image.ImageUrl,
+                        AltText = image.AltText,
+                        SortOrder = image.SortOrder,
+                        IsPrimary = image.IsPrimary
+                    })
+                    .ToList()
+            },
+            asNoTracking: true,
+            cancellationToken: cancellationToken,
+            includes:
+            [
+                variant => variant.Product,
+                variant => variant.InventoryStock!,
+                variant => variant.ProductImages
+            ]);
+
+        if (variant == null)
+        {
+            _logger.LogWarning(
+                "Admin get product variant details failed. Variant not found. ProductVariantId={ProductVariantId}",
+                productVariantId);
+
+            throw new NotFoundException(
+                $"Product variant with ID {productVariantId} was not found.");
+        }
+
+        _logger.LogInformation(
+            "Retrieved admin product variant details successfully. ProductVariantId={ProductVariantId}",
+            productVariantId);
+
+        return variant;
+    }
+
+
+    public async Task<ProductVariantResponseModel> UpdateStatusAsync(
+        long productVariantId,
+        ProductVariantStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
+            v => v.ProductVariantId == productVariantId,
+            v => v,
+            asNoTracking: false,
+            cancellationToken: cancellationToken);
+
+        if (variant == null)
+            throw new NotFoundException("Product variant not found.");
+        if (variant.Status == ProductVariantStatus.Deleted)
+        {
+            throw new BadRequestException("Deleted variant cannot be updated.");
+        }
+        variant.Status = status;
+        variant.UpdatedAtUtc = DateTime.UtcNow;
+
+        _unitOfWork.ProductVariants.Update(variant);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new ProductVariantResponseModel
+        {
+            ProductVariantId = variant.ProductVariantId,
+            Sku = variant.Sku,
+            Status = variant.Status.ToString()
+        };
+    }
+
+    private string GenerateSku(
+        long productId,
+        string colorCode,
+        string sizeCode)
+    {
+        return $"SPW-{productId}-{colorCode}-{sizeCode}";
+    }
+}   

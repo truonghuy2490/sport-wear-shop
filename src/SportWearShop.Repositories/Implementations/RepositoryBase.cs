@@ -45,7 +45,7 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
         {
             query = query.Include(include);
         }
-
+    
         return await query
             .Where(predicate)
             .Select(selector)
@@ -95,6 +95,48 @@ public class BaseRepository<T> : IBaseRepository<T> where T : class
             .ToListAsync(cancellationToken);
     }
 
+    public async Task<(List<TResult> Items, int TotalCount)> FindWithPagingAsync<TResult>(
+        QueryOptions<T> options,
+        Expression<Func<T, TResult>> selector,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(selector);
+
+        IQueryable<T> query = _dbSet;
+
+        if (options.AsNoTracking)
+        {
+            query = query.AsNoTracking();
+        }
+
+        if (options.Filter != null)
+        {
+            query = query.Where(options.Filter);
+        }
+
+        foreach (var include in options.Includes)
+        {
+            query = query.Include(include);
+        }
+
+        var totalItems = await query.CountAsync(cancellationToken);
+
+        if (options.SortBy != null)
+        {
+            query = options.Ascending
+                ? query.OrderBy(options.SortBy)
+                : query.OrderByDescending(options.SortBy);
+        }
+
+        var items = await query
+            .Skip((options.PageNumber - 1) * options.PageSize)
+            .Take(options.PageSize)
+            .Select(selector)
+            .ToListAsync(cancellationToken);
+
+        return (items, totalItems);
+    }
 
     public virtual async Task AddAsync(
         T entity,

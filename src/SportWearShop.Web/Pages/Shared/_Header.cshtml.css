@@ -1,0 +1,21 @@
+.navbar .dropdown:hover .dropdown-menu {
+    display: block;
+}
+
+.navbar .dropdown-menu {
+    left: 0;
+    right: 0;
+}
+
+.navbar .dropdown-toggle::after {
+    display: none;
+}
+
+.navbar .dropdown-menu h6 {
+    font-size: 13px;
+    letter-spacing: .3px;
+}
+
+.navbar .dropdown-menu a {
+    line-height: 1.6;
+}
