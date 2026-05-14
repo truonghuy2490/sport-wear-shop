@@ -1,0 +1,139 @@
+@page
+@model SportWearShop.Web.Pages.Auth.RegisterModel
+
+@{
+    ViewData["Title"] = "Register";
+}
+
+<div class="d-flex align-items-center justify-content-center py-5"
+     style="min-height: 70vh;">
+
+    <div class="col-12 col-sm-10 col-md-8 col-lg-6">
+
+        <div class="card border-0 shadow-sm rounded-4" style="border-radius: 24px;">
+            <div class="card-body p-4 p-lg-5">
+
+                <div class="text-center mb-4">
+                    <h1 class="fw-bold mb-2">
+                        Create Account
+                    </h1>
+
+                    <p class="text-muted mb-0">
+                        Join SportWearShop and start shopping.
+                    </p>
+                </div>
+
+                <form method="post"
+                      style="
+                        border-radius: 14px;
+                        padding: 0.85rem 1rem;
+                      ">
+
+                    @if (!string.IsNullOrWhiteSpace(Model.ErrorMessage))
+                    {
+                        <div class="alert alert-danger py-2 small mb-4">
+                            @Model.ErrorMessage
+                        </div>
+                    }
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Email"
+                               class="form-label fw-medium">
+                        </label>
+
+                        <input asp-for="Input.Email"
+                               class="form-control form-control-lg" />
+
+                        <span asp-validation-for="Input.Email"
+                              class="text-danger small">
+                        </span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.Password"
+                               class="form-label fw-medium">
+                        </label>
+
+                        <input asp-for="Input.Password"
+                               type="password"
+                               class="form-control form-control-lg" />
+
+                        <span asp-validation-for="Input.Password"
+                              class="text-danger small">
+                        </span>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.FirstName"
+                                   class="form-label fw-medium">
+                                First Name
+                            </label>
+
+                            <input asp-for="Input.FirstName"
+                                   class="form-control form-control-lg" />
+
+                            <span asp-validation-for="Input.FirstName"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label asp-for="Input.LastName"
+                                   class="form-label fw-medium">
+                                Last Name
+                            </label>
+
+                            <input asp-for="Input.LastName"
+                                   class="form-control form-control-lg" />
+
+                            <span asp-validation-for="Input.LastName"
+                                  class="text-danger small">
+                            </span>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Input.PhoneNumber"
+                               class="form-label fw-medium">
+                            Phone Number
+                        </label>
+
+                        <input asp-for="Input.PhoneNumber"
+                               class="form-control form-control-lg" />
+
+                        <span asp-validation-for="Input.PhoneNumber"
+                              class="text-danger small">
+                        </span>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-dark btn-lg w-100"
+                            style="border-radius: 14px;">
+                        Create Account
+                    </button>
+
+                </form>
+
+                <div class="text-center mt-4">
+                    <span class="text-muted">
+                        Already have an account?
+                    </span>
+
+                    <a asp-page="/Auth/Login"
+                       class="text-dark fw-semibold text-decoration-none">
+                        Login
+                    </a>
+                </div>
+
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial" />
+}

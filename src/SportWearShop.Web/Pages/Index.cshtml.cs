@@ -1,0 +1,80 @@
+using Microsoft.AspNetCore.Mvc.RazorPages;
+using SportWearShop.Shared.Enums;
+using SportWearShop.Shared.ViewModels;
+using SportWearShop.Shared.ViewModels.ProductModels;
+using SportWearShop.Web.Infrastructure.Api;
+using SportWearShop.Web.Services.Interfaces;
+using System.Net;
+
+namespace SportWearShop.Web.Pages;
+
+public class IndexModel : PageModel
+{
+    private readonly IProductApiService _productApiService;
+
+    public PagingResponseModel<ProductResponseModel>? FeaturedProducts { get; private set; }
+
+    public PagingResponseModel<ProductResponseModel>? NewArrivalProducts { get; private set; }
+
+    public PagingResponseModel<ProductResponseModel>? SaleProducts { get; private set; }
+
+    public string? ErrorMessage { get; private set; }
+    public IndexModel(IProductApiService productApiService)
+    {
+        _productApiService = productApiService;
+    }
+
+    public async Task OnGetAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            FeaturedProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+
+            NewArrivalProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsNewRelease = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+
+            SaleProducts = await _productApiService.GetAllAsync(
+                new ProductQueryRequestModel
+                {
+                    PageNumber = 1,
+                    PageSize = 4,
+                    IsOnSale = true,
+                    SortBy = ProductSortBy.CreatedAtUtc,
+                    IsAscending = false
+                },
+                cancellationToken);
+        }
+        catch (ApiException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            ErrorMessage = "Featured products not found.";
+        }
+        catch (HttpRequestException)
+        {
+            ErrorMessage = "Cannot connect to API server. Please make sure backend API is running.";
+        }
+        catch (TaskCanceledException)
+        {
+            ErrorMessage = "Request timeout. Please try again.";
+        }
+        catch (Exception)
+        {
+            ErrorMessage = "Something went wrong while loading featured products.";
+        }
+    }
+}

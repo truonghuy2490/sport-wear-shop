@@ -1,0 +1,399 @@
+@inject SportWearShop.Web.Services.Interfaces.ICurrentUserService CurrentUser
+@inject SportWearShop.Web.Services.Interfaces.IBrandApiService BrandApiService
+@inject SportWearShop.Web.Services.Interfaces.ICategoryApiService CategoryApiService
+
+@{
+    var brandResult = await BrandApiService.GetAllAsync(
+        pageNumber: 1,
+        pageSize: 12);
+
+    var brands = brandResult?.Items
+        .Where(x => x.IsActive)
+        .ToList()
+        ?? new List<SportWearShop.Shared.ViewModels.BrandModels.BrandResponseModel>();
+    var categories = await CategoryApiService.GetTreeAsync();
+
+    var rootCategories = categories
+        .OrderBy(x => x.SortOrder)
+        .ToList();
+}
+
+<header class="bg-white border-bottom sticky-top">
+
+    <nav class="navbar navbar-expand-lg container py-3">
+
+        <!-- LOGO -->
+        <a class="navbar-brand fw-bold fs-3"
+           asp-page="/Index">
+            SportWearShop
+        </a>
+
+        <!-- MOBILE TOGGLER -->
+        <button class="navbar-toggler border-0 shadow-none"
+                type="button"
+                data-bs-toggle="collapse"
+                data-bs-target="#mainNavbar">
+
+            <span class="navbar-toggler-icon"></span>
+
+        </button>
+
+        <div class="collapse navbar-collapse"
+             id="mainNavbar">
+
+            <!-- CENTER MENU -->
+            <ul class="navbar-nav mx-auto gap-lg-4 mt-3 mt-lg-0">
+
+                @* <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       asp-page="/Products/Index">
+                        Products
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       href="#">
+                        New Arrivals
+                    </a>
+                </li>
+
+                <li class="nav-item">
+                    <a class="nav-link fw-medium text-dark"
+                       href="#">
+                        Sale
+                    </a>
+                </li> *@
+                <!-- MEN -->
+                <li class="nav-item dropdown position-static">
+                    <a class="nav-link fw-medium text-dark dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown">
+                        Men
+                    </a>
+
+                    <div class="dropdown-menu w-100 border-0 border-top shadow-sm rounded-0 mt-0">
+                        <div class="container py-4">
+                            <div class="row g-4">
+
+                                <div class="col-6 col-md-2">
+                                    <h6 class="fw-bold text-uppercase">Featured</h6>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="1"
+                                    asp-route-Query.IsNewRelease="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        New Arrivals
+                                    </a>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="1"
+                                    asp-route-Query.IsOnSale="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        Sale
+                                    </a>
+                                </div>
+
+                                @foreach (var root in rootCategories.Take(5))
+                                {
+                                    <div class="col-6 col-md-2">
+                                        <h6 class="fw-bold text-uppercase">
+                                            @root.CategoryName
+                                        </h6>
+
+                                        <a asp-page="/Products/Index"
+                                        asp-route-Query.Gender="1"
+                                        asp-route-Query.CategoryIds="@root.CategoryId"
+                                        class="d-block text-dark text-decoration-none small mb-2">
+                                            All @root.CategoryName
+                                        </a>
+
+                                        @foreach (var child in root.Children.OrderBy(x => x.SortOrder))
+                                        {
+                                            <a asp-page="/Products/Index"
+                                            asp-route-Query.Gender="1"
+                                            asp-route-Query.CategoryIds="@child.CategoryId"
+                                            class="d-block text-dark text-decoration-none small mb-2">
+                                                @child.CategoryName
+                                            </a>
+
+                                            @foreach (var grandChild in child.Children.OrderBy(x => x.SortOrder).Take(4))
+                                            {
+                                                <a asp-page="/Products/Index"
+                                                asp-route-Query.Gender="1"
+                                                asp-route-Query.CategoryIds="@grandChild.CategoryId"
+                                                class="d-block text-muted text-decoration-none small mb-2 ms-2">
+                                                    @grandChild.CategoryName
+                                                </a>
+                                            }
+                                        }
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- WOMEN -->
+                <li class="nav-item dropdown position-static">
+                    <a class="nav-link fw-medium text-dark dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown">
+                        Women
+                    </a>
+
+                    <div class="dropdown-menu w-100 border-0 border-top shadow-sm rounded-0 mt-0">
+                        <div class="container py-4">
+                            <div class="row g-4">
+
+                                <div class="col-6 col-md-2">
+                                    <h6 class="fw-bold text-uppercase">Featured</h6>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="2"
+                                    asp-route-Query.IsNewRelease="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        New Arrivals
+                                    </a>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="2"
+                                    asp-route-Query.IsOnSale="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        Sale
+                                    </a>
+                                </div>
+
+                                @foreach (var root in rootCategories.Take(5))
+                                {
+                                    <div class="col-6 col-md-2">
+                                        <h6 class="fw-bold text-uppercase">
+                                            @root.CategoryName
+                                        </h6>
+
+                                        <a asp-page="/Products/Index"
+                                        asp-route-Query.Gender="2"
+                                        asp-route-Query.CategoryIds="@root.CategoryId"
+                                        class="d-block text-dark text-decoration-none small mb-2">
+                                            All @root.CategoryName
+                                        </a>
+
+                                        @foreach (var child in root.Children.OrderBy(x => x.SortOrder))
+                                        {
+                                            <a asp-page="/Products/Index"
+                                            asp-route-Query.Gender="2"
+                                            asp-route-Query.CategoryIds="@child.CategoryId"
+                                            class="d-block text-dark text-decoration-none small mb-2">
+                                                @child.CategoryName
+                                            </a>
+
+                                            @foreach (var grandChild in child.Children.OrderBy(x => x.SortOrder).Take(4))
+                                            {
+                                                <a asp-page="/Products/Index"
+                                                asp-route-Query.Gender="2"
+                                                asp-route-Query.CategoryIds="@grandChild.CategoryId"
+                                                class="d-block text-muted text-decoration-none small mb-2 ms-2">
+                                                    @grandChild.CategoryName
+                                                </a>
+                                            }
+                                        }
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                <!-- KIDS -->
+                <li class="nav-item dropdown position-static">
+                    <a class="nav-link fw-medium text-dark dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown">
+                        Kids
+                    </a>
+
+                    <div class="dropdown-menu w-100 border-0 border-top shadow-sm rounded-0 mt-0">
+                        <div class="container py-4">
+                            <div class="row g-4">
+
+                                <div class="col-6 col-md-2">
+                                    <h6 class="fw-bold text-uppercase">Featured</h6>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="3"
+                                    asp-route-Query.IsNewRelease="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        New Arrivals
+                                    </a>
+
+                                    <a asp-page="/Products/Index"
+                                    asp-route-Query.Gender="3"
+                                    asp-route-Query.IsOnSale="true"
+                                    class="d-block text-dark text-decoration-none small mb-2">
+                                        Sale
+                                    </a>
+                                </div>
+
+                                @foreach (var root in rootCategories.Take(5))
+                                {
+                                    <div class="col-6 col-md-2">
+                                        <h6 class="fw-bold text-uppercase">
+                                            @root.CategoryName
+                                        </h6>
+
+                                        <a asp-page="/Products/Index"
+                                        asp-route-Query.Gender="3"
+                                        asp-route-Query.CategoryIds="@root.CategoryId"
+                                        class="d-block text-dark text-decoration-none small mb-2">
+                                            All @root.CategoryName
+                                        </a>
+
+                                        @foreach (var child in root.Children.OrderBy(x => x.SortOrder))
+                                        {
+                                            <a asp-page="/Products/Index"
+                                            asp-route-Query.Gender="3"
+                                            asp-route-Query.CategoryIds="@child.CategoryId"
+                                            class="d-block text-dark text-decoration-none small mb-2">
+                                                @child.CategoryName
+                                            </a>
+
+                                            @foreach (var grandChild in child.Children.OrderBy(x => x.SortOrder).Take(4))
+                                            {
+                                                <a asp-page="/Products/Index"
+                                                asp-route-Query.Gender="3"
+                                                asp-route-Query.CategoryIds="@grandChild.CategoryId"
+                                                class="d-block text-muted text-decoration-none small mb-2 ms-2">
+                                                    @grandChild.CategoryName
+                                                </a>
+                                            }
+                                        }
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </li>
+
+                 <!-- BRANDS MEGA MENU -->
+                <li class="nav-item dropdown position-static">
+                    <a class="nav-link fw-medium text-dark dropdown-toggle"
+                    href="#"
+                    role="button"
+                    data-bs-toggle="dropdown"
+                    aria-expanded="false">
+                        Brands
+                    </a>
+
+                    <div class="dropdown-menu w-100 border-0 border-top shadow-sm rounded-0 mt-0">
+                        <div class="container py-4">
+                            <div class="row g-4">
+
+                                @foreach (var brand in brands)
+                                {
+                                    <div class="col-6 col-md-3">
+                                        <a asp-page="/Products/Index"
+                                        asp-route-Query.BrandIds="@brand.BrandId"
+                                        class="text-decoration-none text-dark">
+
+                                            @if (!string.IsNullOrWhiteSpace(brand.BrandImage))
+                                            {
+                                                <img src="@brand.BrandImage"
+                                                    alt="@brand.BrandName"
+                                                    class="w-100 mb-3"
+                                                    style="height: 90px; object-fit: cover;" />
+                                            }
+                                            else
+                                            {
+                                                <div class="bg-light border mb-3 d-flex align-items-center justify-content-center"
+                                                    style="height: 90px;">
+                                                    <span class="fw-bold">@brand.BrandName</span>
+                                                </div>
+                                            }
+
+                                            <h6 class="fw-bold text-uppercase mb-1">
+                                                @brand.BrandName
+                                            </h6>
+
+                                            @* <p class="small text-muted mb-0">
+                                                @brand.ProductCount product(s)
+                                            </p> *@
+                                        </a>
+                                    </div>
+                                }
+
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+
+            <!-- RIGHT ACTIONS -->
+            <div class="d-flex flex-column flex-lg-row align-items-lg-center gap-3 mt-4 mt-lg-0">
+
+                <!-- SEARCH -->
+                <form method="get"
+                    asp-page="/Products/Index"
+                    class="position-relative">
+
+                    <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+
+                    <input type="text"
+                        name="Query.SearchTerm"
+                        value="@Context.Request.Query["Query.SearchTerm"]"
+                        class="form-control ps-5"
+                        placeholder="Search products..." />
+
+                    <input type="hidden" name="Query.PageNumber" value="1" />
+                    <input type="hidden" name="Query.PageSize" value="12" />
+                </form>
+
+                <!-- CART -->
+                <a href="#"
+                   class="text-dark text-decoration-none fs-5">
+                    <i class="bi bi-bag"></i>
+                </a>
+
+                @if (CurrentUser.IsAuthenticated)
+                {
+                    <div class="d-flex align-items-center gap-3">
+
+                        <a asp-page="/Profile/Index"
+                        class="text-dark text-decoration-none small fw-medium">
+
+                            Hello, @CurrentUser.DisplayName!
+
+                        </a>
+
+                        <form method="post"
+                              asp-page="/Auth/Logout">
+
+                            <button type="submit"
+                                    class="btn btn-dark btn-sm px-3">
+                                Logout
+                            </button>
+
+                        </form>
+
+                    </div>
+                }
+                else
+                {
+                    <a asp-page="/Auth/Login"
+                       class="text-dark text-decoration-none fs-5">
+                        <i class="bi bi-person"></i>
+                    </a>
+                }
+
+            </div>
+
+        </div>
+
+    </nav>
+
+</header>

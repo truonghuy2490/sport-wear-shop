@@ -1,0 +1,15 @@
+﻿body {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.navbar-brand {
+    letter-spacing: -0.04em;
+}
+
+.btn {
+    border-radius: 999px;
+}
+
+.form-control {
+    border-radius: 999px;
+}
