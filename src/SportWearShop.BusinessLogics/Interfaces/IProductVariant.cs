@@ -1,5 +1,6 @@
 ﻿using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels.ProductVarientModels;
+using SportWearShop.Repositories.Enums;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -39,5 +40,10 @@ public interface IProductVariantService
 
     Task<AdminProductVariantDetailResponseModel> GetAdminByIdAsync(
         long productVariantId,
+        CancellationToken cancellationToken = default);
+
+    Task<ProductVariantResponseModel> UpdateStatusAsync(
+        long productVariantId,
+        ProductVariantStatus status,
         CancellationToken cancellationToken = default);
 }

@@ -17,7 +17,9 @@ public interface ICategoryService
     Task<List<CategoryTreeResponseModel>> GetTreeAsync(
         CancellationToken cancellationToken = default);
 
-    Task<List<CategoryResponseModel>> GetRootCategoriesAsync(
+    Task<PagingResponseModel<CategoryResponseModel>> GetRootCategoriesAsync(
+        int pageNumber,
+        int pageSize,
         CancellationToken cancellationToken = default);
 
     Task<List<CategoryResponseModel>> GetChildrenAsync(

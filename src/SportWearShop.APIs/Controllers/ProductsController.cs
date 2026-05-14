@@ -106,4 +106,19 @@ public class ProductsController : ControllerBase
 
         return Ok(result);
     }
+
+    [HttpPatch("products/{productId:long}/status")]
+    [Authorize(Policy = "AdminOnly")]
+    public async Task<IActionResult> UpdateStatus(
+        long productId,
+        [FromBody] UpdateProductStatusRequestModel request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _productService.UpdateStatusAsync(
+            productId,
+            request.Status,
+            cancellationToken);
+
+        return Ok(result);
+    }
 }

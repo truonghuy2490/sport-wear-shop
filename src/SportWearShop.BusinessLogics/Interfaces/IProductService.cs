@@ -1,5 +1,6 @@
 ﻿using SportWearShop.BusinessLogics.ResponseModels;
 using SportWearShop.BusinessLogics.ResponseModels.ProductModels;
+using SportWearShop.Repositories.Enums;
 
 namespace SportWearShop.BusinessLogics.Interfaces
 {
@@ -30,6 +31,11 @@ namespace SportWearShop.BusinessLogics.Interfaces
         Task<AdminProductDetailResponseModel> GetAdminDetailsAsync(
             long productId,
             CancellationToken cancellationToken = default);     
+
+        Task<ProductDetailResponseModel> UpdateStatusAsync(
+            long productId,
+            ProductStatus status,
+            CancellationToken cancellationToken = default);
     }
 
 

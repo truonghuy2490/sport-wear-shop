@@ -41,3 +41,14 @@ export async function updateProduct(productId, request) {
 export async function deleteProduct(productId) {
     await axiosClient.delete(`/products/${productId}`);
 }
+
+export async function updateProductStatus(productId, status) {
+    const response = await axiosClient.patch(
+        `/products/${productId}/status`,
+        {
+            status: Number(status)
+        }
+    );
+
+    return response.data;
+}

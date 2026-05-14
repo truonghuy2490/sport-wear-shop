@@ -54,7 +54,7 @@ public class ProductVariantService : IProductVariantService{
         var options = new QueryOptions<ProductVariant>
         {
             Filter = variant => variant.ProductId == productId
-                                && variant.Status == ProductVariantStatus.Active,
+                                && variant.Status != ProductVariantStatus.Deleted,
             SortBy = variant => variant.CreatedAtUtc,
             Ascending = false,
             PageNumber = pageNumber,
@@ -273,7 +273,7 @@ public class ProductVariantService : IProductVariantService{
                 variant => variant.ProductId == productId
                         && variant.ColorCode == item.ColorCode
                         && variant.SizeCode == item.SizeCode
-                        && variant.Status == ProductVariantStatus.Active,
+                        && variant.Status != ProductVariantStatus.Deleted,
                 cancellationToken);
 
             if (variantCombinationExists)
@@ -376,7 +376,7 @@ public class ProductVariantService : IProductVariantService{
                             && otherVariant.ColorCode == normalizedColorCode
                             && otherVariant.SizeCode == normalizedSizeCode
                             && otherVariant.ProductVariantId != productVariantId
-                            && otherVariant.Status == ProductVariantStatus.Active,
+                            && otherVariant.Status != ProductVariantStatus.Deleted,
             cancellationToken);
 
         if (variantCombinationExists)
@@ -645,6 +645,38 @@ public class ProductVariantService : IProductVariantService{
             productVariantId);
 
         return variant;
+    }
+
+
+    public async Task<ProductVariantResponseModel> UpdateStatusAsync(
+        long productVariantId,
+        ProductVariantStatus status,
+        CancellationToken cancellationToken = default)
+    {
+        var variant = await _unitOfWork.ProductVariants.FirstOrDefaultAsync(
+            v => v.ProductVariantId == productVariantId,
+            v => v,
+            asNoTracking: false,
+            cancellationToken: cancellationToken);
+
+        if (variant == null)
+            throw new NotFoundException("Product variant not found.");
+        if (variant.Status == ProductVariantStatus.Deleted)
+        {
+            throw new BadRequestException("Deleted variant cannot be updated.");
+        }
+        variant.Status = status;
+        variant.UpdatedAtUtc = DateTime.UtcNow;
+
+        _unitOfWork.ProductVariants.Update(variant);
+        await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+        return new ProductVariantResponseModel
+        {
+            ProductVariantId = variant.ProductVariantId,
+            Sku = variant.Sku,
+            Status = variant.Status.ToString()
+        };
     }
 
     private string GenerateSku(

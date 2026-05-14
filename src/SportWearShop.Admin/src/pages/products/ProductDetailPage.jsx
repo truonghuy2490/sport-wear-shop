@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, useParams} from "react-router-dom";
 import { useDispatch } from "react-redux";
-
-import { getProductDetail } from "../../api/productApi";
 import { productDetailResponseModel } from "../../models/productModel";
+import { getProductDetail, updateProductStatus } from "../../api/productApi";
+import { updateProductVariantStatus } from "../../api/productVariantApi";
 import { showToast } from "../../redux/toast/toastSlice";
 
 function ProductDetailPage() {
@@ -78,6 +78,44 @@ function ProductDetailPage() {
         return "badge bg-success";
     }
 
+    async function handleUpdateProductStatus(status) {
+        try {
+            await updateProductStatus(product.productId, status);
+            await loadProductDetail();
+
+            dispatch(showToast({
+                type: "success",
+                title: "Success",
+                message: "Product status updated."
+            }));
+        } catch (error) {
+            dispatch(showToast({
+                type: "error",
+                title: "Error",
+                message: error.response?.data?.message || "Failed to update product status."
+            }));
+        }
+    }
+
+    async function handleUpdateVariantStatus(productVariantId, status) {
+        try {
+            await updateProductVariantStatus(productVariantId, status);
+            await loadProductDetail();
+
+            dispatch(showToast({
+                type: "success",
+                title: "Success",
+                message: "Variant status updated."
+            }));
+        } catch (error) {
+            dispatch(showToast({
+                type: "error",
+                title: "Error",
+                message: error.response?.data?.message || "Failed to update variant status."
+            }));
+        }
+    }
+
     if (isLoading) {
         return (
             <div className="text-center py-5 text-muted">
@@ -113,12 +151,14 @@ function ProductDetailPage() {
                         Back
                     </Link>
 
-                    <Link
-                        to={`/products/${product.productId}/update`}
-                        className="btn btn-dark"
-                    >
-                        Update Product
-                    </Link>
+                    {product.status !== "Deleted" && (
+                        <Link
+                            to={`/products/${product.productId}/update`}
+                            className="btn btn-dark"
+                        >
+                            Update Product
+                        </Link>
+                    )}
                 </div>
             </div>
 
@@ -135,9 +175,31 @@ function ProductDetailPage() {
                             </div>
                         </div>
 
-                        <span className={getStatusBadgeClass(product.status)}>
-                            {product.status}
-                        </span>
+                        <div className="d-flex align-items-center gap-2">
+                            {product.status !== "Deleted" && product.status === "Draft" && (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-success"
+                                    onClick={() => handleUpdateProductStatus(1)}
+                                >
+                                    Publish
+                                </button>
+                            )}
+
+                            {product.status !== "Deleted" && product.status === "Active" && (
+                                <button
+                                    type="button"
+                                    className="btn btn-sm btn-warning"
+                                    onClick={() => handleUpdateProductStatus(0)}
+                                >
+                                    Unpublish
+                                </button>
+                            )}
+
+                            <span className={getStatusBadgeClass(product.status)}>
+                                {product.status}
+                            </span>
+                        </div>
                     </div>
 
                     <hr />
@@ -425,12 +487,38 @@ function ProductDetailPage() {
                                                 )}
                                             </td>
                                             <td>
-                                                <Link
-                                                    to={`/inventory/${variant.productVariantId}`}
-                                                    className="btn btn-sm btn-outline-dark"
-                                                >
-                                                    Inventory
-                                                </Link>
+                                                <div className="d-flex gap-2">
+                                                    {variant.status === "Draft" && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-success"
+                                                            onClick={() =>
+                                                                handleUpdateVariantStatus(variant.productVariantId, 1)
+                                                            }
+                                                        >
+                                                            Publish
+                                                        </button>
+                                                    )}
+
+                                                    {variant.status === "Active" && (
+                                                        <button
+                                                            type="button"
+                                                            className="btn btn-sm btn-warning"
+                                                            onClick={() =>
+                                                                handleUpdateVariantStatus(variant.productVariantId, 0)
+                                                            }
+                                                        >
+                                                            Unpublish
+                                                        </button>
+                                                    )}
+
+                                                    <Link
+                                                        to={`/inventory/${variant.productVariantId}`}
+                                                        className="btn btn-sm btn-outline-dark"
+                                                    >
+                                                        Inventory
+                                                    </Link>
+                                                </div>
                                             </td>
                                         </tr>
                                     ))

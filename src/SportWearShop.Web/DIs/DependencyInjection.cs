@@ -40,10 +40,11 @@ public static class DependencyInjection
         services.AddScoped<IProductApiService, ProductApiService>();
         services.AddScoped<IAuthApiService, AuthApiService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ICategoryApiService, CategoryApiService>();
+        services.AddScoped<IBrandApiService, BrandApiService>();
 
         // auth service
         services.AddScoped<IAuthCookieService, AuthCookieService>();
-        
         
         return services;
     }

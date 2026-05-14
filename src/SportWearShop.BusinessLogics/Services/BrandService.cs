@@ -323,7 +323,7 @@ public class BrandService : IBrandService
 
         var hasProducts = await _unitOfWork.Products.AnyAsync(
             predicate: product => product.BrandId == brand.BrandId
-                                  && product.Status == ProductStatus.Active,
+                                  && product.Status != ProductStatus.Deleted,
             cancellationToken: cancellationToken);
 
         if (hasProducts)
