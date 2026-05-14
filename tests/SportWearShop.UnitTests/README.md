@@ -1,5 +1,7 @@
 dotnet add tests/SportWearShop.UnitTests package Moq
 dotnet add tests/SportWearShop.UnitTests package coverlet.collector
+dotnet add package MockQueryable.Moq
+dotnet add package Moq
 
 reference businesslogics 
 
