@@ -69,3 +69,10 @@ export const updateProductImageSortOrderRequestModel = {
 export const updateProductImageSortOrdersRequestModel = {
     images: []
 };
+
+export const productVariantStatusOptions = [
+    { value: "", label: "All statuses" },
+    { value: 0, label: "Draft" },
+    { value: 1, label: "Active" },
+    { value: 3, label: "Deleted" }
+];

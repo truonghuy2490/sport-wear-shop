@@ -38,9 +38,15 @@ public class CategoryController : ControllerBase
     // AUTHORIZATION: Allow anonymous, client, admin, staff
     [HttpGet("root")]
     public async Task<IActionResult> GetRootCategories(
-        CancellationToken cancellationToken)
+        [FromQuery] int pageNumber = 1,
+        [FromQuery] int pageSize = 10,
+        CancellationToken cancellationToken = default)
     {
-        var result = await _categoryService.GetRootCategoriesAsync(cancellationToken);
+        var result = await _categoryService.GetRootCategoriesAsync(
+            pageNumber,
+            pageSize,
+            cancellationToken);
+
         return Ok(result);
     }
 

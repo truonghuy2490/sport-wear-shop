@@ -6,8 +6,10 @@ function VariantForm({
     onRemove,
     onSubmit,
     isSubmitting,
-    submitText = "Create Variants"
+    submitText = "Create Variants",
+    mode = "create" // create | update
 }) {
+    const isUpdateMode = mode === "update";
     return (
         <form onSubmit={onSubmit}>
             <div className="card border-0 shadow-sm">
@@ -54,18 +56,18 @@ function VariantForm({
                             </div>
 
                             <div className="row g-3">
-                                <div className="col-md-6">
-                                    <label className="form-label">SKU</label>
-                                    <input
-                                        type="text"
-                                        className="form-control"
-                                        value={form.sku}
-                                        onChange={(e) =>
-                                            onChange(index, "sku", e.target.value)
-                                        }
-                                        required
-                                    />
-                                </div>
+                                {isUpdateMode && (
+                                    <div className="col-md-6">
+                                        <label className="form-label">SKU</label>
+                                        <input
+                                            type="text"
+                                            className="form-control bg-light"
+                                            value={form.sku || ""}
+                                            disabled
+                                            readOnly
+                                        />
+                                    </div>
+                                )}
 
                                 <div className="col-md-3">
                                     <label className="form-label">Color Code</label>
@@ -159,22 +161,9 @@ function VariantForm({
                                         min="0"
                                     />
                                 </div>
+                                
 
-                                <div className="col-md-3">
-                                    <label className="form-label">Initial Stock</label>
-                                    <input
-                                        type="number"
-                                        className="form-control"
-                                        value={form.initialStockQuantity}
-                                        onChange={(e) =>
-                                            onChange(index, "initialStockQuantity", e.target.value)
-                                        }
-                                        min="0"
-                                        required
-                                    />
-                                </div>
-
-                                <div className="col-md-3">
+                                {/* <div className="col-md-3">
                                     <label className="form-label">Status</label>
                                     <select
                                         className="form-select"
@@ -186,7 +175,7 @@ function VariantForm({
                                         <option value="ACTIVE">ACTIVE</option>
                                         <option value="INACTIVE">INACTIVE</option>
                                     </select>
-                                </div>
+                                </div> */}
                             </div>
                         </div>
                     ))}

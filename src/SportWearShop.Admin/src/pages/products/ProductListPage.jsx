@@ -400,22 +400,24 @@ function ProductListPage() {
                                                             View
                                                         </Link>
 
-                                                        <Link
-                                                            to={`/products/${product.productId}/update`}
-                                                            className="btn btn-sm btn-outline-dark me-2"
-                                                        >
-                                                            Update
-                                                        </Link>
+                                                        {product.status !== "Deleted" && (
+                                                            <>
+                                                                <Link
+                                                                    to={`/products/${product.productId}/update`}
+                                                                    className="btn btn-sm btn-outline-dark me-2"
+                                                                >
+                                                                    Update
+                                                                </Link>
 
-                                                        <button
-                                                            type="button"
-                                                            className="btn btn-sm btn-outline-danger"
-                                                            onClick={() =>
-                                                                handleDeleteProduct(product.productId)
-                                                            }
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                                <button
+                                                                    type="button"
+                                                                    className="btn btn-sm btn-outline-danger"
+                                                                    onClick={() => handleDeleteProduct(product.productId)}
+                                                                >
+                                                                    Delete
+                                                                </button>
+                                                            </>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))

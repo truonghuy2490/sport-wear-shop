@@ -1,228 +1,175 @@
-# SportWearShop Admin Manager
-
-Admin management system for SportWearShop, built with ReactJS and integrated with ASP.NET Core Web API backend.
-
+ReactJS thuần
+Vite
+Bootstrap
+React Router
+Axios
+React Redux
 ---
+localStorage/cookie:
+- accessToken
+- refreshToken
 
-## Overview
-
-SportWearShop Admin is an internal dashboard used by administrators and staff to manage:
-
-- Authentication / Authorization
-- Product Management
-- Product Variant Management
-- Category Management
-- Brand Management
-- Inventory Management
-- Customer Account Management
-- Order Management
-- Dashboard Monitoring
-
-This frontend communicates with the SportWearShop backend APIs using JWT authentication with refresh token support.
-
+Redux:
+- currentUser
+- isAuthenticated
+- role
+- loading
+- errorMessage
 ---
-
-## Tech Stack
-
-### Frontend
-- ReactJS
-- Vite
-- Bootstrap 5
-- React Router DOM
-- Axios
-- React Redux
-
-### Authentication
-- JWT Access Token
-- Refresh Token
-- Role-based Authorization
-
-### Storage
-- localStorage / cookie
-    - accessToken
-    - refreshToken
-
----
-
-## Redux Global State
-
-```js
-{
-  currentUser,
-  isAuthenticated,
-  role,
-  loading,
-  errorMessage
-}
-```
-
----
-
-## Project Structure
+## Kiến trúc nên dùng
 
 ```txt
-sportwearshop.admin/
+sport-wear-shop/
 │
-├── src/
-│   ├── api/
-│   ├── pages/
-│   ├── layouts/
-│   ├── components/
-│   ├── routes/
-│   ├── hooks/
-│   ├── utils/
-│   ├── redux/
-│   ├── App.jsx
-│   └── main.jsx
+├── backend/
+│   ├── SportWearShop.APIs
+│   ├── SportWearShop.BusinessLogics
+│   ├── SportWearShop.Infrastructure
+│   ├── SportWearShop.Repositories
+│   ├── SportWearShop.Shared
+│   ├── sportwearshop.customer/        # Razor Pages
+│   └── sportwearshop.admin/           # ReactJS Admin
+│       ├── src/
+│       │   ├── api/
+│       │   │   ├── axiosClient.js
+│       │   │   ├── authApi.js
+│       │   │   ├── productApi.js
+│       │   │   ├── accountApi.js
+│       │   │   └── inventoryApi.js
+│       │   │
+│       │   ├── pages/
+│       │   │   ├── auth/
+│       │   │   │   └── LoginPage.jsx
+│       │   │   ├── dashboard/
+│       │   │   │   └── DashboardPage.jsx
+│       │   │   ├── accounts/
+│       │   │   ├── products/
+│       │   │   ├── categories/
+│       │   │   ├── brands/
+│       │   │   ├── inventory/
+│       │   │   └── orders/
+│       │   │
+│       │   ├── layouts/
+│       │   │   ├── AdminLayout.jsx
+│       │   │   ├── Sidebar.jsx
+│       │   │   └── Header.jsx
+│       │   │
+│       │   ├── components/
+│       │   │   ├── common/
+│       │   │   ├── table/
+│       │   │   ├── form/
+│       │   │   └── modal/
+│       │   │
+│       │   ├── routes/
+│       │   │   ├── AppRouter.jsx
+│       │   │   └── ProtectedRoute.jsx
+│       │   │
+│       │   ├── hooks/
+│       │   │   └── useAuth.js
+│       │   │
+│       │   ├── utils/
+│       │   │   ├── tokenStorage.js
+│       │   │   └── constants.js
+│       │   │
+│       │   ├── App.jsx
+│       │   ├── main.jsx
+│       │   └── index.css
+│       │
+│       ├── .env
+│       ├── package.json
+│       └── vite.config.js
+│
+├── docker-compose.yml
+└── README.md
 ```
 
----
-
-## Core Features
-
-### Authentication
-- Login
-- Logout
-- Auto refresh token
-- Protected routes
-- Role-based access control
-
-### Dashboard
-- Overview statistics
-- Quick navigation shortcuts
-- Business summary
-
-### Product Management
-- Product list
-- Product detail
-- Create product
-- Update product
-- Soft delete / deactivate
-- Publish product
-
-### Product Variant Management
-- Add single variant
-- Batch create variants
-- Update variant
-- Publish variant
-- Activate / deactivate variant
-
-### Category Management
-- Category CRUD
-- Parent / child category
-- Category hierarchy
-
-### Brand Management
-- Brand CRUD
-- Brand active / inactive
-- Pagination
-- Search
-
-### Inventory Management
-- Stock overview
-- Inventory movements
-- Stock adjustment
-- Product stock tracking
-
-### Account Management
-- Admin / Staff account management
-- Role assignment
-- User profile management
-
-### Order Management
-- Order listing
-- Order detail
-- Status management
-
----
-
-## Installation
-
-### Prerequisites
-
-- Node.js >= 20
-- npm
-- backend API running
-
-### Install
+## Cài project cơ bản
 
 ```bash
+cd frontend
+npm create vite@latest sportwearshop.admin -- --template react
+cd sportwearshop.admin
 npm install
 ```
 
-### Run
+Vite hiện yêu cầu Node.js bản khá mới, ví dụ Node `20.19+` hoặc `22.12+`. ([vitejs][1])
+
+Cài package cần thiết:
+
+```bash
+npm install react-router-dom
+npm install axios
+npm install bootstrap
+```
+
+Bootstrap có hướng dẫn chính thức để dùng với Vite, mình có thể import trực tiếp CSS/JS trong `main.jsx`. ([Bootstrap][2])
+
+## Setup Bootstrap
+
+Trong `src/main.jsx`:
+
+```jsx
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App.jsx';
+
+import 'bootstrap/dist/css/bootstrap.min.css';
+import 'bootstrap/dist/js/bootstrap.bundle.min.js';
+import './index.css';
+
+ReactDOM.createRoot(document.getElementById('root')).render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+```
+
+## Setup React Router
+
+```jsx
+// src/App.jsx
+import { BrowserRouter } from 'react-router-dom';
+import AppRouter from './routes/AppRouter';
+
+function App() {
+  return (
+    <BrowserRouter>
+      <AppRouter />
+    </BrowserRouter>
+  );
+}
+
+export default App;
+```
+
+React Router dùng `BrowserRouter` để bọc app và quản lý routing phía client. ([React Router][3])
+
+## Chạy project
 
 ```bash
 npm run dev
 ```
 
-Default:
+Sau đó mở:
 
 ```txt
 http://localhost:5173
 ```
 
----
+## Kết luận
 
-## Environment Variables
+Với giai đoạn này, bạn nên đi theo stack:
 
-Example `.env`
-
-```env
-VITE_API_BASE_URL=http://localhost:5068/api
+```txt
+ReactJS thuần
+Vite
+Bootstrap
+React Router
+Axios
 ```
 
----
+Chưa cần Redux ngay. Khi admin bắt đầu lớn hơn, nhiều state dùng chung hơn như auth, role, sidebar, global loading, notification thì thêm **Redux Toolkit** sau vẫn được.
 
-## Authentication Flow
-
-1. User login
-2. Backend returns:
-   - accessToken
-   - refreshToken
-3. Store tokens
-4. Axios interceptor attaches access token
-5. If 401:
-   - call refresh token API
-   - retry original request
-6. If refresh fails:
-   - logout
-   - redirect login
-
----
-
-## Route Protection
-
-Protected routes use:
-
-- authentication check
-- role validation
-
-Example:
-
-- Admin
-- Staff
-
-Unauthorized users are redirected.
-
----
-
-## Error Handling
-
-Handled scenarios:
-
-- 401 Unauthorized
-- Invalid refresh token
-- API validation errors
-- Conflict errors (409)
-- Not found routes
-- network errors
-
----
-
-## Future Improvements
-
-- Toast notification system
-- Better dashboard analytics
-- Implement with orders
-- Responsive admin improvements
+[1]: https://vite.dev/guide/?utm_source=chatgpt.com "Getting Started"
+[2]: https://getbootstrap.com/docs/5.2/getting-started/vite/?utm_source=chatgpt.com "Bootstrap & Vite"
+[3]: https://reactrouter.com/start/declarative/installation?utm_source=chatgpt.com "Installation"

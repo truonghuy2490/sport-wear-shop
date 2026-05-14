@@ -555,6 +555,7 @@ function ProductUpdatePage() {
             {currentStep === 2 && (
                 <>
                     <VariantForm
+                        mode="update"
                         variants={variantForms}
                         product={productDetail}
                         onChange={handleVariantChange}

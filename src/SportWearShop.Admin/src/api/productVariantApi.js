@@ -53,3 +53,14 @@ export async function updateProductVariantImageSortOrders(
 
     return response.data;
 }
+
+export async function updateProductVariantStatus(productVariantId, status) {
+    const response = await axiosClient.patch(
+        `/product-variants/${productVariantId}/status`,
+        {
+            status: Number(status)
+        }
+    );
+
+    return response.data;
+}

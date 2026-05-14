@@ -25,6 +25,7 @@ import OrderPage from "../pages/orders/OrderPage";
 import InventoryPage from "../pages/inventory/InventoryPage";
 import AccountPage from "../pages/accounts/AccountPage";
 import AccountDetailPage from "../pages/accounts/AccountDetailPage";
+import NotFoundPage from "../pages/errors/NotFoundPage";
 
 
 
@@ -217,6 +218,17 @@ function AppRouter() {
                     <ProtectedRoute>
                         <Layout>
                             <AccountDetailPage />
+                        </Layout>
+                    </ProtectedRoute>
+                }
+            />
+
+            <Route
+                path="*"
+                element={
+                    <ProtectedRoute>
+                        <Layout>
+                            <NotFoundPage/>
                         </Layout>
                     </ProtectedRoute>
                 }

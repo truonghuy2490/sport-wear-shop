@@ -7,27 +7,14 @@ namespace SportWearShop.Web.Services.Interfaces;
 /// product api service
 /// </summary>
 /// 
+
 public interface IProductApiService
 {
     Task<PagingResponseModel<ProductResponseModel>?> GetAllAsync(
-        int pageNumber = 1,
-        int pageSize = 10,
+        ProductQueryRequestModel request,
         CancellationToken cancellationToken = default);
 
     Task<ProductDetailResponseModel?> GetByIdAsync(
-        long productId,
-        CancellationToken cancellationToken = default);
-
-    Task<ProductResponseModel?> CreateAsync(
-        CreateProductRequestModel request,
-        CancellationToken cancellationToken = default);
-
-    Task<ProductResponseModel?> UpdateAsync(
-        long productId,
-        UpdateProductRequestModel request,
-        CancellationToken cancellationToken = default);
-
-    Task DeleteAsync(
         long productId,
         CancellationToken cancellationToken = default);
 }

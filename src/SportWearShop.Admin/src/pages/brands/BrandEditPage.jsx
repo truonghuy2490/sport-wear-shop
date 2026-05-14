@@ -35,8 +35,7 @@ function BrandEditPage() {
             setFormData({
                 brandName: data.brandName || "",
                 brandCode: data.brandCode || "",
-                brandImageFile: null,
-                isActive: data.isActive ?? true
+                brandImageFile: null
             });
 
             setCurrentImage(data.brandImage || "");
@@ -57,11 +56,11 @@ function BrandEditPage() {
     }
 
     function handleChange(e) {
-        const { name, value, type, checked } = e.target;
+        const { name, value } = e.target;
 
         setFormData((prev) => ({
             ...prev,
-            [name]: type === "checkbox" ? checked : value
+            [name]: value
         }));
     }
 
@@ -124,7 +123,7 @@ function BrandEditPage() {
                 <div>
                     <h3 className="fw-bold mb-1">Edit Brand</h3>
                     <p className="text-muted mb-0">
-                        Update brand information, image and status.
+                        Update brand information and image.
                     </p>
                 </div>
 
@@ -212,7 +211,7 @@ function BrandEditPage() {
                                 )}
                             </div>
 
-                            <div className="col-md-12">
+                            {/* <div className="col-md-12">
                                 <div className="form-check">
                                     <input
                                         type="checkbox"
@@ -230,7 +229,7 @@ function BrandEditPage() {
                                         Active
                                     </label>
                                 </div>
-                            </div>
+                            </div> */}
                         </div>
 
                         <div className="d-flex justify-content-end gap-2 mt-4">
