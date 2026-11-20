@@ -1,7 +1,12 @@
+using SportWearShop.Persistence;
+using SportWearShop.Application.Features.Brands.GetBrands;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddStorePersistence(builder.Configuration);
+builder.Services.AddScoped<GetBrandsHandler>();
 builder.Services.AddControllers();
 // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
@@ -14,7 +19,10 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.UseHttpsRedirection();
+if (app.Configuration.GetValue("Web:UseHttpsRedirection", true))
+{
+    app.UseHttpsRedirection();
+}
 
 app.UseAuthorization();
 

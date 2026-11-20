@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# The official entrypoint sources this file during initial database setup.
+# Docker may source or execute this file depending on its mode inside the container.
 (
     set -e
     for password in "$SWS_IDENTITY_PASSWORD" "$SWS_STORE_PASSWORD"; do
@@ -9,7 +9,15 @@
         fi
     done
 
-    docker_process_sql <<SQL
+    run_sql() {
+        if declare -F docker_process_sql >/dev/null; then
+            docker_process_sql
+        else
+            MYSQL_PWD="$MYSQL_ROOT_PASSWORD" mysql --protocol=socket --user=root
+        fi
+    }
+
+    run_sql <<SQL
 CREATE USER 'sws_identity'@'%' IDENTIFIED BY '$SWS_IDENTITY_PASSWORD';
 CREATE USER 'sws_store'@'%' IDENTIFIED BY '$SWS_STORE_PASSWORD';
 GRANT ALL PRIVILEGES ON \`sportwearshop\_identity\`.* TO 'sws_identity'@'%';

@@ -4,10 +4,9 @@
     <ProjectReference Include="..\SportWearShop.Application\SportWearShop.Application.csproj" />
   </ItemGroup>
 
-  <PropertyGroup>
-    
-    
-    
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="MySql.EntityFrameworkCore" />
+    <PackageReference Include="Ardalis.Specification.EntityFrameworkCore" />
+  </ItemGroup>
 
 </Project>

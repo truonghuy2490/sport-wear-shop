@@ -4,10 +4,8 @@
     <ProjectReference Include="..\SportWearShop.Domain\SportWearShop.Domain.csproj" />
   </ItemGroup>
 
-  <PropertyGroup>
-    
-    
-    
-  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Ardalis.Specification" />
+  </ItemGroup>
 
 </Project>
