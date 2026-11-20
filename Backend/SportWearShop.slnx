@@ -1,0 +1,20 @@
+<Solution>
+  <Folder Name="/Identity/" />
+  <Folder Name="/Identity/src/">
+    <Project Path="Identity/src/SportWearShop.Identity.Application/SportWearShop.Identity.Application.csproj" />
+    <Project Path="Identity/src/SportWearShop.Identity.Domain/SportWearShop.Identity.Domain.csproj" />
+    <Project Path="Identity/src/SportWearShop.Identity.Infrastructure/SportWearShop.Identity.Infrastructure.csproj" />
+    <Project Path="Identity/src/SportWearShop.Identity.Persistence/SportWearShop.Identity.Persistence.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="Store/src/SportWearShop.Application/SportWearShop.Application.csproj" />
+    <Project Path="Store/src/SportWearShop.Domain/SportWearShop.Domain.csproj" />
+    <Project Path="Identity/src/SportWearShop.IdentityServer/SportWearShop.IdentityServer.csproj" />
+    <Project Path="Store/src/SportWearShop.Infrastructure/SportWearShop.Infrastructure.csproj" />
+    <Project Path="Store/src/SportWearShop.Persistence/SportWearShop.Persistence.csproj" />
+    <Project Path="Store/src/SportWearShop.WebAPI/SportWearShop.WebAPI.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/SportWearShop.UnitTests/SportWearShop.UnitTests.csproj" />
+  </Folder>
+</Solution>
