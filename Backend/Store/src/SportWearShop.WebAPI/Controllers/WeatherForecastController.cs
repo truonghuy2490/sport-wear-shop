@@ -1,8 +1,10 @@
+using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 
 namespace SportWearShop.WebAPI.Controllers;
 
 [ApiController]
+[ApiVersionNeutral]
 [Route("[controller]")]
 public class WeatherForecastController : ControllerBase
 {
